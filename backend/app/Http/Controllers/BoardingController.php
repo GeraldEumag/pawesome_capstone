@@ -1188,7 +1188,9 @@ class BoardingController extends Controller
                 'boarding_type' => $request->input('boarding_type', $room->room_type),
                 'total_amount' => $newTotal,
                 'status' => 'scheduled',
-                'payment_status' => $boarding->payment_status === 'paid' ? 'paid' : 'unpaid',
+                'payment_status' => $boarding->payment_status === 'pending' && !$boarding->payment_proof
+                    ? 'unpaid'
+                    : ($boarding->payment_status ?: 'unpaid'),
                 'approved_by' => $boarding->approved_by ?: $request->user()?->id,
                 'approved_at' => $boarding->approved_at ?: now(),
                 'notes' => $request->input('notes', $boarding->notes),

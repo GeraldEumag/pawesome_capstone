@@ -1,0 +1,222 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: phase12-boarding-workflow.spec.js >> Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in
+- Location: e2e\phase12-boarding-workflow.spec.js:112:1
+
+# Error details
+
+```
+Test timeout of 480000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e7]: Reception Portal
+    - navigation [ref=e8]:
+      - list [ref=e9]:
+        - listitem [ref=e10]:
+          - button "Booking" [expanded] [ref=e11] [cursor=pointer]:
+            - img [ref=e12]
+            - generic [ref=e14]: Booking
+            - img [ref=e15]
+          - list [ref=e17]:
+            - listitem [ref=e18]:
+              - link "Hotel" [ref=e19] [cursor=pointer]:
+                - /url: /receptionist/bookings/hotel
+                - img [ref=e20]
+                - text: Hotel
+            - listitem [ref=e22]:
+              - link "Veterinary" [ref=e23] [cursor=pointer]:
+                - /url: /receptionist/bookings/veterinary
+                - img [ref=e24]
+                - text: Veterinary
+            - listitem [ref=e26]:
+              - link "Grooming" [ref=e27] [cursor=pointer]:
+                - /url: /receptionist/bookings/grooming
+                - img [ref=e28]
+                - text: Grooming
+        - listitem [ref=e30]:
+          - link "Manage Services" [ref=e31] [cursor=pointer]:
+            - /url: /receptionist/manage-services
+            - img [ref=e32]
+            - text: Manage Services
+        - listitem [ref=e34]:
+          - link "Walk-ins" [ref=e35] [cursor=pointer]:
+            - /url: /receptionist/walk-ins
+            - img [ref=e36]
+            - text: Walk-ins
+        - listitem [ref=e38]:
+          - link "Customer Profile" [ref=e39] [cursor=pointer]:
+            - /url: /receptionist/customer-profile
+            - img [ref=e40]
+            - text: Customer Profile
+        - listitem [ref=e42]:
+          - link "Chatbot" [ref=e43] [cursor=pointer]:
+            - /url: /receptionist/chatbot
+            - img [ref=e44]
+            - text: Chatbot
+        - listitem [ref=e46]:
+          - link "Live Chat" [ref=e47] [cursor=pointer]:
+            - /url: /receptionist/live-chat
+            - img [ref=e48]
+            - text: Live Chat
+        - listitem [ref=e50]:
+          - link "History" [ref=e51] [cursor=pointer]:
+            - /url: /receptionist/history
+            - img [ref=e52]
+            - text: History
+        - listitem [ref=e54]:
+          - link "Reports" [ref=e55] [cursor=pointer]:
+            - /url: /receptionist/reports
+            - img [ref=e56]
+            - text: Reports
+        - listitem [ref=e58]:
+          - link "My Payroll" [ref=e59] [cursor=pointer]:
+            - /url: /receptionist/payroll
+            - img [ref=e60]
+            - text: My Payroll
+        - listitem [ref=e62]:
+          - link "Profile" [ref=e63] [cursor=pointer]:
+            - /url: /receptionist/profile
+            - img [ref=e64]
+            - text: Profile
+    - button "Logout" [ref=e67] [cursor=pointer]
+  - main [ref=e68]:
+    - generic [ref=e69]:
+      - generic [ref=e70]:
+        - heading "Hotel Bookings" [level=1] [ref=e71]
+        - paragraph [ref=e72]: Manage pet hotel and boarding reservations, check-ins, and check-outs.
+      - generic [ref=e73]:
+        - button "Notifications" [ref=e75] [cursor=pointer]:
+          - img [ref=e76]
+          - generic [ref=e78]: 9+
+        - button "RECEPTIONIST Receptionist" [ref=e80] [cursor=pointer]:
+          - img [ref=e82]
+          - generic [ref=e84]:
+            - strong [ref=e85]: RECEPTIONIST
+            - generic [ref=e86]: Receptionist
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - img [ref=e92]
+            - text: Receptionist Hotel Operations
+          - heading "Hotel Boarding Management" [level=1] [ref=e94]
+          - paragraph [ref=e95]: Approve boarding requests, assign rooms, check pets in, add care logs, prepare pickup, and complete hotel stay workflows.
+          - generic [ref=e96]: "Last updated: 11/8/2026, 8:21:55 PM"
+        - button "Export ▼" [ref=e99] [cursor=pointer]:
+          - img [ref=e100]
+          - text: Export ▼
+      - generic [ref=e102]:
+        - button "3 Total Requests" [ref=e103] [cursor=pointer]:
+          - img [ref=e105]
+          - generic [ref=e107]:
+            - strong [ref=e108]: "3"
+            - paragraph [ref=e109]: Total Requests
+        - button "0 Pending" [ref=e110] [cursor=pointer]:
+          - img [ref=e112]
+          - generic [ref=e114]:
+            - strong [ref=e115]: "0"
+            - paragraph [ref=e116]: Pending
+        - button "3 Approved / Scheduled" [ref=e117] [cursor=pointer]:
+          - img [ref=e119]
+          - generic [ref=e121]:
+            - strong [ref=e122]: "3"
+            - paragraph [ref=e123]: Approved / Scheduled
+        - button "0 In Care" [ref=e124] [cursor=pointer]:
+          - img [ref=e126]
+          - generic [ref=e128]:
+            - strong [ref=e129]: "0"
+            - paragraph [ref=e130]: In Care
+        - button "0 Completed" [ref=e131] [cursor=pointer]:
+          - img [ref=e133]
+          - generic [ref=e135]:
+            - strong [ref=e136]: "0"
+            - paragraph [ref=e137]: Completed
+      - generic [ref=e138]:
+        - tablist "Hotel booking stages" [ref=e139]:
+          - tab "ALL 1" [ref=e140] [cursor=pointer]:
+            - generic [ref=e141]: ALL
+            - generic [ref=e142]: "1"
+          - tab "TO APPROVE 0" [selected] [ref=e143] [cursor=pointer]:
+            - generic [ref=e144]: TO APPROVE
+            - generic [ref=e145]: "0"
+          - tab "TO PAY 1" [ref=e146] [cursor=pointer]:
+            - generic [ref=e147]: TO PAY
+            - generic [ref=e148]: "1"
+          - tab "ON GOING 0" [ref=e149] [cursor=pointer]:
+            - generic [ref=e150]: ON GOING
+            - generic [ref=e151]: "0"
+          - tab "READY TO PICKUP 0" [ref=e152] [cursor=pointer]:
+            - generic [ref=e153]: READY TO PICKUP
+            - generic [ref=e154]: "0"
+          - tab "COMPLETE 0" [ref=e155] [cursor=pointer]:
+            - generic [ref=e156]: COMPLETE
+            - generic [ref=e157]: "0"
+          - tab "CANCELED 0" [ref=e158] [cursor=pointer]:
+            - generic [ref=e159]: CANCELED
+            - generic [ref=e160]: "0"
+        - generic [ref=e161]:
+          - generic [ref=e162]:
+            - group "Filter bookings by date" [ref=e163]:
+              - button "TODAY" [ref=e164] [cursor=pointer]
+              - button "UPCOMING" [pressed] [ref=e165] [cursor=pointer]
+              - button "YESTERDAY" [ref=e166] [cursor=pointer]
+              - button "7 DAYS" [ref=e167] [cursor=pointer]
+              - button "1 MONTH" [ref=e168] [cursor=pointer]
+            - generic [ref=e169]: 2026-11-08 to 2027-01-07
+          - button "2 on later dates" [ref=e170] [cursor=pointer]
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - textbox "Search pet, customer, room, phone, notes..." [ref=e173]: PHASE12 Board 39868009
+          - button [ref=e174] [cursor=pointer]:
+            - img [ref=e175]
+        - combobox [ref=e178] [cursor=pointer]:
+          - option "All Payments" [selected]
+          - option "Unpaid"
+          - option "Pending"
+          - option "Paid"
+          - option "Partial"
+          - option "Rejected"
+        - button "Clear" [ref=e179] [cursor=pointer]:
+          - img [ref=e180]
+          - text: Clear
+      - generic [ref=e182]:
+        - generic [ref=e184]:
+          - generic [ref=e185]:
+            - img [ref=e186]
+            - text: Live Boarding Queue
+          - heading "Hotel Boarding Requests" [level=2] [ref=e188]
+          - paragraph [ref=e189]:
+            - text: Showing
+            - strong [ref=e190]: "0"
+            - text: of
+            - strong [ref=e191]: "3"
+            - text: record(s).
+        - table [ref=e193]:
+          - rowgroup [ref=e194]:
+            - row "Pet Customer Stay Room Payment Status Actions" [ref=e195]:
+              - columnheader "Pet" [ref=e196]
+              - columnheader "Customer" [ref=e197]
+              - columnheader "Stay" [ref=e198]
+              - columnheader "Room" [ref=e199]
+              - columnheader "Payment" [ref=e200]
+              - columnheader "Status" [ref=e201]
+              - columnheader "Actions" [ref=e202]
+          - rowgroup [ref=e203]:
+            - row "No hotel boarding records found Try adjusting the search keyword, status, or payment filter." [ref=e204]:
+              - cell "No hotel boarding records found Try adjusting the search keyword, status, or payment filter." [ref=e205]:
+                - generic [ref=e206]:
+                  - img [ref=e207]
+                  - heading "No hotel boarding records found" [level=3] [ref=e209]
+                  - paragraph [ref=e210]: Try adjusting the search keyword, status, or payment filter.
+```

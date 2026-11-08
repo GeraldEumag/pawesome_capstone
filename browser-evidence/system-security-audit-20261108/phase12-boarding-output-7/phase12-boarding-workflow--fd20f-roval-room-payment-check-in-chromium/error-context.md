@@ -1,0 +1,204 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: phase12-boarding-workflow.spec.js >> Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in
+- Location: e2e\phase12-boarding-workflow.spec.js:112:1
+
+# Error details
+
+```
+Error: Command failed: php -r 
+$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$id=(int)$argv[1];
+$b=$db->query("SELECT id,service_request_id,pet_id,customer_id,room_name,room_type,check_in,check_out,status,total_amount,payment_status,payment_method,payment_reference,payment_proof,vaccination_card,vaccination_card_verified_at,booking_channel,approved_by,approved_at,verified_by,verified_at,paid_at,receipt_number,actual_check_in,checked_in_at,checked_in_by FROM boardings WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
+$r=$db->query("SELECT id,room_id,source_type,source_id,pet_id,customer_id,check_in_date,check_out_date,status FROM boarding_room_reservations WHERE source_type='pet_hotel' AND source_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$pr=$db->query("SELECT id,payable_type,payable_id,uploaded_by,disk,disk_path,mime,size_bytes,sha256,submitted_reference,status FROM payment_receipts WHERE payable_type='boarding' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$refs=$db->query("SELECT id,provider,reference_normalized,payable_type,payable_id,receipt_id,confirmed_by,confirmed_at FROM payment_references WHERE payable_type='boarding' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$logs=$db->query("SELECT id,boarding_id,logged_by,log_type,title,notes FROM boarding_care_logs WHERE boarding_id=$id ORDER BY id DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+echo json_encode(["boarding"=>$b,"reservations"=>$r,"receipts"=>$pr,"references"=>$refs,"careLogs"=>$logs],JSON_PRETTY_PRINT); 6
+PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'room_name' in 'field list' in Command line code:4
+Stack trace:
+#0 Command line code(4): PDO->query('SELECT id,servi...')
+#1 {main}
+  thrown in Command line code on line 4
+
+```
+
+# Test source
+
+```ts
+  1   | const { test, expect } = require("@playwright/test");
+  2   | const fs = require("node:fs");
+  3   | const path = require("node:path");
+  4   | const { execFileSync } = require("node:child_process");
+  5   | const { apiLogin } = require("./test-utils");
+  6   | 
+  7   | const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
+  8   | const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
+  9   | const evidenceDir = path.resolve(__dirname, "../../browser-evidence/system-security-audit-20261108/phase12-boarding");
+  10  | const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
+  11  | 
+  12  | test.describe.configure({ mode: "serial" });
+  13  | test.beforeEach(() => {
+  14  |   test.skip(process.env.E2E_AUDIT_DATABASE !== "pawesome_e2e_audit", "Requires the approved isolated audit database.");
+  15  |   expect(apiUrl).toBe("http://127.0.0.1:8001/api");
+  16  | });
+  17  | 
+  18  | const uniqueBuffer = (tag) => Buffer.concat([png, Buffer.from(`-${tag}`)]);
+  19  | const today = () => new Date().toISOString().slice(0, 10);
+  20  | const futureDate = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+  21  | const list = (body) => body?.rooms || body?.available_rooms || body?.boarding_requests || body?.boardings || body?.pets || body?.data || body || [];
+  22  | 
+  23  | async function api(request, session, method, endpoint, data, extra = {}) {
+  24  |   const response = await request[method](`${apiUrl}${endpoint}`, {
+  25  |     headers: { Accept: "application/json", Authorization: `Bearer ${session.token}`, ...extra.headers },
+  26  |     data,
+  27  |     multipart: extra.multipart,
+  28  |   });
+  29  |   const body = await response.json().catch(() => ({}));
+  30  |   if (!response.ok()) throw new Error(`${method.toUpperCase()} ${endpoint}: ${response.status()} ${JSON.stringify(body)}`);
+  31  |   return body;
+  32  | }
+  33  | 
+  34  | async function openAs(browser, session, route, network, consoleLog) {
+  35  |   const context = await browser.newContext({ baseURL: frontendUrl });
+  36  |   await context.addInitScript(({ token, user }) => {
+  37  |     localStorage.setItem("token", token);
+  38  |     localStorage.setItem("role", user.role);
+  39  |     localStorage.setItem("name", user.name || user.email);
+  40  |     localStorage.setItem("username", user.username || user.email);
+  41  |     localStorage.setItem("email", user.email);
+  42  |   }, session);
+  43  |   const page = await context.newPage();
+  44  |   page.on("console", (m) => ["error", "warning"].includes(m.type()) && consoleLog.push({ type: m.type(), text: m.text(), page: page.url() }));
+  45  |   page.on("response", (r) => new URL(r.url()).pathname.startsWith("/api/") && network.push({ method: r.request().method(), path: new URL(r.url()).pathname, status: r.status(), page: new URL(page.url()).pathname }));
+  46  |   page.on("requestfailed", (r) => new URL(r.url()).pathname.startsWith("/api/") && network.push({ method: r.method(), path: new URL(r.url()).pathname, status: "REQUEST_FAILED", failure: r.failure()?.errorText }));
+  47  |   await page.goto(route);
+  48  |   return { page, context };
+  49  | }
+  50  | 
+  51  | async function shot(page, name) {
+  52  |   fs.mkdirSync(evidenceDir, { recursive: true });
+  53  |   const file = `${name}.png`;
+  54  |   await page.screenshot({ path: path.join(evidenceDir, file), fullPage: false }).catch(() => {});
+  55  |   return `phase12-boarding/${file}`;
+  56  | }
+  57  | 
+  58  | function dbBoarding(id) {
+  59  |   const code = `
+  60  | $db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+  61  | $id=(int)$argv[1];
+  62  | $b=$db->query("SELECT id,service_request_id,pet_id,customer_id,room_name,room_type,check_in,check_out,status,total_amount,payment_status,payment_method,payment_reference,payment_proof,vaccination_card,vaccination_card_verified_at,booking_channel,approved_by,approved_at,verified_by,verified_at,paid_at,receipt_number,actual_check_in,checked_in_at,checked_in_by FROM boardings WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
+  63  | $r=$db->query("SELECT id,room_id,source_type,source_id,pet_id,customer_id,check_in_date,check_out_date,status FROM boarding_room_reservations WHERE source_type='pet_hotel' AND source_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+  64  | $pr=$db->query("SELECT id,payable_type,payable_id,uploaded_by,disk,disk_path,mime,size_bytes,sha256,submitted_reference,status FROM payment_receipts WHERE payable_type='boarding' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+  65  | $refs=$db->query("SELECT id,provider,reference_normalized,payable_type,payable_id,receipt_id,confirmed_by,confirmed_at FROM payment_references WHERE payable_type='boarding' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+  66  | $logs=$db->query("SELECT id,boarding_id,logged_by,log_type,title,notes FROM boarding_care_logs WHERE boarding_id=$id ORDER BY id DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+  67  | echo json_encode(["boarding"=>$b,"reservations"=>$r,"receipts"=>$pr,"references"=>$refs,"careLogs"=>$logs],JSON_PRETTY_PRINT);`;
+> 68  |   return JSON.parse(execFileSync("php", ["-r", code, String(id)], { cwd: path.resolve(__dirname, "../../backend"), encoding: "utf8" }));
+      |                     ^ Error: Command failed: php -r 
+  69  | }
+  70  | 
+  71  | function dbCount(sql) {
+  72  |   const code = `$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root",""); echo json_encode($db->query(${JSON.stringify(sql)})->fetchAll(PDO::FETCH_ASSOC));`;
+  73  |   return JSON.parse(execFileSync("php", ["-r", code], { cwd: path.resolve(__dirname, "../../backend"), encoding: "utf8" }));
+  74  | }
+  75  | 
+  76  | async function existingPet(request, customer, index = 0) {
+  77  |   const pets = list(await api(request, customer, "get", "/customer/pets"), ["pets"])
+  78  |     .filter((pet) => pet.status !== "archived" && !pet.archived_at);
+  79  |   expect(pets.length).toBeGreaterThan(index);
+  80  |   return pets[index];
+  81  | }
+  82  | 
+  83  | async function createRoomFixture(request, receptionist, unique) {
+  84  |   const template = list(await api(request, receptionist, "get", "/receptionist/boarding-rooms"))
+  85  |     .find((room) => room.room_type === "dog_standard" && room.is_active && room.customer_selectable);
+  86  |   expect(template, "active dog room template").toBeTruthy();
+  87  |   return (await api(request, receptionist, "post", "/receptionist/boarding-rooms", {
+  88  |     room_code: `P12-${unique}`,
+  89  |     room_name: `Phase12 Board ${unique}`,
+  90  |     room_type: template.room_type,
+  91  |     hotel_category: template.hotel_category,
+  92  |     allowed_species: template.allowed_species,
+  93  |     max_capacity: 1,
+  94  |     total_rooms: 1,
+  95  |     daily_rate: template.daily_rate,
+  96  |     is_active: true,
+  97  |     customer_selectable: true,
+  98  |     notes: `PHASE12_BOARDING_${unique}`,
+  99  |   })).room;
+  100 | }
+  101 | 
+  102 | async function secondCustomer(request, unique) {
+  103 |   const email = `phase12-other-${unique}@example.test`;
+  104 |   await request.post(`${apiUrl}/auth/register`, {
+  105 |     headers: { Accept: "application/json" },
+  106 |     data: { name: `Phase12 Other ${unique}`, first_name: "Phase12", last_name: `Other${unique}`, username: `p12other${unique}`, email, password: "Password123!", password_confirmation: "Password123!" },
+  107 |   });
+  108 |   const login = await request.post(`${apiUrl}/auth/login`, { headers: { Accept: "application/json" }, data: { login: email, password: "Password123!" } });
+  109 |   return login.ok() ? await login.json() : null;
+  110 | }
+  111 | 
+  112 | test("Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in", async ({ browser, request }) => {
+  113 |   test.setTimeout(480000);
+  114 |   const network = [], consoleLog = [], screenshots = [];
+  115 |   const unique = Date.now().toString().slice(-8);
+  116 |   const customer = await apiLogin(request, "customer");
+  117 |   const receptionist = await apiLogin(request, "receptionist");
+  118 |   const cashier = await apiLogin(request, "cashier");
+  119 |   const pet = await existingPet(request, customer, 0);
+  120 |   const room = await createRoomFixture(request, receptionist, unique);
+  121 |   const date = futureDate(31);
+  122 |   const reference = `P12B-${unique}`;
+  123 |   const notes = `PHASE12_BOARDING_${unique}`;
+  124 | 
+  125 |   const customerView = await openAs(browser, customer, "/customer/hotel", network, consoleLog);
+  126 |   const customerPage = customerView.page;
+  127 |   await customerPage.locator('select[name="pet_id"]').selectOption(String(pet.id));
+  128 |   const [year, month, day] = date.split("-");
+  129 |   await customerPage.getByPlaceholder("mm/dd/yyyy").fill(`${month}/${day}/${year}`);
+  130 |   await customerPage.getByPlaceholder("mm/dd/yyyy").press("Enter");
+  131 |   const roomCard = customerPage.locator(".room-card").filter({ hasText: room.room_name });
+  132 |   await expect(roomCard).toBeVisible({ timeout: 30000 });
+  133 |   await roomCard.click();
+  134 |   await customerPage.locator('textarea[name="notes"]').fill(notes);
+  135 |   await customerPage.locator('input[type="file"]').setInputFiles({ name: `vax-${unique}.png`, mimeType: "image/png", buffer: uniqueBuffer(`vax-${unique}`) });
+  136 |   screenshots.push(await shot(customerPage, "01-customer-boarding-form"));
+  137 |   const createPromise = customerPage.waitForResponse((r) => new URL(r.url()).pathname === "/api/customer/boardings" && r.request().method() === "POST");
+  138 |   await customerPage.getByRole("button", { name: "Submit Boarding Request" }).click();
+  139 |   await expect(customerPage.locator(".brm-modal")).toBeVisible();
+  140 |   await customerPage.locator(".brm-pay-now input").check();
+  141 |   await customerPage.locator(".brm-primary").click();
+  142 |   const createResponse = await createPromise;
+  143 |   expect(createResponse.status(), await createResponse.text()).toBe(201);
+  144 |   const boardingId = (await createResponse.json()).boarding.id;
+  145 |   screenshots.push(await shot(customerPage, "02-customer-payment-modal"));
+  146 |   const uploadPromise = customerPage.waitForResponse((r) => new URL(r.url()).pathname === `/api/customer/boarding-requests/${boardingId}/payment-proof` && r.request().method() === "POST");
+  147 |   await customerPage.locator("#pum-file-input").setInputFiles({ name: `proof-${reference}.png`, mimeType: "image/png", buffer: uniqueBuffer(`proof-${unique}`) });
+  148 |   await customerPage.locator(".pum-ref-input").fill(reference);
+  149 |   await customerPage.locator(".pum-confirm-btn").click();
+  150 |   const uploadResponse = await uploadPromise;
+  151 |   expect(uploadResponse.status(), await uploadResponse.text()).toBe(200);
+  152 |   const closePayment = customerPage.locator(".pum-confirm-btn").filter({ hasText: /Close|Done/ });
+  153 |   if (await closePayment.isVisible({ timeout: 5000 }).catch(() => false)) await closePayment.click();
+  154 |   await customerView.context.close();
+  155 | 
+  156 |   const ownerCard = await request.get(`${apiUrl}/files/vaccination-cards/${boardingId}/view`, { headers: { Authorization: `Bearer ${customer.token}` } });
+  157 |   const anonymousCard = await request.get(`${apiUrl}/files/vaccination-cards/${boardingId}/view`);
+  158 |   const other = await secondCustomer(request, unique);
+  159 |   const otherCard = other ? await request.get(`${apiUrl}/files/vaccination-cards/${boardingId}/view`, { headers: { Authorization: `Bearer ${other.token || other.access_token}` } }) : null;
+  160 |   const cashierApprove = await request.post(`${apiUrl}/receptionist/boarding-requests/${boardingId}/approve`, { headers: { Authorization: `Bearer ${cashier.token}` } });
+  161 |   const customerVerifyVax = await request.post(`${apiUrl}/receptionist/boarding-requests/${boardingId}/verify-vaccination`, { headers: { Authorization: `Bearer ${customer.token}` } });
+  162 |   const negativeChecks = {
+  163 |     owner_vaccination_file: ownerCard.status(),
+  164 |     anonymous_vaccination_file: anonymousCard.status(),
+  165 |     other_customer_vaccination_file: otherCard?.status() ?? "no_second_customer",
+  166 |     cashier_cannot_approve: cashierApprove.status(),
+  167 |     customer_cannot_verify_vaccination: customerVerifyVax.status(),
+  168 |   };
+```

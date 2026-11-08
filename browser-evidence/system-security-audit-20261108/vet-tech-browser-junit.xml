@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="11.336511999999999">
+<testsuite name="pawesome-role-smoke-audit.spec.js" timestamp="2026-11-08T10:55:18.394Z" hostname="chromium" tests="1" failures="0" skipped="0" time="8.782" errors="0">
+<testcase name="vet_tech dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="8.782">
+</testcase>
+</testsuite>
+</testsuites>

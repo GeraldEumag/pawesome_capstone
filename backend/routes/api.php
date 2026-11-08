@@ -625,23 +625,23 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     // Items collection routes
     Route::get('items', [InventoryDashboardController::class, 'items']);
     Route::get('items/archived', [InventoryController::class, 'archived']);
-    Route::post('items', [InventoryDashboardController::class, 'storeItem']);
-    Route::post('monthly-audit', [InventoryDashboardController::class, 'saveMonthlyAudit']);
+    Route::post('items', [InventoryDashboardController::class, 'storeItem'])->middleware('idempotency');
+    Route::post('monthly-audit', [InventoryDashboardController::class, 'saveMonthlyAudit'])->middleware('idempotency');
     
     // Dynamic routes with ID parameters
     Route::get('items/{id}', [InventoryDashboardController::class, 'showItem']);
     Route::put('items/{id}', [InventoryDashboardController::class, 'updateItem']);
-    Route::post('items/{id}', [InventoryDashboardController::class, 'updateItem']); // Multipart file workaround
+    Route::post('items/{id}', [InventoryDashboardController::class, 'updateItem'])->middleware('idempotency'); // Multipart file workaround
     Route::delete('items/{id}', [InventoryDashboardController::class, 'destroyItem']);
     Route::patch('items/{id}/archive', [InventoryController::class, 'archive']);
     Route::patch('items/{id}/restore', [InventoryController::class, 'unarchive']);
-    Route::post('items/{id}/adjust-stock', [InventoryController::class, 'adjustStock']);
+    Route::post('items/{id}/adjust-stock', [InventoryController::class, 'adjustStock'])->middleware('idempotency');
     Route::get('items/{id}/batches', [InventoryController::class, 'getItemBatches']);
-    Route::post('items/{id}/batches', [InventoryController::class, 'addBatch']);
-    Route::post('batches/{batchId}/dispose', [InventoryController::class, 'disposeBatch']);
-    Route::put('batches/{batchId}', [InventoryController::class, 'adjustBatch']);
-    Route::post('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
-    Route::patch('{id}/stock', [InventoryDashboardController::class, 'adjustStock']);
+    Route::post('items/{id}/batches', [InventoryController::class, 'addBatch'])->middleware('idempotency');
+    Route::post('batches/{batchId}/dispose', [InventoryController::class, 'disposeBatch'])->middleware('idempotency');
+    Route::put('batches/{batchId}', [InventoryController::class, 'adjustBatch'])->middleware('idempotency');
+    Route::post('{id}/stock', [InventoryDashboardController::class, 'adjustStock'])->middleware('idempotency');
+    Route::patch('{id}/stock', [InventoryDashboardController::class, 'adjustStock'])->middleware('idempotency');
 
     // Supplier routes — accessible by both admin and inventory staff
     Route::get('suppliers', [SupplierController::class, 'index']);
@@ -897,7 +897,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet_tech,recepti
 
 Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('veterinary')->group(function () {
     Route::get('dashboard', [VeterinaryDashboardController::class, 'overview']);
-    Route::get('appointments', [VeterinaryDashboardController::class, 'appointments']);
     Route::post('appointments', [AppointmentController::class, 'store']);
     Route::get('patients', [VeterinaryDashboardController::class, 'patients']);
     Route::get('history', [VeterinaryDashboardController::class, 'history']);

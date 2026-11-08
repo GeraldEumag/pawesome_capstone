@@ -1,0 +1,182 @@
+{
+  "sku": "AUDIT-RACE-1794135844082",
+  "item_id": 841,
+  "initial_stock": 5,
+  "final_stock": 4,
+  "results": [
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "transaction": {
+          "id": 5,
+          "transaction_number": "TRX-6AF057299D2D5",
+          "invoice_number": "INV-2026-6AF05729A9BA0",
+          "total_amount": 100,
+          "tax_amount": 10.71,
+          "change_amount": 0,
+          "payment_method": "cash",
+          "status": "completed",
+          "created_at": "2026-11-08T11:04:09.000000Z"
+        },
+        "receipt": {
+          "store_name": "Pawesome Retreat Inc.",
+          "store_address": "Aldana Street San Isidro Village, Las Piñas, Philippines, 1740",
+          "store_phone": "pawesomeretreat24@gmail.com",
+          "transaction_number": "TRX-6AF057299D2D5",
+          "invoice_number": "INV-2026-6AF05729A9BA0",
+          "date": "2026-11-08 11:04:09",
+          "cashier": "CASHIER",
+          "customer": {
+            "name": "Walk-in",
+            "email": null,
+            "phone": null
+          },
+          "items": [
+            {
+              "name": "AUDIT-RACE-1794135844082",
+              "type": "product",
+              "quantity": 1,
+              "unit_price": "100.00",
+              "discount": "0.00",
+              "total": "100.00"
+            }
+          ],
+          "subtotal": "100.00",
+          "tax": "10.71",
+          "vat_amount": "10.71",
+          "discount": "0.00",
+          "total": "100.00",
+          "payment": {
+            "method": "cash",
+            "amount": "100.00",
+            "change": "0.00",
+            "reference": null
+          },
+          "payments": [
+            {
+              "method": "cash",
+              "amount": 100,
+              "reference_number": null,
+              "change": 0,
+              "status": "completed",
+              "paid_at": "2026-11-08T11:04:09.000000Z"
+            }
+          ],
+          "breakdown": {
+            "currency": "PHP",
+            "vat_inclusive": true,
+            "vat_rate": 0.12,
+            "net_amount": 89.29,
+            "vat_amount": 10.71,
+            "discount": 0,
+            "total": 100,
+            "payments": [
+              {
+                "method": "cash",
+                "amount": 100,
+                "reference_number": null,
+                "receipt_number": null,
+                "paid_at": "2026-11-08T11:04:09.000000Z",
+                "status": "completed"
+              }
+            ],
+            "amount_paid": 100,
+            "refunds": [],
+            "amount_refunded": 0,
+            "balance_due": 0
+          },
+          "notes": null
+        },
+        "message": "OK"
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "success": true,
+        "transaction": {
+          "id": 5,
+          "transaction_number": "TRX-6AF057299D2D5",
+          "invoice_number": "INV-2026-6AF05729A9BA0",
+          "total_amount": 100,
+          "tax_amount": 10.71,
+          "change_amount": 0,
+          "payment_method": "cash",
+          "status": "completed",
+          "created_at": "2026-11-08T11:04:09.000000Z"
+        },
+        "receipt": {
+          "store_name": "Pawesome Retreat Inc.",
+          "store_address": "Aldana Street San Isidro Village, Las Piñas, Philippines, 1740",
+          "store_phone": "pawesomeretreat24@gmail.com",
+          "transaction_number": "TRX-6AF057299D2D5",
+          "invoice_number": "INV-2026-6AF05729A9BA0",
+          "date": "2026-11-08 11:04:09",
+          "cashier": "CASHIER",
+          "customer": {
+            "name": "Walk-in",
+            "email": null,
+            "phone": null
+          },
+          "items": [
+            {
+              "name": "AUDIT-RACE-1794135844082",
+              "type": "product",
+              "quantity": 1,
+              "unit_price": "100.00",
+              "discount": "0.00",
+              "total": "100.00"
+            }
+          ],
+          "subtotal": "100.00",
+          "tax": "10.71",
+          "vat_amount": "10.71",
+          "discount": "0.00",
+          "total": "100.00",
+          "payment": {
+            "method": "cash",
+            "amount": "100.00",
+            "change": "0.00",
+            "reference": null
+          },
+          "payments": [
+            {
+              "method": "cash",
+              "amount": 100,
+              "reference_number": null,
+              "change": 0,
+              "status": "completed",
+              "paid_at": "2026-11-08T11:04:09.000000Z"
+            }
+          ],
+          "breakdown": {
+            "currency": "PHP",
+            "vat_inclusive": true,
+            "vat_rate": 0.12,
+            "net_amount": 89.29,
+            "vat_amount": 10.71,
+            "discount": 0,
+            "total": 100,
+            "payments": [
+              {
+                "method": "cash",
+                "amount": 100,
+                "reference_number": null,
+                "receipt_number": null,
+                "paid_at": "2026-11-08T11:04:09.000000Z",
+                "status": "completed"
+              }
+            ],
+            "amount_paid": 100,
+            "refunds": [],
+            "amount_refunded": 0,
+            "balance_due": 0
+          },
+          "notes": null
+        },
+        "message": "OK"
+      }
+    }
+  ]
+}

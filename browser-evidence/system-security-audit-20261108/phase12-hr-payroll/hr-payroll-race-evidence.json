@@ -1,0 +1,36 @@
+{
+  "result": "PASS",
+  "period": {
+    "start": "2026-11-01",
+    "end": "2026-11-15"
+  },
+  "duplicate_generate": {
+    "statuses": [
+      200
+    ],
+    "before": 1,
+    "after": 1
+  },
+  "concurrent_generate": {
+    "statuses": [
+      200,
+      200
+    ],
+    "after": 1
+  },
+  "concurrent_approve": {
+    "statuses": [
+      200,
+      200
+    ]
+  },
+  "final": {
+    "status": "pending",
+    "processed_by": 2
+  },
+  "checks": {
+    "no_duplicate_rows": true,
+    "single_user_period_row": true,
+    "approve_idempotent_or_single": true
+  }
+}

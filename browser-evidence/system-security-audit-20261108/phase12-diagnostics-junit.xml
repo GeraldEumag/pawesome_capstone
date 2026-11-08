@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="33.146671999999995">
+<testsuite name="phase12-diagnostics-workflow.spec.js" timestamp="2026-11-08T14:40:12.927Z" hostname="chromium" tests="3" failures="0" skipped="0" time="31.633" errors="0">
+<testcase name="Phase 12.7 native diagnostics lifecycle: order via UI, collect, result, vet review" classname="phase12-diagnostics-workflow.spec.js" time="20.517">
+</testcase>
+<testcase name="Phase 12.7 diagnostics rejects unauthorized roles, tampering, and bad prerequisites" classname="phase12-diagnostics-workflow.spec.js" time="8.576">
+</testcase>
+<testcase name="Phase 12.7 concurrent result submission and review stay consistent" classname="phase12-diagnostics-workflow.spec.js" time="2.54">
+</testcase>
+</testsuite>
+</testsuites>

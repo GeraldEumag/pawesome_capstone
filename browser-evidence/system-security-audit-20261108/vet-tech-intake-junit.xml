@@ -1,0 +1,36 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="1" time="62.12124000000001">
+<testsuite name="vet-tech-intake-audit.spec.js" timestamp="2026-11-08T10:57:39.208Z" hostname="chromium" tests="1" failures="0" skipped="0" time="60.274" errors="1">
+<testcase name="vet tech checks in a patient without clinical controls" classname="vet-tech-intake-audit.spec.js" time="60.274">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|vet-tech-intake\vet-tech-intake-audit-vet--db32e-t-without-clinical-controls-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|vet-tech-intake\vet-tech-intake-audit-vet--db32e-t-without-clinical-controls-chromium\error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 60000ms exceeded." type="Error">
+<![CDATA[  [chromium] › vet-tech-intake-audit.spec.js:7:1 › vet tech checks in a patient without clinical controls 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: page.waitForResponse: Test timeout of 60000ms exceeded.
+
+      40 |   await expect(page.getByRole('button', { name: /^(Start|Consult|Edit|Cancel)$/ })).toHaveCount(0);
+      41 |   const [checkIn] = await Promise.all([
+    > 42 |     page.waitForResponse((response) => response.url().endsWith(`/veterinary/appointments/${appointment.id}/check-in`) && response.request().method() === 'POST'),
+         |          ^
+      43 |     page.getByRole('button', { name: /^Check in$/ }).first().click(),
+      44 |   ]);
+      45 |   expect(checkIn.status()).toBe(200);
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\vet-tech-intake-audit.spec.js:42:10
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\vet-tech-intake\vet-tech-intake-audit-vet--db32e-t-without-clinical-controls-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\vet-tech-intake\vet-tech-intake-audit-vet--db32e-t-without-clinical-controls-chromium\error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+</testsuites>

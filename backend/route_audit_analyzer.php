@@ -1,30 +1,42 @@
 <?php
-$j = json_decode(file_get_contents(__DIR__ . '/routes_full_list.json'), true);
-echo "Total routes: " . count($j) . PHP_EOL;
 
+require __DIR__ . '/vendor/autoload.php';
+$app = require __DIR__ . '/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+$output = $argv[1] ?? dirname(__DIR__) . '/browser-evidence/route-inventory/' . date('Ymd-His') . '/routes.json';
+if (file_exists($output)) {
+    throw new RuntimeException('Refusing to overwrite existing route evidence: ' . $output);
+}
+
+$all = [];
 $noAuth = [];
 $noRole = [];
-$all = [];
+$noThrottle = [];
 
-foreach ($j as $r) {
-    $mw = $r['middleware'] ?? [];
+foreach (Illuminate\Support\Facades\Route::getRoutes() as $route) {
+    if (!str_starts_with($route->uri(), 'api/')) {
+        continue;
+    }
+
+    $middleware = $app['router']->gatherRouteMiddleware($route);
     $hasAuth = false;
-    foreach ($mw as $m) {
-        if (str_contains($m, 'auth.api') || str_contains($m, 'auth:sanctum')) {
-            $hasAuth = true;
-            break;
-        }
-    }
     $hasRole = false;
-    foreach ($mw as $m) {
-        if (str_contains($m, 'role:')) {
-            $hasRole = true;
-            break;
-        }
+    $hasThrottle = false;
+
+    foreach ($middleware as $name) {
+        $hasAuth = $hasAuth || $name === App\Http\Middleware\ApiTokenAuth::class
+            || str_starts_with($name, Illuminate\Auth\Middleware\Authenticate::class . ':');
+        $hasRole = $hasRole || str_starts_with($name, App\Http\Middleware\EnsureRole::class . ':');
+        $hasThrottle = $hasThrottle || str_starts_with($name, Illuminate\Routing\Middleware\ThrottleRequests::class . ':');
     }
-    $uri = $r['uri'] ?? '';
-    $method = implode('|', (array)($r['method'] ?? []));
-    $row = ['method' => $method, 'uri' => $uri, 'middleware' => implode(',', $mw), 'controller' => $r['action']['controller'] ?? ($r['action']['uses'] ?? '')];
+
+    $row = [
+        'method' => implode('|', $route->methods()),
+        'uri' => $route->uri(),
+        'middleware' => $middleware,
+        'controller' => $route->getActionName(),
+    ];
     $all[] = $row;
     if (!$hasAuth) {
         $noAuth[] = $row;
@@ -32,21 +44,32 @@ foreach ($j as $r) {
     if ($hasAuth && !$hasRole) {
         $noRole[] = $row;
     }
+    if (!$hasThrottle) {
+        $noThrottle[] = $row;
+    }
 }
 
-echo "No-auth routes: " . count($noAuth) . PHP_EOL;
-foreach ($noAuth as $r) {
-    echo "  " . $r['method'] . " " . $r['uri'] . "  [mw: " . $r['middleware'] . "]" . PHP_EOL;
-}
-
-echo PHP_EOL . "Auth but no role middleware: " . count($noRole) . PHP_EOL;
-foreach ($noRole as $r) {
-    echo "  " . $r['method'] . " " . $r['uri'] . "  [mw: " . $r['middleware'] . "]" . PHP_EOL;
-}
-
-file_put_contents(__DIR__ . '/routes_audit_summary.json', json_encode([
-    'total' => count($j),
+$report = [
+    'generated_at' => now()->toIso8601String(),
+    'scope' => 'Effective API route definitions; middleware presence does not prove resource authorization.',
+    'total' => count($all),
     'no_auth' => $noAuth,
     'auth_no_role' => $noRole,
+    'no_throttle' => $noThrottle,
     'all' => $all,
-], JSON_PRETTY_PRINT));
+];
+
+if (!is_dir(dirname($output)) && !mkdir(dirname($output), 0777, true) && !is_dir(dirname($output))) {
+    throw new RuntimeException('Cannot create route evidence directory.');
+}
+if (file_put_contents($output, json_encode($report, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)) === false) {
+    throw new RuntimeException('Cannot write route evidence.');
+}
+
+echo json_encode([
+    'total' => count($all),
+    'no_auth' => count($noAuth),
+    'auth_no_role' => count($noRole),
+    'no_throttle' => count($noThrottle),
+    'evidence' => $output,
+], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR), PHP_EOL;

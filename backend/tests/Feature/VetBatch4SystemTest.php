@@ -63,11 +63,14 @@ class VetBatch4SystemTest extends TestCase
         $this->withHeaders($headers)->getJson('/api/veterinary/reports/appointments')->assertOk();
     }
 
-    public function test_vet_tech_is_blocked_from_the_vet_only_queue(): void
+    public function test_vet_tech_can_read_intake_but_not_vet_only_history_or_dashboard(): void
     {
-        // The appointments/dashboard group is role:veterinary,vet only; vet_tech
-        // gets the shared consents/diagnostics group instead.
+        // Vet techs read the shared intake board; clinical history and dashboard
+        // remain restricted to veterinarians and administrators.
         $tech = $this->staff('vet_tech');
-        $this->withHeaders($this->headers($tech))->getJson('/api/veterinary/appointments')->assertForbidden();
+        $headers = $this->headers($tech);
+        $this->withHeaders($headers)->getJson('/api/veterinary/appointments')->assertOk();
+        $this->withHeaders($headers)->getJson('/api/veterinary/history')->assertForbidden();
+        $this->withHeaders($headers)->getJson('/api/veterinary/dashboard')->assertForbidden();
     }
 }

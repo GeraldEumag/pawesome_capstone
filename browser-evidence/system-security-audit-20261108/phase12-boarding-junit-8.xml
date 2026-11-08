@@ -1,0 +1,35 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="1" errors="1" time="67.56905400000001">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:28:43.344Z" hostname="chromium" tests="3" failures="0" skipped="1" time="65.939" errors="1">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="64.587">
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js" time="1.352">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output-8\phase12-boarding-workflow--06ff8-oarding-access-are-enforced-chromium\error-context.md]]
+]]>
+</system-out>
+<error message="apiRequestContext.post: Only one of &apos;data&apos;, &apos;form&apos; or &apos;multipart&apos; can be specified" type="Error">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:276:1 › Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced 
+
+    Error: apiRequestContext.post: Only one of 'data', 'form' or 'multipart' can be specified
+
+      22 |
+      23 | async function api(request, session, method, endpoint, data, extra = {}) {
+    > 24 |   const response = await request[method](`${apiUrl}${endpoint}`, {
+         |                                         ^
+      25 |     headers: { Accept: "application/json", Authorization: `Bearer ${session.token}`, ...extra.headers },
+      26 |     data,
+      27 |     multipart: extra.multipart,
+        at api (C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:24:41)
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:283:25
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-8\phase12-boarding-workflow--06ff8-oarding-access-are-enforced-chromium\error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

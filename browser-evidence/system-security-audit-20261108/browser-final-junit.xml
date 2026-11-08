@@ -1,0 +1,89 @@
+<testsuites id="" name="" tests="11" failures="0" skipped="0" errors="1" time="234.177788">
+<testsuite name="cross-role-main-workflow.spec.js" timestamp="2026-11-08T10:47:08.009Z" hostname="chromium" tests="1" failures="0" skipped="0" time="154.777" errors="0">
+<testcase name="Customer to Receptionist to Veterinary to Manager Reports" classname="cross-role-main-workflow.spec.js" time="154.777">
+</testcase>
+</testsuite>
+<testsuite name="pawesome-role-smoke-audit.spec.js" timestamp="2026-11-08T10:47:08.009Z" hostname="chromium" tests="9" failures="0" skipped="0" time="68.297" errors="1">
+<testcase name="customer dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.592">
+</testcase>
+<testcase name="receptionist dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.651">
+</testcase>
+<testcase name="cashier dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="8.559">
+</testcase>
+<testcase name="inventory dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="9.103">
+</testcase>
+<testcase name="veterinary dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.441">
+</testcase>
+<testcase name="manager dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.454">
+</testcase>
+<testcase name="admin dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="10.665">
+</testcase>
+<testcase name="super_receptionist dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.845">
+</testcase>
+<testcase name="vet_tech dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.987">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|playwright-final\pawesome-role-smoke-audit--0b5d0-oads-without-console-errors-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|playwright-final\pawesome-role-smoke-audit--0b5d0-oads-without-console-errors-chromium\error-context.md]]
+]]>
+</system-out>
+<error message="Console/HTTP errors for vet_tech: [" type="Error">
+<![CDATA[  [chromium] › pawesome-role-smoke-audit.spec.js:27:3 › vet_tech dashboard loads without console errors 
+
+    Error: Console/HTTP errors for vet_tech: [
+      {
+        "type": "http",
+        "status": 403,
+        "url": "http://127.0.0.1:8001/api/veterinary/appointments",
+        "page": "http://127.0.0.1:3001/veterinary/appointments"
+      },
+      {
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+        "page": "http://127.0.0.1:3001/veterinary/appointments"
+      },
+      {
+        "type": "network",
+        "text": "Failed to fetch appointments: Error: You are not allowed to access this page.\n    at apiRequest (http://127.0.0.1:3001/src/api/client.js:129:13)\n    at async Promise.all (index 0)\n    at async http://127.0.0.1:3001/src/components/veterinary/VetAppointments.jsx:142:35",
+        "page": "http://127.0.0.1:3001/veterinary/appointments"
+      },
+      {
+        "type": "http",
+        "status": 403,
+        "url": "http://127.0.0.1:8001/api/veterinary/history?status=completed,cancelled&per_page=500",
+        "page": "http://127.0.0.1:3001/veterinary/appointments"
+      },
+      {
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+        "page": "http://127.0.0.1:3001/veterinary/appointments"
+      }
+    ]
+
+      76 |     await page.waitForTimeout(3000); // give sockets time to close before next role
+      77 |     if (errors.length) {
+    > 78 |       throw new Error(`Console/HTTP errors for ${role}: ${JSON.stringify(errors, null, 2)}`);
+         |             ^
+      79 |     }
+      80 |   });
+      81 | }
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\pawesome-role-smoke-audit.spec.js:78:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\playwright-final\pawesome-role-smoke-audit--0b5d0-oads-without-console-errors-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\playwright-final\pawesome-role-smoke-audit--0b5d0-oads-without-console-errors-chromium\error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+<testsuite name="security-concurrency-audit.spec.js" timestamp="2026-11-08T10:47:08.009Z" hostname="chromium" tests="1" failures="0" skipped="0" time="7.433" errors="0">
+<testcase name="concurrent POS retries with one key create exactly one sale" classname="security-concurrency-audit.spec.js" time="7.433">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|playwright-final\security-concurrency-audit-d9c93-key-create-exactly-one-sale-chromium\attachments\concurrency-evidence-ec4b9e4753ec8d900f4d13640dad6cf335cb8c28.json]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

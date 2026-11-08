@@ -1,0 +1,8 @@
+{
+  "appointment_id": 6,
+  "tech_user_id": 8,
+  "pet_id": 1,
+  "status": "checked_in",
+  "checked_in_by": 8,
+  "api_errors": []
+}

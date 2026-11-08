@@ -1,0 +1,20 @@
+{
+  "roomId": 16,
+  "date": "2026-12-09",
+  "statuses": [
+    201,
+    422
+  ],
+  "boardingIds": [
+    9
+  ],
+  "db": [
+    {
+      "id": 9,
+      "room_id": 16,
+      "source_id": 9,
+      "pet_id": 9,
+      "status": "pending"
+    }
+  ]
+}

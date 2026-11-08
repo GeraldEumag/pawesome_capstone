@@ -1,0 +1,23 @@
+{
+    "p0_mysql8_parity": {
+        "status": "strict-mode simulation PASS locally; authoritative proof still requires a real MySQL 8 run",
+        "ci_config": {
+            "image": "mysql:8.0",
+            "database": "pawesome_test",
+            "cmd": "php artisan test",
+            "file": ".github\/workflows\/ci.yml"
+        },
+        "local_simulation": {
+            "engine": "MariaDB 10.4.32",
+            "sql_mode_applied": "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION (MySQL 8 default set)",
+            "result": "916 passed \/ 1 skipped \/ 1 failed (4156 assertions, 264s)",
+            "failure": "ReceptionistCheckInGateTest > scheduling preserves a submitted payment proof \u2014 422 on boarding schedule",
+            "strict_mode_specific": false,
+            "verification": "same test fails identically under the original loose sql_mode \u2192 local data\/environment-dependent failure, NOT a MySQL 8 strict-mode regression",
+            "ofgb_failures": 0,
+            "conclusion": "No ONLY_FULL_GROUP_BY or STRICT_TRANS_TABLES violations across the suite including the 73 groupBy call sites; the single failure is orthogonal to sql_mode"
+        },
+        "caveat": "MariaDB strict-mode simulation approximates but does not equal MySQL 8 \u2014 engine-specific optimizer\/JSON\/checksum behavior remains unproven until a real mysql:8.0 run; CI is the authoritative gate",
+        "actionable": "one boarding-schedule test fails locally in BOTH modes \u2014 investigate whether it is local-data-dependent or a real intermittent defect that would also fail on CI"
+    }
+}

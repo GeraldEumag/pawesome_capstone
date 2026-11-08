@@ -1,0 +1,53 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="2" errors="1" time="481.86278899999996">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:13:56.396Z" hostname="chromium" tests="3" failures="0" skipped="2" time="480.09" errors="1">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="480.09">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output-4\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|phase12-boarding-output-4\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png]]
+
+[[ATTACHMENT|phase12-boarding-output-4\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 480000ms exceeded." type="Error">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:112:1 › Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in 
+
+    Test timeout of 480000ms exceeded.
+
+    Error: locator.click: Test ended.
+    Call log:
+      - waiting for locator('tr.booking-row').filter({ hasText: 'PHASE12 Board 39868009' }).getByRole('button', { name: /Actions for PHASE12 Board 39868009/ })
+
+
+      196 |   // Reopen the approved booking and schedule it for today through the UI so the
+      197 |   // guarded check-in transition is exercised without changing fixture data.
+    > 198 |   await row.getByRole("button", { name: new RegExp(`Actions for ${pet.name}`) }).click();
+          |                                                                                  ^
+      199 |   await receptionistPage.getByRole("button", { name: "View / Manage" }).click();
+      200 |   await expect(modal).toBeVisible();
+      201 |   await modal.locator("select").first().selectOption(`boarding:${room.id}`);
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:198:82
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-4\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-4\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-4\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

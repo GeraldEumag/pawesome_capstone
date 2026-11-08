@@ -1,0 +1,59 @@
+{
+    "phase13_2_mail": {
+        "status": "PARTIAL \u2014 real provider integration proven; delivery-to-inbox unproven",
+        "config": {
+            "mailer": "smtp",
+            "host": "smtp-relay.brevo.com:587",
+            "from": "Brevo-verified sender",
+            "env": ".env (shared by e2e backend on :8001)"
+        },
+        "evidence": [
+            "email_deliveries outbox: 109 rows, ALL status\/provider_status=accepted \u2014 109 real Brevo-accepted sends",
+            "event mix: service_request.submitted 24, service_request.approved 17, appointment.created 13, boarding.status 12, payment.proof_submitted 10, boarding.created 9, payment.receipt.service_request 8, auth.email_verification 6",
+            "dedup: 0 duplicate occurrence_keys across 109 deliveries",
+            "attempts=1 (first-try success), failure machinery present (attempts\/max_attempts\/next_attempt_at\/failure_class)"
+        ],
+        "not_proven": [
+            "delivered_at is null on all rows \u2014 inbox delivery not tracked (needs provider webhooks\/bounce processing)",
+            "no failed\/bounced deliveries observed \u2192 failure\/retry path untested",
+            "notification preference opt-out suppression path (documented in code) not exercised here"
+        ]
+    },
+    "phase13_2_storage": {
+        "status": "PARTIAL \u2014 local lifecycle + authorization proven; S3\/Railway persistence unproven",
+        "config": {
+            "default_disk": "public",
+            "disks": "private + public + s3 defined",
+            "0": "AWS creds empty locally"
+        },
+        "evidence": [
+            "browser-verified 2026-11-05 (browser-evidence\/storage-hardening\/): proof upload \u2192 DB write \u2192 replace \u2192 retained old proof; cashier-authorized private file served (200) with content-disposition",
+            "FileStorageService::storeAndPersist transactional semantics (AGENTS.md \u2014 prior fix)"
+        ],
+        "not_proven": [
+            "S3-compatible object store behavior",
+            "Railway volume persistence across redeploys",
+            "private-file denial for non-authorized roles on all file routes (owner check verified on payment proofs only)"
+        ]
+    },
+    "phase13_2_queue": {
+        "status": "PARTIAL \u2014 execution machinery proven synchronously; async worker unproven",
+        "config": {
+            "driver": "sync (local)",
+            "available": "database driver + jobs\/failed_jobs tables",
+            "commands": "email-deliveries:dispatch, :reconcile, retry"
+        },
+        "evidence": [
+            "SendEmailDelivery jobs demonstrably executed \u2014 109 accepted deliveries could not exist otherwise",
+            "failed_jobs table present, 0 rows (no failures to retry)",
+            "outbox worker-claim columns (locked_at, locked_by, next_attempt_at) present for async safety"
+        ],
+        "not_proven": [
+            "asynchronous worker execution (queue:work)",
+            "retry\/backoff behavior on real failures",
+            "failed_job recovery",
+            "queue monitoring"
+        ]
+    },
+    "verdict": "all three infrastructure items locally validated for machinery + provider integration; deployed-infrastructure behaviors remain OPEN pending Railway\/MySQL8\/S3 evidence \u2014 NOT closed"
+}

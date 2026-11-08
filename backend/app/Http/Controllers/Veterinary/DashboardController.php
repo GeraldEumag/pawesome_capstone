@@ -95,14 +95,19 @@ class DashboardController extends Controller
 
     public function appointments()
     {
+        $query = $this->assignedAppointments()->with(['customer', 'pet', 'service', 'veterinarian']);
+        if (Auth::user()->role === 'vet_tech') {
+            $query = Appointment::query()
+                ->select(['id', 'customer_id', 'pet_id', 'service_id', 'veterinarian_id', 'status', 'scheduled_at', 'checked_in_at', 'checked_in_by', 'emergency', 'created_at'])
+                ->with(['customer:id,name,phone', 'pet:id,name,species,breed', 'service:id,name', 'veterinarian:id,name']);
+        }
+
         // Regular veterinarians only see appointments assigned to them
         // (i.e., ones that receptionist has approved and assigned);
         // admin sees the full board. Emergencies first, then earliest
         // check-in so waiting patients surface ahead of future bookings.
         return response()->json(
-            $this->assignedAppointments()
-                ->with(['customer', 'pet', 'service', 'veterinarian'])
-                ->whereIn('status', VeterinaryStatus::QUEUE)
+            $query->whereIn('status', VeterinaryStatus::QUEUE)
                 ->orderByDesc('emergency')
                 ->orderBy('checked_in_at')
                 ->orderBy('scheduled_at')

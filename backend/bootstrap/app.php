@@ -20,7 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // out as http:// and SESSION_SECURE_COOKIE breaks behind the proxy.
         $middleware->trustProxies(at: env('TRUSTED_PROXIES', '*'));
         $middleware->use([
+            \Illuminate\Http\Middleware\ValidatePathEncoding::class,
+            \Illuminate\Foundation\Http\Middleware\InvokeDeferredCallbacks::class,
+            \Illuminate\Http\Middleware\TrustProxies::class,
             \App\Http\Middleware\Cors::class,
+            \Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
+            \Illuminate\Http\Middleware\ValidatePostSize::class,
+            \Illuminate\Foundation\Http\Middleware\TrimStrings::class,
+            \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
         $middleware->appendToGroup('api', \App\Http\Middleware\NormalizeApiResponse::class);

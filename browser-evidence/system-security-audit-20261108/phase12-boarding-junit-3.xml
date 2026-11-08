@@ -1,0 +1,52 @@
+<testsuites id="" name="" tests="3" failures="1" skipped="2" errors="0" time="40.829426000000005">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:12:45.881Z" hostname="chromium" tests="3" failures="1" skipped="2" time="39.072" errors="0">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="39.072">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output-3\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|phase12-boarding-output-3\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeVisible() failed" type="expect.toBeVisible">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:112:1 › Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('.room-card').filter({ hasText: 'Phase12 Board 39967259' })
+    Expected: visible
+    Timeout: 30000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 30000ms
+      - waiting for locator('.room-card').filter({ hasText: 'Phase12 Board 39967259' })
+
+
+      130 |   await customerPage.getByPlaceholder("mm/dd/yyyy").press("Enter");
+      131 |   const roomCard = customerPage.locator(".room-card").filter({ hasText: room.room_name });
+    > 132 |   await expect(roomCard).toBeVisible({ timeout: 30000 });
+          |                          ^
+      133 |   await roomCard.click();
+      134 |   await customerPage.locator('textarea[name="notes"]').fill(notes);
+      135 |   await customerPage.locator('input[type="file"]').setInputFiles({ name: `vax-${unique}.png`, mimeType: "image/png", buffer: uniqueBuffer(`vax-${unique}`) });
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:132:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-3\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-3\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

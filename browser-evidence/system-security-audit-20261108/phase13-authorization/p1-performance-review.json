@@ -1,0 +1,47 @@
+{
+    "phase13_4_performance": {
+        "status": "LOCAL findings documented; deployed-environment metrics pending",
+        "response_times_measured": [
+            "admin\/reports\/payments (today window): 0.511s \/ 15.4KB",
+            "admin\/reports\/sales (half-month): 0.329s",
+            "admin\/reports\/summary: 0.379s",
+            "admin\/reports\/overview (week): 1.084s \/ 36.3KB",
+            "manager\/payroll: 0.387s \/ 35.1KB",
+            "admin\/reports\/cashier: 0.704s",
+            "admin\/reports\/orders (half-month): 0.359s",
+            "note: earlier reports-page slowness was a Playwright networkidle artifact, not API latency"
+        ],
+        "index_audit": {
+            "missing": [
+                "payments.created_at (report date-range filter)",
+                "service_requests.created_at (report merge sort)",
+                "service_requests.status (cashier queue filter)",
+                "service_requests.payment_status (payment queue filter)",
+                "sales.status (status-filtered queries)",
+                "appointments.created_at (date-range filters)"
+            ],
+            "present": [
+                "payments.sale_id",
+                "sales.created_at",
+                "appointments.{status,veterinarian_id} composites",
+                "diagnostic_orders.{appointment_id,status} composite",
+                "email_deliveries.status",
+                "notifications.user_id",
+                "payrolls.user_id+period unique",
+                "attendance user+date unique",
+                "inventory_logs.inventory_item_id",
+                "boardings.status composites"
+            ],
+            "verdict": "P2: six unindexed columns sit on report date-filter and cashier-queue hot paths \u2014 recommend adding composite indexes; low-severity at current data volume (~small audit DB) but will degrade at scale"
+        },
+        "architectural_notes": [
+            "payments report merges 5 tables with limit(500) each then sortByDesc in PHP memory \u2014 ~2500-row in-memory merge per request; acceptable now, scales poorly",
+            "frontend bundle: build\/ is 8.2MB across 112 chunks \u2014 route-level code splitting in place; large-bundle warnings remain a documented known issue"
+        ],
+        "not_measurable_locally": [
+            "Railway resource usage \/ DB latency \/ queue throughput",
+            "production slow-query log",
+            "real-traffic p95 response times"
+        ]
+    }
+}

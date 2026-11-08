@@ -53,6 +53,19 @@ class VisitIntakeTest extends TestCase
         ], $overrides));
     }
 
+    public function test_vet_tech_board_shows_active_patients_without_clinical_fields(): void
+    {
+        $tech = $this->userWithToken('vet_tech');
+        $vet = $this->userWithToken('veterinary');
+        $appointment = $this->makeAppointment($vet);
+        $this->makeAppointment($vet, ['status' => 'completed']);
+
+        $this->withHeaders($this->authHeader($tech))->getJson('/api/veterinary/appointments')
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $appointment->id)
+            ->assertJsonMissingPath('data.0.diagnosis')->assertJsonMissingPath('data.0.notes')
+            ->assertJsonMissingPath('data.0.customer.email')->assertJsonMissingPath('data.0.veterinarian.email');
+    }
+
     public function test_receptionist_can_check_in_a_scheduled_appointment(): void
     {
         $receptionist = $this->userWithToken('receptionist');

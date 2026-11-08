@@ -1,0 +1,38 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="2" errors="1" time="28.360063">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:11:06.619Z" hostname="chromium" tests="3" failures="0" skipped="2" time="26.667" errors="1">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="26.667">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md]]
+]]>
+</system-out>
+<error message="GET /boarding/rooms/available?pet_id=9&amp;species=dog&amp;check_in_date=2027-01-13&amp;check_out_date=2027-01-13: 429 {&quot;message&quot;:&quot;Too Many Attempts.&quot;}" type="Error">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:100:1 › Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in 
+
+    Error: GET /boarding/rooms/available?pet_id=9&species=dog&check_in_date=2027-01-13&check_out_date=2027-01-13: 429 {"message":"Too Many Attempts."}
+
+      28 |   });
+      29 |   const body = await response.json().catch(() => ({}));
+    > 30 |   if (!response.ok()) throw new Error(`${method.toUpperCase()} ${endpoint}: ${response.status()} ${JSON.stringify(body)}`);
+         |                             ^
+      31 |   return body;
+      32 | }
+      33 |
+        at api (C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:30:29)
+        at chooseRoomAndDate (C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:83:18)
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:108:26
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

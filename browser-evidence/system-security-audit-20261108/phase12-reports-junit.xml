@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="31.564598">
+<testsuite name="phase12-reports-reconciliation.spec.js" timestamp="2026-11-08T14:13:58.351Z" hostname="chromium" tests="3" failures="0" skipped="0" time="30.108" errors="0">
+<testcase name="Phase 12.5 native reports lifecycle: real POS transaction reconciles through browser report" classname="phase12-reports-reconciliation.spec.js" time="16.561">
+</testcase>
+<testcase name="Phase 12.5 report authorization, filter tampering, and export permission checks" classname="phase12-reports-reconciliation.spec.js" time="6.647">
+</testcase>
+<testcase name="Phase 12.5 independent reconciliation: DB totals vs API across windows and statuses" classname="phase12-reports-reconciliation.spec.js" time="6.9">
+</testcase>
+</testsuite>
+</testsuites>

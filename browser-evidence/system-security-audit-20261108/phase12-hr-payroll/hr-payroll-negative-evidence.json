@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "responses": {
+    "customer_payroll": 403,
+    "receptionist_payroll": 403,
+    "cashier_payroll": 403,
+    "inventory_payroll": 403,
+    "veterinary_payroll": 403,
+    "cashier_generate": 403,
+    "cashier_approve": 403,
+    "cashier_other_payslip": 403,
+    "missing_payslip": 404,
+    "missing_payroll_show": 404
+  }
+}

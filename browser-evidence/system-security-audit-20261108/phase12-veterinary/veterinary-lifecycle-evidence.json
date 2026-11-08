@@ -1,0 +1,404 @@
+{
+  "result": "PASS",
+  "request_id": 24,
+  "appointment_id": 16,
+  "marker": "P12VET_46083968",
+  "database": {
+    "appointment": {
+      "id": 16,
+      "service_request_id": 24,
+      "customer_id": 1,
+      "pet_id": 9,
+      "service_id": 2,
+      "veterinarian_id": 7,
+      "status": "checkout",
+      "scheduled_at": "2026-12-09 09:00:00",
+      "started_at": "2026-11-08 13:55:23",
+      "checked_in_at": "2026-11-08 13:55:05",
+      "checked_in_by": 3,
+      "clinical_completed_at": "2026-11-08 13:55:38",
+      "clinical_completed_by": 7,
+      "checked_out_at": "2026-11-08 13:55:38",
+      "checked_out_by": 7,
+      "completed_at": null,
+      "outcome": null,
+      "payment_status": "unpaid",
+      "diagnosis": null,
+      "treatment_notes": null,
+      "vet_remarks": null,
+      "booking_channel": "online"
+    },
+    "records": [
+      {
+        "id": 8,
+        "pet_id": 9,
+        "appointment_id": 16,
+        "veterinarian_id": 7,
+        "status": "finalized",
+        "chief_complaint": "Phase12 limping 46083968",
+        "diagnosis": "Phase12 sprain 46083968",
+        "treatment_plan": "Rest 7 days; anti-inflammatory course; recheck",
+        "weight_kg": null,
+        "is_editable": 1,
+        "finalized_at": "2026-11-08 13:55:31",
+        "finalized_by": 7,
+        "created_at": "2026-11-08 13:55:23",
+        "updated_at": "2026-11-08 13:55:31"
+      }
+    ],
+    "prescriptions": []
+  },
+  "checks": {
+    "status_final": true,
+    "clinical_attribution": true,
+    "record_finalized": true,
+    "vet_attribution": true
+  },
+  "screenshots": [
+    "phase12-veterinary/01-customer-vet-form.png",
+    "phase12-veterinary/02-customer-submitted.png",
+    "phase12-veterinary/03-consultation-started.png",
+    "phase12-veterinary/04-clinical-notes.png",
+    "phase12-veterinary/05-after-finalize.png",
+    "phase12-veterinary/06-sent-to-cashier.png"
+  ],
+  "network": [
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/pets",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/services",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/pets",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/services",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/availability/veterinary",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/customer/requests",
+      "status": 201
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/inventory-items",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/inventory-items",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/pets/9/medical-records",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/pets/9/medical-records",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/pets/9/medical-records",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/veterinary/consultations/16/start",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16/diagnostics",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16/consents",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16/diagnostics",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16/consents",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "PUT",
+      "path": "/api/veterinary/medical-records/8",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "PUT",
+      "path": "/api/veterinary/medical-records/8",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/16",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/pets/9/medical-records",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/pets/9/medical-records",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/billing/veterinary/16/summary",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/billing/veterinary/16/summary",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/veterinary/consultations/16/complete",
+      "status": 200
+    }
+  ],
+  "console": []
+}

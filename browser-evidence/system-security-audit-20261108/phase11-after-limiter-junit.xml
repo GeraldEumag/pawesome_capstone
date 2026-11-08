@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="261.338346">
+<testsuite name="phase11-state-changing-workflows.spec.js" timestamp="2026-11-08T11:30:00.259Z" hostname="chromium" tests="1" failures="0" skipped="0" time="259.34" errors="0">
+<testcase name="Phase 11 full state-changing workflow validation" classname="phase11-state-changing-workflows.spec.js" time="259.34">
+</testcase>
+</testsuite>
+</testsuites>

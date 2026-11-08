@@ -94,6 +94,52 @@ class AuthLoginTest extends TestCase
             ->assertJsonPath('id', $user->id);
     }
 
+    public function test_expired_token_cannot_authenticate(): void
+    {
+        $token = $this->user()->createToken('expired', ['*'], now()->subMinute());
+
+        $this->withToken($token->plainTextToken)->getJson('/api/auth/me')->assertUnauthorized();
+    }
+
+    public function test_token_older_than_configured_lifetime_cannot_authenticate(): void
+    {
+        config(['sanctum.expiration' => 60]);
+        $token = $this->user()->createToken('old');
+        $token->accessToken->forceFill(['created_at' => now()->subMinutes(61)])->save();
+
+        $this->withToken($token->plainTextToken)->getJson('/api/auth/me')->assertUnauthorized();
+    }
+
+    public function test_unexpired_token_can_authenticate_with_configured_lifetime(): void
+    {
+        config(['sanctum.expiration' => 60]);
+        $user = $this->user();
+        $token = $user->createToken('valid', ['*'], now()->addHour());
+
+        $this->withToken($token->plainTextToken)->getJson('/api/auth/me')
+            ->assertOk()->assertJsonPath('id', $user->id);
+    }
+
+    public function test_revoked_token_cannot_authenticate(): void
+    {
+        $token = $this->user()->createToken('revoked');
+        $token->accessToken->delete();
+
+        $this->withToken($token->plainTextToken)->getJson('/api/auth/me')->assertUnauthorized();
+    }
+
+    public function test_me_uses_authenticated_bearer_identity_when_a_different_cookie_is_present(): void
+    {
+        $user = $this->user();
+        $otherUser = $this->user(['role' => 'admin']);
+        $token = $user->createToken('bearer');
+        $cookieToken = $otherUser->createToken('cookie');
+
+        $this->withCredentials()->withUnencryptedCookie('auth_token', $cookieToken->plainTextToken)
+            ->withToken($token->plainTextToken)->getJson('/api/auth/me')
+            ->assertOk()->assertJsonPath('id', $user->id);
+    }
+
     public function test_me_endpoint_without_token_is_unauthorized(): void
     {
         $this->getJson('/api/auth/me')->assertStatus(401);

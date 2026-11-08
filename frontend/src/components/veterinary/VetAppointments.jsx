@@ -26,6 +26,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import StandardTable from "../shared/StandardTable";
 import { VET_CANCEL_RESTRICTED_STATUSES, VET_POST_CLINICAL_STATUSES, VET_STARTABLE_STATUSES, VET_STARTED_STATUSES } from "./vetStatus";
 import "./theme.css";
@@ -42,6 +43,8 @@ const isGenericFetchFailure = (error) =>
 
 const VetAppointments = () => {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isVetTech = role === "vet_tech";
   const mountedRef = useRef(true);
   const fetchAbortRef = useRef(null);
   const [appointments, setAppointments] = useState([]);
@@ -177,7 +180,7 @@ const VetAppointments = () => {
 
       const [data, historyData] = await Promise.all([
         apiRequest("/veterinary/appointments", { signal }),
-        apiRequest("/veterinary/history?status=completed,cancelled&per_page=500", {
+        isVetTech ? Promise.resolve(null) : apiRequest("/veterinary/history?status=completed,cancelled&per_page=500", {
           signal,
         }).catch(() => null),
       ]);
@@ -211,7 +214,21 @@ const VetAppointments = () => {
         setRefreshing(false);
       }
     }
-  }, [transformAppointment]);
+  }, [transformAppointment, isVetTech]);
+
+  const checkInAppointment = useCallback(async (appointmentId) => {
+    setActionLoadingId(`${appointmentId}-check-in`);
+    try {
+      await apiRequest(`/veterinary/appointments/${appointmentId}/check-in`, "POST", {});
+      setSelectedAppointment(null);
+      await fetchAppointments({ silent: true });
+      toast.success("Patient checked in.");
+    } catch (err) {
+      toast.error(err.message || "Failed to check in patient.");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }, [fetchAppointments]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -542,7 +559,12 @@ const VetAppointments = () => {
               >
                 <FontAwesomeIcon icon={faEye} /> View
               </button>
-              {!isUnassignedPending && (
+              {isVetTech && appointment.status === "scheduled" && (
+                <button className="action-btn start-btn" type="button" disabled={actionLoadingId === `${appointment.id}-check-in`} onClick={() => checkInAppointment(appointment.id)}>
+                  <FontAwesomeIcon icon={faClipboardCheck} /> Check in
+                </button>
+              )}
+              {!isVetTech && !isUnassignedPending && (
                 <>
                   <button
                     className="action-btn start-btn"
@@ -603,7 +625,7 @@ const VetAppointments = () => {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [actionLoadingId, navigate]
+    [actionLoadingId, navigate, isVetTech, checkInAppointment]
   );
 
 
@@ -809,6 +831,11 @@ const VetAppointments = () => {
             </div>
 
             <div className="hbk-foot">
+              {isVetTech ? (
+                <button className="action-btn start-btn" type="button" disabled={selectedAppointment.status !== "scheduled" || actionLoadingId === `${selectedAppointment.id}-check-in`} onClick={() => checkInAppointment(selectedAppointment.id)}>
+                  <FontAwesomeIcon icon={faClipboardCheck} /> Check in
+                </button>
+              ) : <>
               <button
                 className="action-btn start-btn"
                 type="button"
@@ -841,6 +868,7 @@ const VetAppointments = () => {
               >
                 <FontAwesomeIcon icon={faTrash} /> Cancel
               </button>
+              </>}
             </div>
           </div>
         </div>

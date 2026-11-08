@@ -1,0 +1,20 @@
+{
+  "result": "PASS",
+  "order_id": 9,
+  "responses": {
+    "customer_order": 403,
+    "receptionist_result_pre": 403,
+    "cashier_review": 403,
+    "vettech_order": 403,
+    "customer_index": 403,
+    "review_before_result": 422,
+    "invalid_order": 422,
+    "missing_order_result": 404,
+    "missing_order_review": 404,
+    "duplicate_result": {
+      "first": 200,
+      "second": 200
+    },
+    "cancel_reviewed": 422
+  }
+}

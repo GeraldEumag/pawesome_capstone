@@ -752,6 +752,15 @@ class InventoryController extends Controller
                     'notes' => 'nullable|string|max:1000',
                 ]);
 
+                // Batch numbers are scoped per product; a resubmitted or
+                // conflicting reference must not fork the lot ledger.
+                if (!empty($validated['batch_no'])
+                    && $item->batches()->where('batch_no', $validated['batch_no'])->exists()) {
+                    throw ValidationException::withMessages([
+                        'batch_no' => ['This batch number already exists for this product.'],
+                    ]);
+                }
+
                 $batch = $item->addBatchStock(
                     (int) $validated['quantity'],
                     $validated['batch_no'] ?? null,

@@ -1,0 +1,520 @@
+{
+  "boardingId": 7,
+  "petId": 9,
+  "roomId": 13,
+  "originalDate": "2026-12-09",
+  "scheduledDate": "2026-11-08",
+  "reference": "P12B-40924620",
+  "negativeChecks": {
+    "owner_vaccination_file": 200,
+    "anonymous_vaccination_file": 401,
+    "other_customer_vaccination_file": 403,
+    "cashier_cannot_approve": 403,
+    "customer_cannot_verify_vaccination": 403
+  },
+  "uploadStatus": 200,
+  "approveStatus": 200,
+  "scheduleStatus": 200,
+  "verifyStatus": 200,
+  "checkinStatus": 200,
+  "database": {
+    "boarding": {
+      "id": 7,
+      "service_request_id": null,
+      "pet_id": 9,
+      "customer_id": 1,
+      "boarding_type": "dog_standard",
+      "check_in": "2026-11-08 00:00:00",
+      "check_out": "2026-11-08 00:00:00",
+      "status": "in_care",
+      "total_amount": "500.00",
+      "payment_status": "paid",
+      "payment_method": "gcash",
+      "payment_reference": "P12B-40924620",
+      "payment_proof": "payment-proofs/boardings/boarding_proof_1794140944_GTkLaJKXj8.png",
+      "vaccination_card": "vaccination_cards/snG2rqhPQQt2yFuCph8I0n74C5NpoOBqVu2fLgPE.png",
+      "vaccination_card_verified_at": "2026-11-08 12:29:15",
+      "booking_channel": "online",
+      "approved_by": 3,
+      "approved_at": "2026-11-08 12:29:17",
+      "verified_by": 5,
+      "verified_at": "2026-11-08 12:29:38",
+      "paid_at": "2026-11-08 12:29:38",
+      "receipt_number": "BD-REC-20261108122938-7",
+      "actual_check_in": "2026-11-08 12:29:48",
+      "checked_in_at": "2026-11-08 12:29:48",
+      "checked_in_by": 3
+    },
+    "reservations": [
+      {
+        "id": 7,
+        "room_id": 13,
+        "source_type": "pet_hotel",
+        "source_id": 7,
+        "pet_id": 9,
+        "customer_id": 1,
+        "check_in_date": "2026-11-08",
+        "check_out_date": "2026-11-08",
+        "status": "checked_in"
+      }
+    ],
+    "receipts": [
+      {
+        "id": 15,
+        "payable_type": "boarding",
+        "payable_id": 7,
+        "uploaded_by": 9,
+        "disk": "private",
+        "disk_path": "payment-proofs/boardings/boarding_proof_1794140944_GTkLaJKXj8.png",
+        "mime": "image/png",
+        "size_bytes": 85,
+        "sha256": "195e433faecfe6118c38e201cc2565993361d834c2eb76f631913357a744ca06",
+        "submitted_reference": "P12B-40924620",
+        "status": "confirmed"
+      }
+    ],
+    "references": [
+      {
+        "id": 5,
+        "provider": "gcash",
+        "reference_normalized": "P12B40924620",
+        "payable_type": "boarding",
+        "payable_id": 7,
+        "receipt_id": 15,
+        "confirmed_by": 5,
+        "confirmed_at": "2026-11-08 12:29:39"
+      }
+    ],
+    "careLogs": [
+      {
+        "id": 2,
+        "boarding_id": 7,
+        "logged_by": 3,
+        "log_type": "general_update",
+        "title": "Pet checked in",
+        "notes": "Pet checked in for boarding care."
+      }
+    ]
+  },
+  "screenshots": [
+    "phase12-boarding/01-customer-boarding-form.png",
+    "phase12-boarding/02-customer-payment-modal.png",
+    "phase12-boarding/03-vaccination-verified.png",
+    "phase12-boarding/04-boarding-approved.png",
+    "phase12-boarding/05-boarding-scheduled-today.png",
+    "phase12-boarding/06-cashier-verify-boarding.png",
+    "phase12-boarding/07-cashier-receipt.png",
+    "phase12-boarding/08-checked-in.png"
+  ],
+  "network": [
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/pets",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/pets",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/boarding/rooms/available",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/customer/boardings",
+      "status": 201,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/customer/boarding-requests/7/payment-proof",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/7/verify-vaccination",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/7/approve",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/billing/boarding/7/summary",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/7/schedule",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/files/payment-proofs/boarding/7/view",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/receipts/15",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "POST",
+      "path": "/api/cashier/receipts/15/confirm",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cashier/receipts/15",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/7/check-in",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    }
+  ],
+  "console": [
+    {
+      "type": "warning",
+      "text": "Unable to load LNA library Error: Dynamic require of \"lna\" is not supported\n    at http://127.0.0.1:3001/node_modules/.vite/deps/chunk-2TUXWMP5.js?v=5eeed01a:12:9\n    at Object.loadLna (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:667:24)\n    at Object.getLna (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:654:41)\n    at Object.connectToAddress (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:154:35)\n    at Object.findConnection (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:222:49)\n    at delayed (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:1289:39)\n    at attempt (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:1292:19)\n    at http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:1297:15\n    at new Promise (<anonymous>)\n    at Object.promise (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:617:22)",
+      "page": "http://127.0.0.1:3001/cashier/payment-verification"
+    }
+  ]
+}

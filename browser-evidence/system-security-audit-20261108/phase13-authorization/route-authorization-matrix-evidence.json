@@ -1,0 +1,158 @@
+{
+  "result": "PASS",
+  "total_routes": 654,
+  "route_probes": 654,
+  "group_probes": 130,
+  "denied": 767,
+  "violations": [],
+  "errors": 0,
+  "by_role": {
+    "customer": 94,
+    "receptionist": 77,
+    "cashier": 93,
+    "inventory": 102,
+    "veterinary": 88,
+    "manager": 82,
+    "vet_tech": 107,
+    "admin": 11
+  },
+  "inconclusive": null,
+  "inconclusive_list": [
+    {
+      "scope": "route",
+      "method": "PATCH",
+      "uri": "api/chatbot/live-chat/{session}/close",
+      "role": "veterinary",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "POST",
+      "uri": "api/chatbot/live-chat/{session}/claim",
+      "role": "inventory",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "POST",
+      "uri": "api/chatbot/live-chat/{session}/message",
+      "role": "inventory",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "DELETE",
+      "uri": "api/chatbot/live-chat/{session}",
+      "role": "vet_tech",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "POST",
+      "uri": "api/chatbot/live-chat/{session}/reply",
+      "role": "vet_tech",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "PUT",
+      "uri": "api/manager/employees/{employee}",
+      "role": "cashier",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "GET",
+      "uri": "api/manager/employees/{employee}",
+      "role": "receptionist",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "DELETE",
+      "uri": "api/manager/employees/{employee}",
+      "role": "inventory",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "POST",
+      "uri": "api/manager/attendance/corrections/{correction}/approve",
+      "role": "veterinary",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "POST",
+      "uri": "api/manager/payroll/thirteenth-month/{accrual}/pay",
+      "role": "cashier",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "POST",
+      "uri": "api/manager/attendance/corrections/{correction}/reject",
+      "role": "vet_tech",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "DELETE",
+      "uri": "api/manager/biometric/credentials/{credential}",
+      "role": "vet_tech",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "PUT",
+      "uri": "api/manager/people/{kind}/{id}/day-offs",
+      "role": "inventory",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "GET",
+      "uri": "api/manager/salary-loans/{salaryLoan}",
+      "role": "inventory",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "PUT",
+      "uri": "api/manager/leave-balances/{leaveBalance}",
+      "role": "vet_tech",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "PUT",
+      "uri": "api/manager/salary-loans/{salaryLoan}",
+      "role": "veterinary",
+      "expected": "401/403",
+      "status": 404
+    },
+    {
+      "scope": "route",
+      "method": "DELETE",
+      "uri": "api/manager/salary-loans/{salaryLoan}",
+      "role": "vet_tech",
+      "expected": "401/403",
+      "status": 404
+    }
+  ]
+}

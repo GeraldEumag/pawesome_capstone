@@ -1,0 +1,7 @@
+{
+  "boardingId": 8,
+  "unpaidCheckinStatus": 422,
+  "statusBefore": "approved",
+  "statusAfter": "approved",
+  "otherCustomerShow": 404
+}

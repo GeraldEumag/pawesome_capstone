@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="26.009617000000002">
+<testsuite name="phase12-hr-payroll.spec.js" timestamp="2026-11-08T14:26:44.775Z" hostname="chromium" tests="3" failures="0" skipped="0" time="24.291" errors="0">
+<testcase name="Phase 12.6 native HR/payroll lifecycle: attendance, generation, UI approval, payslip, reconciliation" classname="phase12-hr-payroll.spec.js" time="14.727">
+</testcase>
+<testcase name="Phase 12.6 payroll authorization, IDOR, and tampering checks" classname="phase12-hr-payroll.spec.js" time="6.803">
+</testcase>
+<testcase name="Phase 12.6 duplicate and concurrent payroll processing stays consistent" classname="phase12-hr-payroll.spec.js" time="2.761">
+</testcase>
+</testsuite>
+</testsuites>

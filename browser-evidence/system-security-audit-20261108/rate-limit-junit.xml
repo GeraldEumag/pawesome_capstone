@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="C:\xampp\htdocs\Pawesome_Capstone\backend\phpunit.xml" tests="4" assertions="32" errors="0" failures="0" skipped="0" time="28.250353">
+    <testsuite name="Feature" tests="4" assertions="32" errors="0" failures="0" skipped="0" time="28.250353">
+      <testsuite name="Tests\Feature\AuthRateLimitTest" file="C:\xampp\htdocs\Pawesome_Capstone\backend\tests\Feature\AuthRateLimitTest.php" tests="4" assertions="32" errors="0" failures="0" skipped="0" time="28.250353">
+        <testcase name="test_repeated_login_attempts_are_limited_and_recover" file="C:\xampp\htdocs\Pawesome_Capstone\backend\tests\Feature\AuthRateLimitTest.php" line="20" class="Tests\Feature\AuthRateLimitTest" classname="Tests.Feature.AuthRateLimitTest" assertions="9" time="27.761717">
+          <system-out>=== FIXING LEGACY DATA INTEGRITY ISSUES ===
+
+1. Creating inventory logs for initial stock setup...
+  Created 0 initial stock logs
+
+2. Creating inventory logs for approved orders...
+  Created inventory logs for 0 approved orders
+
+3. Ensuring approved orders have proper metadata...
+  Fixed 0 approved orders
+
+4. Ensuring rejected orders have rejection reasons...
+  Fixed 0 rejected orders
+
+=== LEGACY DATA CLEANUP COMPLETE ===
+</system-out>
+        </testcase>
+        <testcase name="test_rotating_login_identifiers_cannot_bypass_the_ip_limit" file="C:\xampp\htdocs\Pawesome_Capstone\backend\tests\Feature\AuthRateLimitTest.php" line="34" class="Tests\Feature\AuthRateLimitTest" classname="Tests.Feature.AuthRateLimitTest" assertions="13" time="0.132811"/>
+        <testcase name="test_ip_limit_does_not_block_another_ip" file="C:\xampp\htdocs\Pawesome_Capstone\backend\tests\Feature\AuthRateLimitTest.php" line="46" class="Tests\Feature\AuthRateLimitTest" classname="Tests.Feature.AuthRateLimitTest" assertions="5" time="0.127967"/>
+        <testcase name="test_general_api_limit_uses_the_token_owner_not_the_shared_ip" file="C:\xampp\htdocs\Pawesome_Capstone\backend\tests\Feature\AuthRateLimitTest.php" line="59" class="Tests\Feature\AuthRateLimitTest" classname="Tests.Feature.AuthRateLimitTest" assertions="5" time="0.227859"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

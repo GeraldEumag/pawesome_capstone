@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="305.66767000000004">
+<testsuite name="phase13-route-authorization-matrix.spec.js" timestamp="2026-11-08T15:40:09.260Z" hostname="chromium" tests="1" failures="0" skipped="0" time="304.184" errors="0">
+<testcase name="Phase 13: route/verb authorization matrix — every route probed with a disallowed role" classname="phase13-route-authorization-matrix.spec.js" time="304.184">
+</testcase>
+</testsuite>
+</testsuites>

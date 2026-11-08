@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="64.76305">
+<testsuite name="phase12-veterinary-workflow.spec.js" timestamp="2026-11-08T13:54:42.544Z" hostname="chromium" tests="3" failures="0" skipped="0" time="63.123" errors="0">
+<testcase name="Phase 12.4 native veterinary lifecycle: booking, check-in, consultation, clinical completion" classname="phase12-veterinary-workflow.spec.js" time="56.759">
+</testcase>
+<testcase name="Phase 12.4 veterinary rejects unauthorized roles, tampering, and invalid clinical data" classname="phase12-veterinary-workflow.spec.js" time="4.819">
+</testcase>
+<testcase name="Phase 12.4 concurrent consultation completion cannot double-close or overwrite" classname="phase12-veterinary-workflow.spec.js" time="1.545">
+</testcase>
+</testsuite>
+</testsuites>

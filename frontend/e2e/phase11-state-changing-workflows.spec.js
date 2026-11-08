@@ -10,8 +10,8 @@ const resultPath = path.join(reportDir, "phase11-state-changing-results.json");
 const proofPath = path.join(reportDir, "phase11-proof.png");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
-const backendUrl = "http://127.0.0.1:8000";
-const apiUrl = `${backendUrl}/api`;
+const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
+const backendUrl = apiUrl.replace(/\/api\/?$/, "");
 const workflowDateOffset = 420;
 
 const credentials = {
@@ -375,6 +375,10 @@ async function runRoleAccessNegativeChecks(request, sessions) {
 
 test.describe.configure({ mode: "serial" });
 test.setTimeout(1800000);
+test.skip(
+  process.env.E2E_AUDIT_DATABASE !== "pawesome_e2e_audit" || !apiUrl.startsWith("http://127.0.0.1:8001/"),
+  "Requires the explicitly approved isolated audit API/database."
+);
 
 test("Phase 11 full state-changing workflow validation", async ({ browser, request }) => {
   ensureArtifacts();

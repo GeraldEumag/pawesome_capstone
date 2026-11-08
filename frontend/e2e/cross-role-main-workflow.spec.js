@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const rootDir = path.resolve(__dirname, "../..");
-const evidenceDir = path.join(rootDir, "browser-evidence", "cross-role-main-workflow");
+const evidenceDir = path.join(rootDir, "browser-evidence", "cross-role-main-workflow", new Date().toISOString().replace(/[:.]/g, "-"));
 const resultPath = path.join(evidenceDir, "cross-role-main-workflow-results.json");
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
@@ -77,6 +77,7 @@ function attachAudit(page) {
       const text = message.text();
       // Filter Windows socket exhaustion errors (not app defects)
       if (text.includes("ERR_NETWORK_CHANGED") || text.includes("ERR_ADDRESS_IN_USE") || text.includes("net::ERR_") || text.includes("Failed to fetch")) {
+        run.console.push({ type: "network", text, page: page.url() });
         return;
       }
       run.console.push({ type: message.type(), text, page: page.url() });
@@ -86,7 +87,7 @@ function attachAudit(page) {
   page.on("response", (response) => {
     const status = response.status();
     const url = response.url();
-    if (url.includes("/api/") && [401, 403, 404, 500].includes(status)) {
+    if (url.includes("/api/") && status >= 400) {
       run.httpFailures.push({
         status,
         method: response.request().method(),
@@ -101,7 +102,7 @@ function attachAudit(page) {
     if (!url.includes("/api/")) return;
     const failure = request.failure()?.errorText || "unknown";
     // Filter Windows socket exhaustion errors (not app defects)
-    if (failure === "net::ERR_ABORTED" || failure === "net::ERR_ADDRESS_IN_USE" || failure === "net::ERR_NETWORK_CHANGED") {
+    if (failure === "net::ERR_ABORTED") {
       run.navigationAborts.push({ method: request.method(), url, page: page.url(), failure });
       return;
     }
@@ -353,7 +354,7 @@ test("Customer to Receptionist to Veterinary to Manager Reports", async ({ page,
   recordAction("Manager reports/dashboard loaded after workflow", "PASS", "manager overview and reports available");
 
   const criticalHttpFailures = run.httpFailures.filter((failure) =>
-    [401, 403, 404, 500, "REQUEST_FAILED"].includes(failure.status)
+    failure.status === "REQUEST_FAILED" || (typeof failure.status === "number" && failure.status >= 400)
   );
 
   run.limitations.push("Boarding/hotel workflow not included because latest DB has hotel_rooms=0.");

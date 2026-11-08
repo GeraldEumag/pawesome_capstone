@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Boarding;
+use App\Models\BoardingRoom;
 use App\Models\Customer;
 use App\Models\Pet;
 use App\Models\ServiceRequest;
@@ -83,6 +84,38 @@ class ReceptionistCheckInGateTest extends TestCase
             'id' => $boarding->id,
             'status' => 'in_care',
         ]);
+    }
+
+    public function test_service_request_approval_records_the_receptionist(): void
+    {
+        $receptionist = $this->receptionist();
+        $customerUser = User::factory()->customer()->create();
+        $customer = Customer::factory()->create(['user_id' => $customerUser->id]);
+        $pet = Pet::factory()->create(['customer_id' => $customer->id]);
+        $serviceRequest = ServiceRequest::create([
+            'customer_id' => $customerUser->id,
+            'customer_name' => $customer->name,
+            'customer_email' => $customer->email,
+            'pet_id' => $pet->id,
+            'pet_name' => $pet->name,
+            'request_type' => 'grooming',
+            'service_name' => 'Bath and Brush',
+            'request_date' => Carbon::tomorrow()->toDateString(),
+            'request_time' => '10:00',
+            'status' => 'pending',
+            'payment_status' => 'unpaid',
+        ]);
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
+                'status' => 'approved',
+            ])
+            ->assertOk()
+            ->assertJsonPath('request.status', 'approved');
+
+        $serviceRequest->refresh();
+        $this->assertSame($receptionist->id, (int) $serviceRequest->approved_by);
+        $this->assertNotNull($serviceRequest->approved_at);
     }
 
     public function test_service_request_check_in_requires_paid_booking(): void
@@ -273,6 +306,53 @@ class ReceptionistCheckInGateTest extends TestCase
         $this->assertDatabaseHas('service_requests', [
             'id' => $serviceRequest->id,
             'status' => 'checked_in',
+        ]);
+    }
+
+    public function test_scheduling_preserves_a_submitted_payment_proof_for_cashier_verification(): void
+    {
+        $receptionist = $this->receptionist();
+        $room = BoardingRoom::create([
+            'room_code' => 'TEST-DOG-1',
+            'room_name' => 'Test Dog Room',
+            'room_type' => 'dog_standard',
+            'hotel_category' => 'dog_hotel',
+            'allowed_species' => ['dog'],
+            'max_capacity' => 1,
+            'total_rooms' => 1,
+            'daily_rate' => 500,
+            'is_active' => true,
+            'customer_selectable' => true,
+        ]);
+        $boarding = $this->boarding([
+            'boarding_type' => $room->room_type,
+            'total_amount' => 500,
+            'payment_status' => 'pending',
+            'payment_method' => 'gcash',
+            'payment_reference' => 'P12-REGRESSION',
+            'payment_proof' => 'payment-proofs/boardings/regression-proof.png',
+        ]);
+        // The factory assigns a random species; pin the pet to the dog-standard room's constraint.
+        $boarding->pet()->update(['species' => 'Dog']);
+
+        $this->withHeaders($this->authHeaders($receptionist))
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/schedule", [
+                'room_id' => $room->id,
+                'check_in' => Carbon::today()->toDateString(),
+                'check_out' => Carbon::today()->toDateString(),
+                'check_in_time' => '10:00',
+                'check_out_time' => '18:00',
+                'total_amount' => 500,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('boardings', [
+            'id' => $boarding->id,
+            'status' => 'scheduled',
+            'payment_status' => 'pending',
+            'payment_method' => 'gcash',
+            'payment_reference' => 'P12-REGRESSION',
+            'payment_proof' => 'payment-proofs/boardings/regression-proof.png',
         ]);
     }
 

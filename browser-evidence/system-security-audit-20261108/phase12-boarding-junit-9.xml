@@ -1,0 +1,8 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="11.342827">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:30:03.532Z" hostname="chromium" tests="2" failures="0" skipped="0" time="9.852" errors="0">
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js" time="7.07">
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js" time="2.782">
+</testcase>
+</testsuite>
+</testsuites>

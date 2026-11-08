@@ -1,0 +1,46 @@
+{
+  "phase13_3_xlsx_advisory": {
+    "status": "RESOLVED — documented risk acceptance; vulnerable code paths unreachable",
+    "package": {
+      "name": "xlsx",
+      "installed": "0.18.5",
+      "declared": "^0.18.5",
+      "registry_fix": "none on npmjs (SheetJS moved distribution to their own CDN after 0.18.5)"
+    },
+    "advisories": [
+      {
+        "id": "GHSA-4r6h-8v6p-xvw6",
+        "title": "Prototype Pollution in SheetJS",
+        "severity": "high",
+        "trigger": "parsing a crafted spreadsheet via XLSX.read",
+        "reachable": false
+      },
+      {
+        "id": "GHSA-5pgg-2g8v-p4x9",
+        "title": "SheetJS Regular Expression Denial of Service (ReDoS)",
+        "severity": "high",
+        "trigger": "parsing a crafted spreadsheet via XLSX.read",
+        "reachable": false
+      }
+    ],
+    "usage_inventory": [
+      "frontend/src/utils/reportExport.js — import * as XLSX; aoa_to_sheet, book_new, book_append_sheet, XLSX.write (client-side Excel export)",
+      "frontend/src/utils/advancedReportExport.js — dynamic import('xlsx'); book_new/book_append_sheet/aoa_to_sheet (client-side export)",
+      "csvSanitize.js + ReportFilters.jsx — export-name/sanitization helpers, no parsing",
+      "zero XLSX.read, readFile, sheet_to_json, or xlsx upload/parse handlers in src/ or backend/app"
+    ],
+    "reachability_analysis": [
+      "Both CVEs require the library to PARSE attacker-controlled spreadsheet input",
+      "Pawesome only WRITES .xlsx files client-side from data the API already returned to the user",
+      "No upload path feeds xlsx to the parser — the vulnerable code path is unreachable by any role",
+      "Runs in the report-viewer's own browser: worst case is a user affecting only their own session with data they already had"
+    ],
+    "decision": [
+      "RISK ACCEPTED for the current usage pattern — exploitation requires an xlsx-PARSE feature that does not exist",
+      "REQUIRED GUARD: any future spreadsheet IMPORT/upload feature must not use xlsx.read without a pinned fixed build",
+      "RECOMMENDED (not blocking): pin the SheetJS CE tarball from the official CDN (0.20.x line, e.g. https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz) or migrate to exceljs when dependency state is next touched — NOT done now to avoid unreviewed lockfile changes",
+      "RE-TRIGGER: revisit if npm audit surface changes or an import feature is added"
+    ],
+    "evidence_grep": "no XLSX.read / readFile / sheet_to_json / FormData-xlsx matches in src/ or backend/app"
+  }
+}

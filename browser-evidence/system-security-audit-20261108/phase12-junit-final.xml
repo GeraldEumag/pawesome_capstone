@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="44.618965">
+<testsuite name="phase12-native-ui-workflows.spec.js" timestamp="2026-11-08T12:01:31.605Z" hostname="chromium" tests="1" failures="0" skipped="0" time="42.691" errors="0">
+<testcase name="Phase 12.1 customer booking, approval, and cashier verification are native UI submissions" classname="phase12-native-ui-workflows.spec.js" time="42.691">
+</testcase>
+</testsuite>
+</testsuites>

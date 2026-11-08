@@ -1,0 +1,25 @@
+{
+    "phase13_5_deployment": {
+        "status": "CONFIG VERIFIED \u2014 live environment verification BLOCKED (no deployment exists)",
+        "verified_config": [
+            "backend\/railway.json: preDeployCommand=php artisan migrate --force; startCommand=config:cache && storage:link && schedule:work loop && artisan serve; healthcheckPath=\/api\/health; restart ON_FAILURE x5",
+            "frontend\/vercel.json: Vite build to build\/, SPA rewrites, immutable asset caching, security headers (nosniff, DENY, strict-origin)",
+            "schedule:list: 13 commands registered \u2014 email-deliveries:dispatch every minute, reconcile every 10min, reminders, attendance, payroll accrual, leave reset, probation, inventory expiries, confinement accrual, recalls, prunes",
+            "\/api\/health returns {status: ok}"
+        ],
+        "local_deployability_proofs": [
+            "php artisan route:cache \u2014 succeeded (no closure routes; cacheable route file)",
+            "php artisan migrate --force on FRESH scratch database \u2014 all ~200 migrations ran clean end-to-end (the exact Railway predeploy path)",
+            "php artisan schedule:list \u2014 all commands resolve"
+        ],
+        "blocked_pending_live_env": [
+            "Actual MySQL 8 service connection + version\/sql_mode on Railway",
+            "S3\/Railway-volume upload\/download\/delete\/persistence across redeploys",
+            "Brevo delivered_at (inbox delivery) + webhook\/bounce processing",
+            "Asynchronous queue:work execution + retry\/failed-job recovery",
+            "Deployed CORS, cookies, HTTPS URL generation behind TRUSTED_PROXIES",
+            "Deployed response times, resource usage, scheduler actually firing"
+        ],
+        "evidence_note": "All env values in the repo point at localhost; no Railway\/Vercel deployment URL or credentials exist in the codebase \u2014 live verification requires the deployed environment or CI artifacts"
+    }
+}

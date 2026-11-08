@@ -10,6 +10,7 @@ const DEFAULT_CREDENTIALS = {
   inventory:    { email: 'inventory@example.com',  password: 'Password123!' },
   receptionist: { email: 'receptionist@example.com', password: 'Password123!' },
   super_receptionist: { email: 'super_receptionist@example.com', password: 'Password123!' },
+  vet_tech:     { email: 'vettech@example.com', password: 'Password123!' },
   customer:     { email: 'customer@example.com',   password: 'Password123!' },
 };
 

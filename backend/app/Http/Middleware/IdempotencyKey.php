@@ -13,8 +13,8 @@ use Symfony\Component\HttpFoundation\Response;
  * same key replays it verbatim (headers `Idempotent-Replayed: true`), and a
  * key reused with a different payload is rejected with 409.
  *
- * Concurrent retries fall back to the endpoint's own locking — the unique
- * (user, key, route) index only settles after the first response commits.
+ * Concurrent retries serialize on the authenticated user row so the action
+ * and its stored response commit together before another retry proceeds.
  */
 class IdempotencyKey
 {
@@ -33,6 +33,15 @@ class IdempotencyKey
             ], 422);
         }
 
+        return DB::transaction(function () use ($request, $next, $key) {
+            DB::table('users')->where('id', $request->user()->id)->lockForUpdate()->first();
+
+            return $this->handleLocked($request, $next, $key);
+        });
+    }
+
+    private function handleLocked(Request $request, Closure $next, string $key): Response
+    {
         $userId = (int) $request->user()->id;
         $route = $request->method() . ' ' . $request->path();
         $requestHash = hash('sha256', $request->getContent());

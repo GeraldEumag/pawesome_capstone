@@ -1,0 +1,26 @@
+<testsuites id="" name="" tests="10" failures="0" skipped="0" errors="0" time="242.91393399999998">
+<testsuite name="cross-role-main-workflow.spec.js" timestamp="2026-11-08T10:40:02.991Z" hostname="chromium" tests="1" failures="0" skipped="0" time="162.765" errors="0">
+<testcase name="Customer to Receptionist to Veterinary to Manager Reports" classname="cross-role-main-workflow.spec.js" time="162.765">
+</testcase>
+</testsuite>
+<testsuite name="pawesome-role-smoke-audit.spec.js" timestamp="2026-11-08T10:40:02.991Z" hostname="chromium" tests="9" failures="0" skipped="0" time="77.314" errors="0">
+<testcase name="customer dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.429">
+</testcase>
+<testcase name="receptionist dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.442">
+</testcase>
+<testcase name="cashier dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="8.006">
+</testcase>
+<testcase name="inventory dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="8.014">
+</testcase>
+<testcase name="veterinary dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.589">
+</testcase>
+<testcase name="manager dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.579">
+</testcase>
+<testcase name="admin dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="14.427">
+</testcase>
+<testcase name="super_receptionist dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="8.831">
+</testcase>
+<testcase name="vet_tech dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="11.997">
+</testcase>
+</testsuite>
+</testsuites>

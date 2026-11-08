@@ -1,0 +1,488 @@
+{
+  "requestId": 16,
+  "petId": 8,
+  "service": "Basic Bath and Blow Dry Medium Breed",
+  "date": "2026-11-16",
+  "time": "14:30",
+  "reference": "P12-39437179",
+  "notes": "PHASE12_NATIVE_UI_39437179",
+  "upload": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Payment proof received. Cashier verification will begin after the booking is approved.",
+      "request": {
+        "id": 16,
+        "customer_id": 9,
+        "customer": "CUSTOMER",
+        "customer_name": "CUSTOMER",
+        "email": "customer@example.com",
+        "customer_email": "customer@example.com",
+        "pet_id": 8,
+        "pet": "PHASE12 Pet 39437179",
+        "pet_name": "PHASE12 Pet 39437179",
+        "type": "grooming",
+        "request_type": "grooming",
+        "service_type": "Basic Bath and Blow Dry Medium Breed",
+        "service": "Basic Bath and Blow Dry Medium Breed",
+        "service_name": "Basic Bath and Blow Dry Medium Breed",
+        "date": "2026-11-16",
+        "request_date": "2026-11-16",
+        "requested_date": "2026-11-16",
+        "time": "14:30",
+        "request_time": "14:30",
+        "appointment_id": null,
+        "appointment_status": null,
+        "veterinarian_id": null,
+        "veterinarian": null,
+        "additional_charges": 0,
+        "billing_balance_due": 0,
+        "appointment_payment_status": null,
+        "notes": "PHASE12_NATIVE_UI_39437179",
+        "status": "pending",
+        "price": "500.00",
+        "amount": "500.00",
+        "payment": "pending",
+        "payment_status": "pending",
+        "payment_method": "gcash",
+        "payment_reference": "P12-39437179",
+        "payment_proof": "payment-proofs/proof_1794139457_Fd7OdJm7uJ.png",
+        "rejection_reason": null,
+        "created_at": "2026-11-08T12:04:14.000000Z",
+        "ready_for_pickup_at": null,
+        "workflow_stage": "to_approve"
+      },
+      "payment_status": "pending",
+      "proof_url": "/api/files/payment-proofs/service-request/16/view",
+      "receipt_poll": "/customer/receipts/service_request/16"
+    }
+  },
+  "approveStatus": 200,
+  "verify": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Service request payment verified successfully.",
+      "payment_status": "paid",
+      "receipt_number": "SR-REC-20261108120438-16",
+      "breakdown": {
+        "currency": "PHP",
+        "vat_inclusive": true,
+        "vat_rate": 0.12,
+        "net_amount": 446.43,
+        "vat_amount": 53.57,
+        "discount": 0,
+        "total": 500,
+        "payments": [
+          {
+            "method": "gcash",
+            "amount": 500,
+            "reference_number": "P12-39437179",
+            "receipt_number": "SR-REC-20261108120438-16",
+            "paid_at": "2026-11-08T12:04:38.000000Z",
+            "status": "paid"
+          }
+        ],
+        "amount_paid": 500,
+        "refunds": [],
+        "amount_refunded": 0,
+        "balance_due": 0
+      }
+    }
+  },
+  "negativeChecks": {
+    "customer_cannot_verify": 403,
+    "cashier_cannot_approve": 403,
+    "anonymous_cannot_read_customer_requests": 401
+  },
+  "database": {
+    "request": {
+      "id": 16,
+      "customer_id": 9,
+      "pet_id": 8,
+      "request_type": "grooming",
+      "service_name": "Basic Bath and Blow Dry Medium Breed",
+      "status": "approved",
+      "payment_status": "paid",
+      "payment_method": "gcash",
+      "payment_reference": "P12-39437179",
+      "receipt_number": "SR-REC-20261108120438-16",
+      "booking_channel": "online",
+      "approved_by": 3,
+      "approved_at": "2026-11-08 12:04:27",
+      "verified_by": 5,
+      "verified_at": "2026-11-08 12:04:38",
+      "paid_at": "2026-11-08 12:04:38"
+    },
+    "receipts": [
+      {
+        "id": 10,
+        "payable_type": "service_request",
+        "payable_id": 16,
+        "uploaded_by": 9,
+        "disk": "private",
+        "disk_path": "payment-proofs/proof_1794139457_Fd7OdJm7uJ.png",
+        "mime": "image/png",
+        "size_bytes": 78,
+        "sha256": "1d6d993827d901c41546f7e32affb8b47af2a44bd6ffc873cd8611dd3f83c40a",
+        "provider": null,
+        "submitted_reference": "P12-39437179",
+        "status": "confirmed",
+        "reject_reason": null,
+        "created_at": "2026-11-08 12:04:17",
+        "updated_at": "2026-11-08 12:04:38"
+      }
+    ],
+    "references": [
+      {
+        "id": 3,
+        "provider": "gcash",
+        "reference_normalized": "P1239437179",
+        "payable_type": "service_request",
+        "payable_id": 16,
+        "receipt_id": 10,
+        "confirmed_by": 5,
+        "confirmed_at": "2026-11-08 12:04:38"
+      }
+    ]
+  },
+  "screenshots": [
+    "phase12/01-customer-payment-modal.png",
+    "phase12/02-customer-proof-submitted.png",
+    "phase12/03-receptionist-approved.png",
+    "phase12/04-cashier-pending-card.png",
+    "phase12/05-cashier-verify-modal.png",
+    "phase12/06-cashier-receipt.png"
+  ],
+  "network": [
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/pets",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/services",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/pets",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/services",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/availability/grooming",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/customer/requests",
+      "status": 201,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/customer/requests/16/payment-proof",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/receipts/service_request/16",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/requests",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/receptionist/requests",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "PATCH",
+      "path": "/api/receptionist/requests/16/status",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/customers",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/files/payment-proofs/service-request/16/view",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/receipts/10",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/cashier/receipts/10/confirm",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/receipts/10",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    }
+  ],
+  "console": [
+    {
+      "type": "warning",
+      "text": "Unable to load LNA library Error: Dynamic require of \"lna\" is not supported\n    at http://127.0.0.1:3001/node_modules/.vite/deps/chunk-2TUXWMP5.js?v=5eeed01a:12:9\n    at Object.loadLna (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:667:24)\n    at Object.getLna (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:654:41)\n    at Object.connectToAddress (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:154:35)\n    at Object.findConnection (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:222:49)\n    at delayed (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:1289:39)\n    at attempt (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:1292:19)\n    at http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:1297:15\n    at new Promise (<anonymous>)\n    at Object.promise (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=c1fc5c71:617:22)",
+      "page": "http://127.0.0.1:3001/cashier/payment-verification"
+    }
+  ]
+}

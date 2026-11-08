@@ -49,6 +49,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
+  const [idempotencyKey, setIdempotencyKey] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -93,6 +94,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
     setSupplier("");
     setUnitCost("");
     setError(null);
+    setIdempotencyKey(typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `sa-${Date.now()}`);
   };
 
   useEffect(() => {
@@ -139,6 +141,7 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
 
     try {
       const finalReason = reason === "Other" ? customReason.trim() : reason;
+      const headers = idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {};
       if (adjustmentType === "add") {
         await inventoryApi.addBatch(item.id, {
           batch_no: null,
@@ -149,9 +152,9 @@ const StockAdjustmentModal = ({ isOpen, onClose, item, onSuccess, initialType, i
           supplier: supplier.trim() || null,
           unit_cost: unitCost === "" ? null : Number(unitCost),
           notes: finalReason,
-        });
+        }, { headers });
       } else {
-        await inventoryApi.adjustStock(item.id, adjustmentType, qty, finalReason);
+        await inventoryApi.adjustStock(item.id, adjustmentType, qty, finalReason, { headers });
       }
       await onSuccess?.();
       onClose?.();

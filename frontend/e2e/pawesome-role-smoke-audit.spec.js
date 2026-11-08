@@ -11,6 +11,8 @@ const accounts = {
   veterinary: { email: "vet@example.com", password: "Password123!", dashboard: "/veterinary" },
   manager: { email: "manager@example.com", password: "password123", dashboard: "/manager" },
   admin: { email: "admin@example.com", password: "Password123!", dashboard: "/admin" },
+  super_receptionist: { email: "super_receptionist@example.com", password: "Password123!", dashboard: "/super-receptionist" },
+  vet_tech: { email: "vettech@example.com", password: "Password123!", dashboard: "/veterinary/appointments" },
 };
 
 const { apiLogin: sharedApiLogin } = require("./test-utils");
@@ -27,8 +29,9 @@ for (const role of Object.keys(accounts)) {
     page.on("console", (msg) => {
       if (msg.type() === "error") {
         const text = msg.text();
-        // ERR_NETWORK_CHANGED, ERR_ADDRESS_IN_USE, and "Failed to fetch" are Windows socket exhaustion issues, not app defects
+        // Record network errors, including possible Windows socket failures, without suppressing them.
         if (text.includes("ERR_NETWORK_CHANGED") || text.includes("ERR_ADDRESS_IN_USE") || text.includes("net::ERR_") || text.includes("Failed to fetch")) {
+          errors.push({ type: "network", text, page: page.url() });
           return;
         }
         errors.push({ text: msg.text(), page: page.url() });
@@ -37,8 +40,15 @@ for (const role of Object.keys(accounts)) {
     page.on("response", (response) => {
       const status = response.status();
       const url = response.url();
-      if (url.includes("/api/") && [401, 403, 500].includes(status)) {
+      if (url.includes("/api/") && status >= 400) {
         errors.push({ type: "http", status, url, page: page.url() });
+      }
+    });
+
+    page.on("requestfailed", (request) => {
+      const failure = request.failure()?.errorText;
+      if (request.url().includes("/api/") && failure !== "net::ERR_ABORTED") {
+        errors.push({ type: "requestfailed", failure, url: request.url() });
       }
     });
 

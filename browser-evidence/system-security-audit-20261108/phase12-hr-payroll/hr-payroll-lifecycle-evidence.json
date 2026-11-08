@@ -1,0 +1,126 @@
+{
+  "result": "PASS",
+  "period": {
+    "start": "2026-11-01",
+    "end": "2026-11-15"
+  },
+  "staff": {
+    "id": 5,
+    "name": "CASHIER"
+  },
+  "attendance_seeded": [
+    "2026-11-01",
+    "2026-11-04",
+    "2026-11-05",
+    "2026-11-06"
+  ],
+  "payroll": {
+    "id": 5,
+    "status": "pending",
+    "gross_pay": "8615.38",
+    "net_pay": "0.00",
+    "base_salary": "32000.00",
+    "deductions": "0.00",
+    "tax": "0.00",
+    "sss": "800.00",
+    "philhealth": "400.00",
+    "pagibig": "50.00",
+    "late": "0.00",
+    "absent": "7384.62",
+    "undertime": "0.00",
+    "loan": "0.00",
+    "advance": "0.00",
+    "present_days": "0.0",
+    "processed_by": 2,
+    "approved_by": null,
+    "processed_at": "2026-11-08 14:26:09",
+    "approved_at": null
+  },
+  "payslip": {
+    "own_status": 200,
+    "other_status": 403
+  },
+  "recomputed": {
+    "gross": 14276.92,
+    "net": 8943.05
+  },
+  "arithmetic": {
+    "gross": 8615.38,
+    "all_deduction_columns": 8634.619999999999,
+    "net": 0,
+    "net_recomputed_as_gross_minus_deductions": -19.24
+  },
+  "checks": {
+    "payroll_generated": true,
+    "approve_attribution": true,
+    "net_lte_gross": true,
+    "own_payslip_ok": true,
+    "cross_payslip_denied": true,
+    "present_days_matches_fixture": false
+  },
+  "screenshots": [
+    "phase12-hr-payroll/01-payroll-management.png",
+    "phase12-hr-payroll/02-after-approve.png",
+    "phase12-hr-payroll/03-employee-my-payroll.png"
+  ],
+  "network": [
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/manager/payroll",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/manager/payroll",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    }
+  ],
+  "console": [
+    {
+      "type": "warning",
+      "text": "No routes matched location \"/my-payroll\" "
+    },
+    {
+      "type": "warning",
+      "text": "No routes matched location \"/my-payroll\" "
+    }
+  ]
+}

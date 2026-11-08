@@ -145,8 +145,8 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         try {
-            // Get token from httpOnly cookie first, then fallback to Authorization header
-            $token = $request->cookie('auth_token') ?? $request->bearerToken();
+            // Get token from Authorization header first, then fallback to httpOnly cookie
+            $token = $request->bearerToken() ?? $request->cookie('auth_token');
             if (!$token) {
                 return response()->json(['error' => 'No token provided'], 401);
             }

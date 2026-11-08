@@ -6,6 +6,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
@@ -41,16 +42,27 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function configureRateLimiting(): void
     {
-        // Global API rate limit: 60 requests per minute per IP (override with API_RATE_LIMIT_PER_MINUTE)
+        // General API traffic uses the token owner when one can be resolved —
+        // otherwise staff/customer sessions behind one office NAT incorrectly
+        // share a single bucket. Invalid bearer strings still fall back to IP.
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(config('app.api_rate_limit_per_minute'))->by($request->ip());
+            $plainToken = $request->bearerToken() ?: $request->cookie('auth_token');
+            $accessToken = $plainToken ? PersonalAccessToken::findToken($plainToken) : null;
+            $key = $accessToken
+                ? 'api-user:' . $accessToken->tokenable_type . ':' . $accessToken->tokenable_id
+                : 'api-ip:' . $request->ip();
+
+            return Limit::perMinute(config('app.api_rate_limit_per_minute'))->by($key);
         });
 
         // Strict rate limit for authentication endpoints per account and IP.
         RateLimiter::for('auth', function (Request $request) {
             $login = strtolower((string) $request->input('login', $request->input('email', 'guest')));
 
-            return Limit::perMinute(5)->by($login . '|' . $request->ip());
+            return [
+                Limit::perMinute(config('app.api_rate_limit_per_minute'))->by('auth-ip:' . $request->ip()),
+                Limit::perMinute(5)->by('auth-account:' . $login . '|' . $request->ip()),
+            ];
         });
 
         // Rate limit for sensitive operations: 10 requests per minute

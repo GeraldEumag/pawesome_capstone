@@ -1,0 +1,58 @@
+{
+  "result": "PASS",
+  "pos_fixture": {
+    "sale_id": 24,
+    "txn": "TRX-6AF083BF4D0CC",
+    "amount": 50
+  },
+  "db": {
+    "payments": {
+      "c": 14,
+      "s": "1350.00",
+      "paid": "14",
+      "pending": "0",
+      "rejected": "0",
+      "refunded": "0"
+    },
+    "sales": {
+      "c": 14,
+      "s": "1350.00",
+      "completed": "14",
+      "pending": "0"
+    },
+    "requests": {
+      "c": 24,
+      "paid": "7",
+      "outstanding": "15"
+    },
+    "refunds": {
+      "c": 0
+    }
+  },
+  "api": {
+    "payments_total": 5850,
+    "payments_count": 47,
+    "paid": 23,
+    "pending": 3,
+    "rejected": 2,
+    "refunded": 0,
+    "cashier_summary": {
+      "total_revenue": 5550,
+      "paid_orders": 0,
+      "pending_payment_proofs": 2,
+      "rejected_payment_proofs": 0,
+      "refunds": 0,
+      "pos_revenue": 1350
+    },
+    "sales_summary": {
+      "total_revenue": 0,
+      "total_orders": 0,
+      "completed_orders": 0,
+      "pending_orders": 0
+    }
+  },
+  "date_filter": {
+    "yesterday_rows": 0,
+    "pos_visible_yesterday": false
+  }
+}

@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="9.212249">
+<testsuite name="security-concurrency-audit.spec.js" timestamp="2026-11-08T10:44:50.271Z" hostname="chromium" tests="1" failures="0" skipped="0" time="7.793" errors="0">
+<testcase name="concurrent POS retries with one key create exactly one sale" classname="security-concurrency-audit.spec.js" time="7.793">
+</testcase>
+</testsuite>
+</testsuites>

@@ -385,4 +385,51 @@ class InventoryBatchReconciliationTest extends TestCase
             $item->batches()->where('batch_no', 'like', 'RECON-%')->exists()
         );
     }
+
+    /**
+     * A retried batch receive with the same Idempotency-Key must replay the
+     * first response instead of forking the lot ledger.
+     */
+    public function test_batch_receive_retry_with_same_idempotency_key_is_replayed(): void
+    {
+        $item = $this->makeItem(['stock' => 0, 'category' => 'Accessories', 'requires_expiry_tracking' => false, 'issue_method' => 'FIFO']);
+        $payload = [
+            'batch_no' => 'IDEM-1',
+            'received_date' => now()->toDateString(),
+            'quantity' => 3,
+        ];
+
+        $this->withHeaders(array_merge($this->inventoryAuth(), ['Idempotency-Key' => 'batch-receive-1']))
+            ->postJson("/api/inventory/items/{$item->id}/batches", $payload)->assertOk();
+        $retry = $this->withHeaders(array_merge($this->inventoryAuth(), ['Idempotency-Key' => 'batch-receive-1']))
+            ->postJson("/api/inventory/items/{$item->id}/batches", $payload)->assertOk();
+
+        $this->assertSame('true', $retry->headers->get('Idempotent-Replayed'));
+        $this->assertSame(1, $item->batches()->where('batch_no', 'IDEM-1')->count());
+        $this->assertSame(3, (int) $item->fresh()->stock);
+
+        $this->withHeaders(array_merge($this->inventoryAuth(), ['Idempotency-Key' => 'batch-receive-1']))
+            ->postJson("/api/inventory/items/{$item->id}/batches", array_merge($payload, ['quantity' => 5]))
+            ->assertStatus(409);
+    }
+
+    /**
+     * Batch numbers are scoped per product: a resubmitted batch_no conflicts
+     * instead of creating a second lot with the same reference.
+     */
+    public function test_duplicate_batch_number_on_same_item_is_rejected(): void
+    {
+        $item = $this->makeItem(['stock' => 0, 'category' => 'Accessories', 'requires_expiry_tracking' => false, 'issue_method' => 'FIFO']);
+        $payload = [
+            'batch_no' => 'DUP-1',
+            'received_date' => now()->toDateString(),
+            'quantity' => 2,
+        ];
+
+        $this->receiveBatch($item, $payload)->assertOk();
+        $this->receiveBatch($item, $payload)->assertStatus(422);
+
+        $this->assertSame(1, $item->batches()->where('batch_no', 'DUP-1')->count());
+        $this->assertSame(2, (int) $item->fresh()->stock);
+    }
 }

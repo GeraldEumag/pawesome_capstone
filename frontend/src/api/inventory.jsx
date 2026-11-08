@@ -517,6 +517,7 @@ export const inventoryApi = {
       return await apiRequest(`/inventory/items/${id}/adjust-stock`, {
         method: "POST",
         body: JSON.stringify(payload),
+        headers: options.headers || {},
       });
     } catch (error) {
       throw error;
@@ -606,13 +607,14 @@ export const inventoryApi = {
    * @returns {Promise<Object>} Created batch
    * @throws {Error} When validation fails or request fails
    */
-  addBatch: async (itemId, batchData) => {
+  addBatch: async (itemId, batchData, options = {}) => {
     validateId(itemId, "Item ID");
     validateData(batchData, "add batch");
     try {
       return await apiRequest(`/inventory/items/${itemId}/batches`, {
         method: "POST",
         body: JSON.stringify(batchData),
+        headers: options.headers || {},
       });
     } catch (error) {
       throw error;

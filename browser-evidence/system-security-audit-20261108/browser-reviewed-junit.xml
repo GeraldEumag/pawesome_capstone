@@ -1,0 +1,39 @@
+<testsuites id="" name="" tests="12" failures="0" skipped="0" errors="0" time="231.03241599999998">
+<testsuite name="cross-role-main-workflow.spec.js" timestamp="2026-11-08T11:00:27.891Z" hostname="chromium" tests="1" failures="0" skipped="0" time="149.423" errors="0">
+<testcase name="Customer to Receptionist to Veterinary to Manager Reports" classname="cross-role-main-workflow.spec.js" time="149.423">
+</testcase>
+</testsuite>
+<testsuite name="pawesome-role-smoke-audit.spec.js" timestamp="2026-11-08T11:00:27.891Z" hostname="chromium" tests="9" failures="0" skipped="0" time="64.66" errors="0">
+<testcase name="customer dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.435">
+</testcase>
+<testcase name="receptionist dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.454">
+</testcase>
+<testcase name="cashier dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="7.341">
+</testcase>
+<testcase name="inventory dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="7.422">
+</testcase>
+<testcase name="veterinary dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.258">
+</testcase>
+<testcase name="manager dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.366">
+</testcase>
+<testcase name="admin dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="10.477">
+</testcase>
+<testcase name="super_receptionist dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="7.003">
+</testcase>
+<testcase name="vet_tech dashboard loads without console errors" classname="pawesome-role-smoke-audit.spec.js" time="6.904">
+</testcase>
+</testsuite>
+<testsuite name="security-concurrency-audit.spec.js" timestamp="2026-11-08T11:00:27.891Z" hostname="chromium" tests="1" failures="0" skipped="0" time="6.064" errors="0">
+<testcase name="concurrent POS retries with one key create exactly one sale" classname="security-concurrency-audit.spec.js" time="6.064">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|playwright-reviewed\security-concurrency-audit-d9c93-key-create-exactly-one-sale-chromium\attachments\concurrency-evidence-57d8b780c333bf5a5aed303eac3fbfab06c63baf.json]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="vet-tech-intake-audit.spec.js" timestamp="2026-11-08T11:00:27.891Z" hostname="chromium" tests="1" failures="0" skipped="0" time="8.374" errors="0">
+<testcase name="vet tech checks in a patient without clinical controls" classname="vet-tech-intake-audit.spec.js" time="8.374">
+</testcase>
+</testsuite>
+</testsuites>

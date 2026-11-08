@@ -1,0 +1,62 @@
+<testsuites id="" name="" tests="3" failures="1" skipped="2" errors="0" time="68.22403999999999">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:22:15.823Z" hostname="chromium" tests="3" failures="1" skipped="2" time="66.57" errors="0">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="66.57">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output-5\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|phase12-boarding-output-5\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png]]
+
+[[ATTACHMENT|phase12-boarding-output-5\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md]]
+]]>
+</system-out>
+<failure message="expect(locator).toHaveCount(expected) failed" type="expect.toHaveCount">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:112:1 › Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('tr.booking-row').filter({ hasText: 'PHASE12 Board 39868009' })
+    Expected: 1
+    Received: 2
+    Timeout:  30000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 30000ms
+      - waiting for locator('tr.booking-row').filter({ hasText: 'PHASE12 Board 39868009' })
+        5 × locator resolved to 0 elements
+          - unexpected value "0"
+        28 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      199 |   await receptionistPage.locator(".hotel-search-box input").fill(pet.name);
+      200 |   const approvedRow = receptionistPage.locator("tr.booking-row").filter({ hasText: pet.name });
+    > 201 |   await expect(approvedRow).toHaveCount(1, { timeout: 30000 });
+          |                             ^
+      202 |   await approvedRow.getByRole("button", { name: new RegExp(`Actions for ${pet.name}`) }).click();
+      203 |   await receptionistPage.getByRole("button", { name: "View / Manage" }).click();
+      204 |   await expect(modal).toBeVisible();
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:201:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-5\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-5\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-5\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

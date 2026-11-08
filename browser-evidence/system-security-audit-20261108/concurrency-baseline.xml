@@ -1,0 +1,33 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="17.272638">
+<testsuite name="security-concurrency-audit.spec.js" timestamp="2026-11-08T10:42:42.570Z" hostname="chromium" tests="1" failures="1" skipped="0" time="14.55" errors="0">
+<testcase name="concurrent POS retries with one key create exactly one sale" classname="security-concurrency-audit.spec.js" time="14.55">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|concurrency-baseline\security-concurrency-audit-d9c93-key-create-exactly-one-sale-chromium\error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;errors&quot;:{&quot;barcode&quot;:[&quot;The barcode field is required for sellable items.&quot;]},&quot;success&quot;:false,&quot;message&quot;:&quot;Unprocessable Content&quot;}" type="expect.toBe">
+<![CDATA[  [chromium] › security-concurrency-audit.spec.js:15:1 › concurrent POS retries with one key create exactly one sale 
+
+    Error: {"errors":{"barcode":["The barcode field is required for sellable items."]},"success":false,"message":"Unprocessable Content"}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 422
+
+      22 |     data: { sku, name: sku, category: 'Food', price: 100, stock: 5, reorder_level: 0, status: 'active' },
+      23 |   });
+    > 24 |   expect(created.status(), await created.text()).toBe(201);
+         |                                                  ^
+      25 |   const item = (await created.json()).item;
+      26 |   expect(item.stock).toBe(5);
+      27 |
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\security-concurrency-audit.spec.js:24:50
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\concurrency-baseline\security-concurrency-audit-d9c93-key-create-exactly-one-sale-chromium\error-context.md
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

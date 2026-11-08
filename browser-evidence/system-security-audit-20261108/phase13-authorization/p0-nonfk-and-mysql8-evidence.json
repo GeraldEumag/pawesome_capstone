@@ -1,0 +1,29 @@
+{
+    "p0_non_fk_id_columns": {
+        "status": "PASS",
+        "candidate_columns": 54,
+        "true_orphans": 0,
+        "findings": [
+            "54 columns ending in _id lack FK constraints \u2014 audited each for orphaned\/invalid references",
+            "False positives: amount_paid (4 tables), is_paid (2), payrolls.payroll_id (display code PAY-YYYY-NNNN), uuid, telegram_chat_id, credential_id, device_id, terminal_id, biometric_id, provider_message_id \u2014 these are not foreign keys at all",
+            "Polymorphic pairs verified via *_type columns: notifications.related_id, payment_receipts\/references.payable_id, payment_settlements.settleable_id, visit_invoices.invoiceable_id, inventory_logs\/activity_logs.reference_id, email_deliveries.source_id \u2014 all resolve to existing parent rows",
+            "boarding_room_reservations.room_id -> boarding_rooms: 0 orphans",
+            "Correctly-typed plain references (service_request_id, user_id, customer_id, pet_id, service_id): 0 orphans",
+            "CONCLUSION: no orphaned or invalid references found; absence of FK constraints is a design characteristic (no cascade protection), not a data-integrity violation"
+        ]
+    },
+    "p0_mysql8_parity": {
+        "status": "PARTIAL \/ environmental limitation",
+        "local_engine": "MariaDB 10.4.32",
+        "local_sql_mode": "NO_ZERO_IN_DATE,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION",
+        "mysql8_default_sql_mode": "ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION",
+        "findings": [
+            "Local audit DB is MariaDB 10.4 \u2014 NOT MySQL 8; local results are not proof of MySQL 8 behavior",
+            "sql_mode lacks ONLY_FULL_GROUP_BY and STRICT_TRANS_TABLES \u2014 queries with non-aggregated selected columns absent from GROUP BY pass locally but FAIL on MySQL 8 defaults",
+            "73 groupBy call sites across controllers (Reports, Inventory, Dashboard, CustomerReport, Chatbot, ActivityLog, LoginLog, ReconcileEmailDeliveries) are the primary OFGB risk surface",
+            "Two migrations contain CHECK constraints \u2014 MariaDB 10.2+ enforces them, MySQL >=8.0.16 enforces them, older MySQL ignores \u2014 consistent behavior on MySQL 8",
+            "CI (per .github\/workflows\/ci.yml + AGENTS.md) runs the full backend suite on MySQL 8 \u2014 that pipeline is the authoritative parity gate for tested paths",
+            "RECOMMENDATION: treat CI MySQL 8 suite as the parity gate; audit the 73 groupBy sites for ONLY_FULL_GROUP_BY safety before claiming full parity"
+        ]
+    }
+}

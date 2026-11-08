@@ -1,0 +1,6741 @@
+[
+    {
+        "method": "GET",
+        "uri": "api/admin/activity-logs",
+        "auth": true,
+        "roles": [
+            "admin",
+            "manager"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/activity-logs/filters",
+        "auth": true,
+        "roles": [
+            "admin",
+            "manager"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/activity-logs/statistics",
+        "auth": true,
+        "roles": [
+            "admin",
+            "manager"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/activity-logs/user/{userId}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "manager"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/activity-logs/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "manager"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/appointments",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/boardings",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/boardings/available-rooms",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/boardings/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/chatbot/faqs",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/chatbot/faqs",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/chatbot/faqs/{faq}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/chatbot/faqs/{faq}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/chatbot/logs",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/chatbot/logs/stats",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/chatbot/logs/user/{user}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/customers",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/customers",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/customers/search",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/customers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/customers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/customers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/customers/{id}/pets",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/customers/{id}/pets",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/customers/{id}/purchases",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/customers/{id}/restore",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/dashboard",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/grooming",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/grooming/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/archived",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/batches/{batchId}/adjust",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/batches/{batchId}/dispose",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/cost-report",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/dashboard",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/expiry-alerts",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/history",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/items",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/items",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/items/{id}/adjust",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/items/{id}/batches",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/items/{id}/batches",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/items/{id}/logs",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/low-stock",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/monthly-audit",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/monthly-audit",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/out-of-stock",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/reports",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/summary",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/inventory/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/inventory/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/{id}/adjust-stock",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/{id}/archive",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/inventory/{id}/history",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/admin/inventory/{id}/stock",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/{id}/stock",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/inventory/{id}/unarchive",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/landing-page",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/landing-page/upload-image",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/landing-page/{section}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/landing-page/{section}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/login-logs",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/login-logs/recent",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/login-logs/statistics",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/login-logs/user/{userId}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/alerts",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/reports/alerts",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/reports/alerts/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/cashier",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/comparison",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/customers",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/customers/export",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/customers/export-pdf",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/customers/segments",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/customers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/executive",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/inventory",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/inventory-optimization",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/logistics",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/manager",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/orders",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/overview",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/payments",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/predictive",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/reception",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/sales",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/sales-analysis",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/service-requests",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/services",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/staff-performance",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/summary",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/reports/veterinary",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/salaries",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/salaries",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/salaries/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/salaries/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/services",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/services",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/services/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/services/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/settings",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/settings/general",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/settings/kiosk-pin",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/settings/notifications",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/settings/security",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/settings/theme",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/suppliers",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/suppliers",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/suppliers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/suppliers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/suppliers/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/admin/users",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/users",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/admin/users/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/admin/users/{id}",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/admin/users/{id}/restore",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/admin/users/{id}/toggle",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/appointments",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/appointments",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/appointments/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/appointments/{id}/pay",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/appointments/{id}/status",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/attendance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance-records",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/attendance-records",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance-records/summary",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/attendance/check-in",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "cashier",
+            "inventory",
+            "veterinary",
+            "vet_tech",
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/attendance/check-out",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "cashier",
+            "inventory",
+            "veterinary",
+            "vet_tech",
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance/export",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance/statistics",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance/today",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/attendance/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/attendance/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/attendance/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/change-password",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/email/resend",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/email/verify",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/login",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/logout",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/auth/me",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/password/forgot",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/password/reset",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/auth/profile",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/profile-photo",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/auth/register",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/availability/boarding",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/availability/grooming",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/availability/veterinary",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/billing/inventory-items",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "veterinary",
+            "receptionist",
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/billing/items",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "receptionist",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/billing/items/mark-paid",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/billing/unpaid-services",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/billing/{serviceType}/{serviceId}/completion-status",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "veterinary",
+            "receptionist",
+            "admin",
+            "inventory"
+        ],
+        "params": 2
+    },
+    {
+        "method": "POST",
+        "uri": "api/billing/{serviceType}/{serviceId}/finalize-bill",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "veterinary",
+            "receptionist",
+            "admin",
+            "inventory"
+        ],
+        "params": 2
+    },
+    {
+        "method": "GET",
+        "uri": "api/billing/{serviceType}/{serviceId}/summary",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "veterinary",
+            "receptionist",
+            "admin",
+            "inventory"
+        ],
+        "params": 2
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/add-ons",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/inventory-items",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/rooms",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/rooms/available",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/rooms/calculate-total",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/rooms/types",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/rooms/{id}",
+        "auth": false,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boarding/{id}/check-in",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boarding/{id}/check-out",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boarding/{id}/checkout",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boarding/{id}/complete",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boarding/{id}/finalize-bill",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boarding/{id}/inventory-usage",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/boarding/{id}/inventory-usage-history",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/boardings",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boardings/available-rooms",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/boardings/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/boardings/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/check-in",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/check-out",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/checkout",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/complete",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/finalize-bill",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/boardings/{id}/pay",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/apply-discount",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/boarding-payments/pending",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/boarding-payments/{id}/reject",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/boarding-payments/{id}/verify",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/confinement-payments/pending",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/confinement-payments/{id}/reject",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/confinement-payments/{id}/verify",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/customer-order-receipts/{id}",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/customers",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/customers/search",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/dashboard",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/dashboard/overview",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/end-shift",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/handover",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/handover/last",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/history",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/inventory/sellable",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/multi-payment",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/payment-requests",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/payment-requests/{id}/reject",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/payment-requests/{id}/verify",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/payments",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/cashier/payments/{id}/{type}/reject",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 2
+    },
+    {
+        "method": "PUT",
+        "uri": "api/cashier/payments/{id}/{type}/verify",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 2
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/pos/invoice/{id}",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/pos/products",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/pos/services",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/pos/transaction",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/pos/transaction/{id}",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/pos/transaction/{id}/void",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/pos/transactions",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/receipt/{id}",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/receipts/{id}",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/receipts/{id}/confirm",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/receipts/{id}/reject",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/receipts/{id}/reread",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/refund",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/live",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/overview",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/paid-payments",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/payment-methods",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/pending-payments",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/pos-sales",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/receipts",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/reports/rejected-payments",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/sales",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/shift-report/last",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/transactions",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/transactions/search",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/cashier/visit-invoices/{appointmentId}",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/visit-invoices/{appointmentId}/adjustments",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/cashier/void",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/live-chat/inbox",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/live-chat/session",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/live-chat/start",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/chatbot/live-chat/{session}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/live-chat/{session}/claim",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/chatbot/live-chat/{session}/close",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/live-chat/{session}/message",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/live-chat/{session}/messages",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/live-chat/{session}/reply",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/message",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/public/message",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/public/welcome",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/welcome",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/workflow/appointments/lookup",
+        "auth": true,
+        "roles": [
+            "customer",
+            "receptionist",
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/workflow/booking-options",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/workflow/bookings",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/workflow/hotel-bookings",
+        "auth": true,
+        "roles": [
+            "customer",
+            "receptionist",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/workflow/hotel-options",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/chatbot/workflow/hotel/availability",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/chatbot/workflow/inventory/search",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/appointments",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/appointments",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/availability/boarding",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/availability/check/boarding-room",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/availability/check/grooming-date",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/availability/check/veterinary-slot",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/availability/grooming",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/availability/veterinary",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/billing",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/billing/payment-requests/{id}/receipt",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/billing/veterinary/{id}/cashier-payment",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/billing/veterinary/{id}/online-payment",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/boarding-requests",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/boarding-requests",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/boarding-requests/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/boarding-requests/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/boarding-requests/{id}/care-logs",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/boarding-requests/{id}/payment-proof",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/boarding-requests/{id}/vaccination-card",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/boardings",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/boardings",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/boardings/available-rooms",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/boardings/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/boardings/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/bookings",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/chatbot",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/dashboard",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/grooming",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/grooming",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/grooming/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/medical-confinements",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/medical-confinements/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/medical-confinements/{id}/care-logs",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/medical-confinements/{id}/medical-notes",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/medical-confinements/{id}/payment-proof",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/my-requests",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/notification-preferences",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/customer/notification-preferences",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/orders/history",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/overview",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/payments/history",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/pets",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/pets",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/pets/archived",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/pets/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/customer/pets/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/customer/pets/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/pets/{id}/archive",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/pets/{id}/unarchive",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/pets/{pet}/medical-history",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/purchases",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/receipts/{id}/reference",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/receipts/{type}/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 2
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/appointments",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/boarding",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/confinements",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/orders",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/payments",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/receipts",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/reports/services",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/requests",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/requests/history",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/customer/requests/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/requests/{id}/payment-proof",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/requests/{id}/receipt",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/services",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/store/checkout",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/store/orders",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/store/orders/{id}",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/store/orders/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customer/store/orders/{id}/payment-proof",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/store/orders/{id}/receipt",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/tracking",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/transactions",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customer/vaccinations/{id}/certificate",
+        "auth": true,
+        "roles": [
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/customers",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customers",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "cashier",
+            "veterinary",
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customers/search",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/customers/{id}/pets",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "cashier",
+            "veterinary",
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/customers/{id}/purchases",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/files/care-logs/{id}/view",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/files/payment-proofs/{type}/{id}/view",
+        "auth": true,
+        "roles": null,
+        "params": 2
+    },
+    {
+        "method": "GET",
+        "uri": "api/files/payment-receipts/{id}/view",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/files/pet-photos/{petId}/view",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/files/profile-photos/{userId}/view",
+        "auth": false,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/files/vaccination-cards/{id}/view",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/gift-cards/{number}/balance",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/grooming",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/grooming",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/grooming/inventory-items",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/grooming/{grooming}/status",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/grooming/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/grooming/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/grooming/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/grooming/{id}/complete",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/grooming/{id}/finalize-bill",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/grooming/{id}/inventory-usage",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/grooming/{id}/inventory-usage-history",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/health",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/holidays/blocked",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/hotel-rooms",
+        "auth": true,
+        "roles": [
+            "admin",
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/hotel-rooms",
+        "auth": true,
+        "roles": [
+            "admin",
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/hotel-rooms/{id}/status",
+        "auth": true,
+        "roles": [
+            "admin",
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/audit-analytics",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/inventory/batches/{batchId}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/batches/{batchId}/dispose",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/dashboard",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/dashboard/low-stock",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/dashboard/overview",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/dashboard/recent-activity",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/expiry-alerts",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/history",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/items",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/items",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/items/archived",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/inventory/items/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/items/{id}/adjust-stock",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/inventory/items/{id}/archive",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/items/{id}/batches",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/items/{id}/batches",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/inventory/items/{id}/restore",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/logs",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/low-stock",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/monthly-audit",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/monthly-audit",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/monthly-audit-report",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/monthly-audit/discrepancy-reasons",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/public/categories",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/public/item/{id}",
+        "auth": false,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/public/items",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/reorder-requests",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/adjustments",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/live",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/low-stock",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/movements",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/order-deductions",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/overview",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/pos-deductions",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/stock-levels",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/stock-restores",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/reports/valuation",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/sellable",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/stock/history",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/suppliers",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/suppliers",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/inventory/suppliers/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/inventory/suppliers/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/inventory/suppliers/{id}",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/inventory/{id}/stock",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/inventory/{id}/stock",
+        "auth": true,
+        "roles": [
+            "admin",
+            "inventory"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/kiosk/log",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/kiosk/punch",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/kiosk/verify",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/landing-page",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/attendance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/attendance/corrections",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/attendance/corrections/{correction}/approve",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/attendance/corrections/{correction}/reject",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/attendance/today-status",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/attendance/{id}/remarks",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/biometric/auth-challenge",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/biometric/challenge",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/biometric/credentials",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/biometric/credentials/{credential}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/biometric/register",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/biometric/terminal-punch",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/biometric/today-summary",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/biometric/verify-punch",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/boarding-rooms",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/boarding-rooms",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/boarding-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/boarding-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/company-schedule",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/company-schedule",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/dashboard",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/employees",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/employees",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/employees/{employee}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/employees/{employee}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/employees/{employee}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/executive-summary",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/history",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/holidays",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/holidays",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/holidays/generate-recurring",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/holidays/{holiday}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/holidays/{holiday}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/hotel-rooms",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/hotel-rooms",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/hotel-rooms/{id}/status",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/inventory-audits/pending",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/inventory-audits/{id}/approve",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/inventory-audits/{id}/reject",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/leave-balances",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/leave-balances/seed",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/leave-balances/{employeeId}/employee",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/leave-balances/{leaveBalance}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/leave-balances/{userId}/user",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/leaves",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/leaves",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/leaves/calendar",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/leaves/{id}/approve",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/leaves/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/leaves/{id}/reject",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/medical-confinements/{id}/release",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/payroll",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll/compute",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll/generate",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/payroll/thirteenth-month",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll/thirteenth-month/accrue",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll/thirteenth-month/{accrual}/pay",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/payroll/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/payroll/{payroll}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll/{payroll}/approve",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/payroll/{payroll}/payslip",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/payroll/{payroll}/release",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/people",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/people/{kind}/{id}/day-offs",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 2
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/receipt-scanner/metrics",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/receipt-scanner/settings",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/receipt-scanner/settings",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/attendance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/boarding",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/customers",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/dtr",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/inventory",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/live",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/medical-confinement",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/overview",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/payments",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/payroll",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/remittance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/revenue-trends",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/room-occupancy",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/sales",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/services",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/staff-performance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/summary",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/reports/veterinary-services",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/salary-loans",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/salary-loans",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/salary-loans/{salaryLoan}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/salary-loans/{salaryLoan}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/salary-loans/{salaryLoan}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/services",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/services",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/services/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/manager/services/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/settings/kiosk-pin",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/staff",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/manager/staff/{id}",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/staff/{id}/attendance",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/staff/{id}/payroll",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/vaccination-recall",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/manager/visit-invoice-adjustments/pending",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/visit-invoice-adjustments/{id}/approve",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/manager/visit-invoice-adjustments/{id}/reject",
+        "auth": true,
+        "roles": [
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-attendance",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-attendance/corrections",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/my-attendance/corrections",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-leaves",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/my-leaves",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-leaves/balance",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/my-leaves/{id}",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-loans",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/my-loans",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-payroll",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/my-payroll/{id}/payslip",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/notifications",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/notifications",
+        "auth": true,
+        "roles": [
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/notifications/booking-status",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/notifications/clear-all",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/notifications/mark-all-read",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/notifications/unread",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/notifications/unread-count",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/notifications/{id}",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/notifications/{id}/read",
+        "auth": true,
+        "roles": null,
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/pets",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "cashier",
+            "veterinary",
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/pets",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/pets/archived",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/pets/pets/archived",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/pets/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/pets/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/pets/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/pets/{id}/archive",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/pets/{id}/unarchive",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "admin",
+            "manager",
+            "customer"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/pos/items",
+        "auth": true,
+        "roles": [
+            "cashier"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/products/barcode/{barcode}",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "inventory",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/products/search",
+        "auth": true,
+        "roles": [
+            "cashier",
+            "inventory",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/public/boarding-rooms",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/appointment/list",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/appointments",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/appointments",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/appointments/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/receptionist/appointments/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/appointments/{id}/approve",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/appointments/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/appointments/{id}/check-in",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/appointments/{id}/reject",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/appointments/{id}/reschedule",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/boarding-requests",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/boarding-requests/pending",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/approve",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/care-logs",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/boarding-requests/{id}/care-logs",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/check-in",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/check-out",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/inventory-usage",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/boarding-requests/{id}/inventory-usage-history",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/ready-for-pickup",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/reject",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/schedule",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-requests/{id}/verify-vaccination",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/boarding-rooms",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/boarding-rooms",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/receptionist/boarding-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/receptionist/boarding-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/boarding/inventory-items",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/customer-orders",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/customer-orders/pending",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/customer-orders/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/customer-orders/{id}/approve",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/customer-orders/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/customer-orders/{id}/reject",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/customers",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/customers",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/customers/search",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/receptionist/customers/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/receptionist/customers/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/dashboard",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/hotel-rooms",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/hotel-rooms",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/receptionist/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/receptionist/hotel-rooms/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/medical-confinements",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/medical-confinements/pending-admission",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/medical-confinements/{id}/admit",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/medical-confinements/{id}/assign-bed",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/medical-confinements/{id}/assign-room",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/medical-confinements/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/medical-confinements/{id}/care-logs",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/medical-confinements/{id}/care-logs",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/medical-confinements/{id}/release",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/orders/approval-history",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/receptionist/orders/{id}/status",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/pets",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/pets",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/reports/appointments",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/reports/customer-orders",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/reports/live",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/reports/overview",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/reports/service-requests",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/reports/transactions",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/requests",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/requests",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/requests/approval-history",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/requests/pending",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/requests/rejected-history",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/requests/{id}/approve",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/requests/{id}/reject",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PATCH",
+        "uri": "api/receptionist/requests/{id}/status",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/scheduling/history",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/services",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/services",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/receptionist/services/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/receptionist/services/{id}",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/veterinarians/available",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/veterinarians/{id}/schedule",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/walk-ins",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/receptionist/walk-ins",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/receptionist/ward-beds",
+        "auth": true,
+        "roles": [
+            "receptionist"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/services",
+        "auth": true,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/settings/public",
+        "auth": false,
+        "roles": null,
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet",
+            "vet_tech"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/appointments",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/veterinary/appointments/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/appointments/{id}/check-in",
+        "auth": true,
+        "roles": [
+            "receptionist",
+            "vet_tech",
+            "veterinary"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments/{id}/consents",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet_tech",
+            "receptionist",
+            "cashier",
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments/{id}/diagnostics",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet_tech",
+            "receptionist",
+            "cashier",
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/appointments/{id}/diagnostics",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/appointments/{id}/inventory-usage",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments/{id}/inventory-usage",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments/{id}/inventory-usage-history",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/appointments/{id}/invoice",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet_tech",
+            "receptionist",
+            "cashier",
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/veterinary/appointments/{id}/medical",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/appointments/{id}/start",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/veterinary/appointments/{id}/status",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/appointments/{serviceId}/finalize-bill",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/boardings/current-boarders",
+        "auth": true,
+        "roles": [
+            "veterinary"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/boardings/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/consents",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet_tech",
+            "receptionist",
+            "cashier",
+            "manager",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/consents/{id}/revoke",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet_tech",
+            "receptionist",
+            "cashier",
+            "manager",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/consultations",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/consultations/scheduled",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/consultations/{id}/complete",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/consultations/{id}/recommend-confinement",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/consultations/{id}/start",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/customers",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/customers/search",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/customers/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/customers/{id}/pets",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/dashboard",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/diagnostics/{id}/cancel",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/diagnostics/{id}/collect",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet",
+            "vet_tech"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/diagnostics/{id}/result",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet",
+            "vet_tech"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/diagnostics/{id}/review",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/history",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/inventory-items",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/medical-confinements",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/clear-for-discharge",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/medical-confinements/{id}/mar",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/mar",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/mar/{marId}/administer",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 2
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/mar/{marId}/status",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 2
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/mark-critical",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/mark-under-observation",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/mark-under-treatment",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-confinements/{id}/progress-notes",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/medical-confinements/{id}/progress-notes",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/medical-records",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-records",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/medical-records/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "PUT",
+        "uri": "api/veterinary/medical-records/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/veterinary/medical-records/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-records/{id}/addenda",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-records/{id}/finalize",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/medical-records/{id}/lock",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/patients",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/pets/{petId}/medical-records",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/pets/{petId}/vaccinations",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/pets/{petId}/vaccinations",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/pets/{pet}/medical-history",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/pets/{pet}/medical-history",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/receipt/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/appointments",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/completed-services",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/confinements",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/consultations",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/health-alerts",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/live",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/medical-records",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/overview",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/reports/treatments",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/services",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "POST",
+        "uri": "api/veterinary/services",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "admin"
+        ],
+        "params": 0
+    },
+    {
+        "method": "PUT",
+        "uri": "api/veterinary/services/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "DELETE",
+        "uri": "api/veterinary/services/{id}",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "admin"
+        ],
+        "params": 1
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/vaccination-recall",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 0
+    },
+    {
+        "method": "GET",
+        "uri": "api/veterinary/vaccinations/{id}/certificate",
+        "auth": true,
+        "roles": [
+            "veterinary",
+            "vet"
+        ],
+        "params": 1
+    }
+]

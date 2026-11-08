@@ -1,0 +1,25 @@
+{
+  "result": "PASS",
+  "order_id": 10,
+  "concurrent_results": {
+    "statuses": [
+      200,
+      200
+    ],
+    "stored": 1
+  },
+  "concurrent_reviews": {
+    "statuses": [
+      200,
+      200
+    ]
+  },
+  "final": {
+    "status": "reviewed",
+    "reviewed_by": 7
+  },
+  "checks": {
+    "single_result_row": true,
+    "reviewed_once": true
+  }
+}

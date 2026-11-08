@@ -314,6 +314,7 @@ const InventoryReports = () => {
           columns={tableColumns}
           data={filteredItems.map(item => ({
             ...item,
+            quantity: getQuantity(item),
             status: getItemStatus(item),
           }))}
           emptyMessage="No inventory items found"

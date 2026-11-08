@@ -26,7 +26,11 @@ class ApiTokenAuth
 
         $accessToken = PersonalAccessToken::findToken($token);
 
-        if (!$accessToken) {
+        $expiration = config('sanctum.expiration');
+
+        if (!$accessToken
+            || ($accessToken->expires_at && $accessToken->expires_at->isPast())
+            || ($expiration && !$accessToken->created_at->gt(now()->subMinutes($expiration)))) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 

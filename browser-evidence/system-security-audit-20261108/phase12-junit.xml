@@ -1,0 +1,58 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="125.92413">
+<testsuite name="phase12-native-ui-workflows.spec.js" timestamp="2026-11-08T11:58:44.226Z" hostname="chromium" tests="1" failures="1" skipped="0" time="124.091" errors="0">
+<testcase name="Phase 12.1 customer booking, approval, and cashier verification are native UI submissions" classname="phase12-native-ui-workflows.spec.js" time="124.091">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\test-failed-3.png]]
+
+[[ATTACHMENT|phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\test-failed-2.png]]
+
+[[ATTACHMENT|phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\error-context.md]]
+]]>
+</system-out>
+<failure message="expect(locator).toBeEnabled() failed" type="expect.toBeEnabled">
+<![CDATA[  [chromium] › phase12-native-ui-workflows.spec.js:87:1 › Phase 12.1 customer booking, approval, and cashier verification are native UI submissions 
+
+    Error: expect(locator).toBeEnabled() failed
+
+    Locator:  locator('.pw-modal .pa-btn-verify')
+    Expected: enabled
+    Received: disabled
+    Timeout:  90000ms
+
+    Call log:
+      - Expect "toBeEnabled" with timeout 90000ms
+      - waiting for locator('.pw-modal .pa-btn-verify')
+        93 × locator resolved to <button disabled class="pa-btn-verify" title="The receipt scan reported blocking issues — reject or resolve them first">…</button>
+           - unexpected value "disabled"
+
+
+      189 |   await cashierPage.locator("#paRefNum").fill(reference);
+      190 |   const verifyButton = cashierPage.locator(".pw-modal .pa-btn-verify");
+    > 191 |   await expect(verifyButton).toBeEnabled({ timeout: 90000 });
+          |                              ^
+      192 |   screenshots.push(await shot(cashierPage, "05-cashier-verify-modal"));
+      193 |   const verifyResponsePromise = cashierPage.waitForResponse((response) => {
+      194 |     const pathname = new URL(response.url()).pathname;
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-native-ui-workflows.spec.js:191:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-output-final\phase12-native-ui-workflow-2f0c7-n-are-native-UI-submissions-chromium\error-context.md
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

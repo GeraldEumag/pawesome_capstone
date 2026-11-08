@@ -1,0 +1,188 @@
+{
+  "result": "PASS",
+  "unique": "47239610",
+  "pos_fixture": {
+    "sale_id": 23,
+    "transaction_number": "TRX-6AF083A95D47D",
+    "amount": 50,
+    "qty": 2,
+    "item": "0000 Phase12 Inventory 43451074"
+  },
+  "window": "2026-11-08",
+  "db_expectations": {
+    "sales": {
+      "s": "1300.00",
+      "c": 13
+    },
+    "payments": {
+      "s": "1300.00",
+      "c": 13,
+      "paid": "13",
+      "pending": "0",
+      "rejected": "0",
+      "refunded": "0"
+    },
+    "unpaid_requests": {
+      "c": 15,
+      "s": "0.00"
+    }
+  },
+  "api_summary": {
+    "payments": {
+      "total_payments": 46,
+      "total_amount": 5800,
+      "paid": 22,
+      "pending": 3,
+      "rejected": 2
+    },
+    "sales": {
+      "total_revenue": 0,
+      "total_orders": 0,
+      "completed_orders": 0,
+      "pending_orders": 0
+    },
+    "cashier": {
+      "total_revenue": 5500,
+      "paid_orders": 0,
+      "pending_payment_proofs": 2,
+      "rejected_payment_proofs": 0,
+      "refunds": 0,
+      "pos_revenue": 1300
+    }
+  },
+  "ui": {
+    "row_visible": true,
+    "screenshots": [
+      "phase12-reports/01-payments-report.png"
+    ]
+  },
+  "csv_export": {
+    "path": "C:\\xampp\\htdocs\\Pawesome_Capstone\\browser-evidence\\system-security-audit-20261108\\phase12-reports\\admin-payment-reports-export.csv",
+    "rows": 46,
+    "total": 5800,
+    "header": [
+      "Payment Ref",
+      "Customer",
+      "Type",
+      "Associated Record",
+      "Method",
+      "Amount",
+      "Status",
+      "Date"
+    ]
+  },
+  "network": [
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications?role=admin",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications?role=admin",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/admin/reports/payments?from=2026-11-01&start_date=2026-11-01&to=2026-11-30&end_date=2026-11-30",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications?role=admin",
+      "status": 200
+    }
+  ],
+  "console": [],
+  "reconciled": {
+    "api_total_amount": 5800,
+    "api_total_payments": 46,
+    "api_paid": 22,
+    "api_pending": 3,
+    "api_rejected": 2,
+    "computed_paid": 22,
+    "computed_pending": 3,
+    "computed_rejected": 2,
+    "computed_total": 5800,
+    "csv_total": 5800,
+    "csv_rows": 46,
+    "row_visible": true
+  },
+  "pos_row_count": 1
+}

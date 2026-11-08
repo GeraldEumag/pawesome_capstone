@@ -1,0 +1,89 @@
+﻿Pawesome Retreat Inc.
+Professional Veterinary & Pet Hotel Services
+"Aldana Street, San Isidro Village, Las Piñas City, Philippines 1740"
+pawesomeretreat24@gmail.com | (02) 8XXX-XXXX
+
+admin payment reports
+admin payment reports — detailed business report
+
+Document Reference,ADMIN-PAYMENT-REPORTS-20261108
+Reporting Period,As of issue date
+Generated,"11/8/2026, 10:14:08 PM"
+Prepared By,ADMINISTRATOR
+Prepared Role,admin
+Records Included,46
+
+REPORT SUMMARY
+Metric,Value
+Records Included,46
+Report Status,Generated
+
+DETAILED RECORDS
+Payment Ref,Customer,Type,Associated Record,Method,Amount,Status,Date
+PAY-6AF083A9684FD,Walk-in,sale,TRX-6AF083A95D47D,cash,₱50.00,completed,2026-11-08 14:14:01
+PAY-6AF0838F76A61,Walk-in,sale,TRX-6AF0838F6D629,cash,₱50.00,completed,2026-11-08 14:13:35
+PAY-6AF083607ACBF,Walk-in,sale,TRX-6AF0836071076,cash,₱50.00,completed,2026-11-08 14:12:48
+PAY-6AF0834EB15DE,Walk-in,sale,TRX-6AF0834EA7045,cash,₱50.00,completed,2026-11-08 14:12:30
+PAY-6AF083064F42D,Walk-in,sale,TRX-6AF08306431C4,cash,₱50.00,completed,2026-11-08 14:11:18
+PAY-6AF081D4D241A,Walk-in,sale,TRX-6AF081D4A0BFA,cash,₱50.00,completed,2026-11-08 14:06:12
+SERVICE-24,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:55:01
+SERVICE-23,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:54:02
+SERVICE-22,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:52:24
+SERVICE-21,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:45:00
+SERVICE-20,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:36:38
+SERVICE-19,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:35:23
+SERVICE-18,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:34:36
+SERVICE-17,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-08 13:33:46
+BOARDING-9,CUSTOMER,boarding,Boarding #9,,₱500.00,unpaid,2026-11-08 12:30:13
+BOARDING-8,CUSTOMER,boarding,Boarding #8,,₱500.00,unpaid,2026-11-08 12:30:07
+BOARDING-7,CUSTOMER,boarding,Boarding #7,gcash,₱500.00,paid,2026-11-08 12:29:01
+BOARDING-6,CUSTOMER,boarding,Boarding #6,gcash,₱500.00,paid,2026-11-08 12:27:37
+BOARDING-5,CUSTOMER,boarding,Boarding #5,gcash,₱500.00,unpaid,2026-11-08 12:24:01
+BOARDING-4,CUSTOMER,boarding,Boarding #4,gcash,₱500.00,pending,2026-11-08 12:22:33
+BOARDING-3,CUSTOMER,boarding,Boarding #3,gcash,₱500.00,pending,2026-11-08 12:14:14
+SERVICE-16,CUSTOMER,service_request,Basic Bath and Blow Dry Medium Breed,gcash,,paid,2026-11-08 12:04:14
+SERVICE-15,CUSTOMER,service_request,Basic Bath and Blow Dry Medium Breed,gcash,,paid,2026-11-08 12:01:50
+SERVICE-14,CUSTOMER,service_request,Basic Bath and Blow Dry Medium Breed,gcash,,pending,2026-11-08 11:59:02
+SERVICE-13,CUSTOMER,service_request,Basic Bath and Blow Dry Medium Breed,gcash,,paid,2026-11-08 11:57:42
+SERVICE-12,CUSTOMER,service_request,Veterinary Consultation,gcash,,paid,2026-11-08 11:33:08
+PAY-6AF05DC15C564,Walk-in,sale,TRX-6AF05DC121FFF,cash,₱250.00,completed,2026-11-08 11:32:17
+SERVICE-11,CUSTOMER,service_request,Standard Grooming,gcash,,paid,2026-11-08 11:31:26
+SERVICE-10,CUSTOMER,service_request,Standard Grooming,gcash,,rejected,2026-11-08 11:30:48
+BOARDING-2,CUSTOMER,boarding,Boarding #2,,₱500.00,unpaid,2026-11-08 11:30:33
+SERVICE-9,CUSTOMER,service_request,Standard Grooming,,,unpaid,2026-11-08 11:30:08
+SERVICE-8,CUSTOMER,service_request,Veterinary Consultation,gcash,,paid,2026-11-08 11:20:31
+PAY-6AF05ADA63A27,Walk-in,sale,TRX-6AF05ADA57B5E,cash,₱250.00,completed,2026-11-08 11:19:54
+SERVICE-7,CUSTOMER,service_request,Standard Grooming,gcash,,paid,2026-11-08 11:18:16
+SERVICE-6,CUSTOMER,service_request,Standard Grooming,gcash,,rejected,2026-11-08 11:16:39
+BOARDING-1,CUSTOMER,boarding,Boarding #1,,₱500.00,unpaid,2026-11-08 11:16:24
+SERVICE-5,CUSTOMER,service_request,Standard Grooming,,,unpaid,2026-11-08 11:16:01
+PAY-6AF05729A7720,Walk-in,sale,TRX-6AF057299D2D5,cash,₱100.00,completed,2026-11-08 11:04:09
+SERVICE-4,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-08 11:00:33
+PAY-6AF054155AEAC,Walk-in,sale,TRX-6AF054154D48E,cash,₱100.00,completed,2026-11-08 10:51:01
+SERVICE-3,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-08 10:47:13
+PAY-6AF052AAC1122,Walk-in,sale,TRX-6AF052AAB7888,cash,₱100.00,completed,2026-11-08 10:44:58
+PAY-6AF0526D3C3B6,Walk-in,sale,TRX-6AF0526D2B9C9,cash,₱100.00,completed,2026-11-08 10:43:57
+PAY-6AF0526D53453,Walk-in,sale,TRX-6AF0526D4597B,cash,₱100.00,completed,2026-11-08 10:43:57
+SERVICE-2,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-08 10:40:08
+SERVICE-1,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-08 10:35:36
+
+FINDINGS & RECOMMENDATIONS
+1. Finding: 46 record(s) are included in the detailed schedule for this report.
+Review the underlying source records and supporting documentation before
+approval.
+2. Recommendation: Retain this report with its source records and obtain the
+required review and approval signatures.
+
+CERTIFICATION & SIGNATURES
+I certify that this report presents the records and calculations available to
+the organization as of the issue date. Supporting records should be retained
+with this report.
+
+Role,Name,Designation
+Prepared by,ADMINISTRATOR,admin
+Reviewed by,,Authorized Reviewer
+Approved by,,Approving Officer
+Date Signed: ______________________
+
+ADMIN-PAYMENT-REPORTS-20261108 | Pawesome Retreat Inc. | For authorized business
+use

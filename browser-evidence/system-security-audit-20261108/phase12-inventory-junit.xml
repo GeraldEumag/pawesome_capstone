@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="108.91399899999999">
+<testsuite name="phase12-inventory-workflow.spec.js" timestamp="2026-11-08T13:10:49.847Z" hostname="chromium" tests="3" failures="0" skipped="0" time="107.458" errors="0">
+<testcase name="Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, audit, reconciliation" classname="phase12-inventory-workflow.spec.js" time="98.325">
+</testcase>
+<testcase name="Phase 12.3 inventory rejects unauthorized access, tampering, duplicates, and insufficient stock" classname="phase12-inventory-workflow.spec.js" time="7.368">
+</testcase>
+<testcase name="Phase 12.3 concurrent stock movements cannot oversell or double-deduct inventory" classname="phase12-inventory-workflow.spec.js" time="1.765">
+</testcase>
+</testsuite>
+</testsuites>

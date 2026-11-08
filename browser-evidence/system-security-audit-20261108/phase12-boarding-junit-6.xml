@@ -1,0 +1,66 @@
+<testsuites id="" name="" tests="3" failures="1" skipped="2" errors="0" time="90.510063">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:23:43.561Z" hostname="chromium" tests="3" failures="1" skipped="2" time="88.891" errors="0">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="88.891">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png]]
+
+[[ATTACHMENT|phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-3.png]]
+
+[[ATTACHMENT|phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md]]
+]]>
+</system-out>
+<failure message="expect(locator).toHaveCount(expected) failed" type="expect.toHaveCount">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:112:1 › Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.pa-card').filter({ hasText: 'P12B-40624788' })
+    Expected: 1
+    Received: 0
+    Timeout:  45000ms
+
+    Call log:
+      - Expect "toHaveCount" with timeout 45000ms
+      - waiting for locator('.pa-card').filter({ hasText: 'P12B-40624788' })
+        48 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      218 |   const cashierPage = cashierView.page;
+      219 |   const card = cashierPage.locator(".pa-card").filter({ hasText: reference });
+    > 220 |   await expect(card).toHaveCount(1, { timeout: 45000 });
+          |                      ^
+      221 |   await card.locator(".pa-btn-verify").click();
+      222 |   await cashierPage.locator("#paRefNum").fill(reference);
+      223 |   const verifyButton = cashierPage.locator(".pw-modal .pa-btn-verify");
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:220:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-6\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

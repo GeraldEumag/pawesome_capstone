@@ -1,0 +1,83 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="2" errors="1" time="70.10616200000001">
+<testsuite name="phase12-boarding-workflow.spec.js" timestamp="2026-11-08T12:27:19.417Z" hostname="chromium" tests="3" failures="0" skipped="2" time="68.462" errors="1">
+<testcase name="Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in" classname="phase12-boarding-workflow.spec.js" time="68.462">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png]]
+
+[[ATTACHMENT|phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-3.png]]
+
+[[ATTACHMENT|phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-4.png]]
+
+[[ATTACHMENT|phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md]]
+]]>
+</system-out>
+<system-err>
+<![CDATA[PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'room_name' in 'field list' in Command line code:4
+Stack trace:
+#0 Command line code(4): PDO->query('SELECT id,servi...')
+#1 {main}
+  thrown in Command line code on line 4
+]]>
+</system-err>
+<error message="Command failed: php -r" type="Error">
+<![CDATA[  [chromium] › phase12-boarding-workflow.spec.js:112:1 › Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in 
+
+    Error: Command failed: php -r 
+    $db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    $id=(int)$argv[1];
+    $b=$db->query("SELECT id,service_request_id,pet_id,customer_id,room_name,room_type,check_in,check_out,status,total_amount,payment_status,payment_method,payment_reference,payment_proof,vaccination_card,vaccination_card_verified_at,booking_channel,approved_by,approved_at,verified_by,verified_at,paid_at,receipt_number,actual_check_in,checked_in_at,checked_in_by FROM boardings WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
+    $r=$db->query("SELECT id,room_id,source_type,source_id,pet_id,customer_id,check_in_date,check_out_date,status FROM boarding_room_reservations WHERE source_type='pet_hotel' AND source_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $pr=$db->query("SELECT id,payable_type,payable_id,uploaded_by,disk,disk_path,mime,size_bytes,sha256,submitted_reference,status FROM payment_receipts WHERE payable_type='boarding' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $refs=$db->query("SELECT id,provider,reference_normalized,payable_type,payable_id,receipt_id,confirmed_by,confirmed_at FROM payment_references WHERE payable_type='boarding' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $logs=$db->query("SELECT id,boarding_id,logged_by,log_type,title,notes FROM boarding_care_logs WHERE boarding_id=$id ORDER BY id DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(["boarding"=>$b,"reservations"=>$r,"receipts"=>$pr,"references"=>$refs,"careLogs"=>$logs],JSON_PRETTY_PRINT); 6
+    PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'room_name' in 'field list' in Command line code:4
+    Stack trace:
+    #0 Command line code(4): PDO->query('SELECT id,servi...')
+    #1 {main}
+      thrown in Command line code on line 4
+
+
+      66 | $logs=$db->query("SELECT id,boarding_id,logged_by,log_type,title,notes FROM boarding_care_logs WHERE boarding_id=$id ORDER BY id DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+      67 | echo json_encode(["boarding"=>$b,"reservations"=>$r,"receipts"=>$pr,"references"=>$refs,"careLogs"=>$logs],JSON_PRETTY_PRINT);`;
+    > 68 |   return JSON.parse(execFileSync("php", ["-r", code, String(id)], { cwd: path.resolve(__dirname, "../../backend"), encoding: "utf8" }));
+         |                     ^
+      69 | }
+      70 |
+      71 | function dbCount(sql) {
+        at dbBoarding (C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:68:21)
+        at C:\xampp\htdocs\Pawesome_Capstone\frontend\e2e\phase12-boarding-workflow.spec.js:253:14
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-2.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #3: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-3.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #4: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\test-failed-4.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\..\browser-evidence\system-security-audit-20261108\phase12-boarding-output-7\phase12-boarding-workflow--fd20f-roval-room-payment-check-in-chromium\error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="Phase 12.2 negatives: payment/date prerequisites and cross-customer boarding access are enforced" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Phase 12.2 room race: concurrent same-room submissions allow only one reservation" classname="phase12-boarding-workflow.spec.js">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

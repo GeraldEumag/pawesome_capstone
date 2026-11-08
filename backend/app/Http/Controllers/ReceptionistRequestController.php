@@ -391,6 +391,14 @@ class ReceptionistRequestController extends Controller
         }
 
         $serviceRequest->status = $validated['status'];
+        if ($validated['status'] === 'approved' && $previousStatus !== 'approved') {
+            if (Schema::hasColumn('service_requests', 'approved_by')) {
+                $serviceRequest->approved_by = $request->user()?->id;
+            }
+            if (Schema::hasColumn('service_requests', 'approved_at')) {
+                $serviceRequest->approved_at = now();
+            }
+        }
         if ($validated['status'] === 'ready_for_pickup' && Schema::hasColumn('service_requests', 'ready_for_pickup_at')) {
             $serviceRequest->ready_for_pickup_at = now();
         }

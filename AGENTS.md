@@ -584,3 +584,12 @@ Automatic receipt reading for customer e-wallet proofs — see
 - Eval harness: `php artisan chatbot:eval` runs 11 fixture cases (incl.
   Taglish + off-topic refusal) through `PremiumChatbotService`; add cases
   when facts change. Tests: `--filter=ChatbotReliabilityTest|ChatbotGroqTest`.
+
+## Current audit verification notes (2026-11-08)
+
+- Frontend unit verification: `npm run test:unit`; restore missing declared packages with the committed npm lockfile (`npm ci`), not a new Yarn lock.
+- `backend/route_audit_analyzer.php [new-output.json]` reads effective routes and resolved middleware, and refuses to overwrite existing evidence. Legacy Gate scripts still need path/safety review before execution.
+- Reviewed live mutation specs require an explicitly isolated API/database/storage target. Do not run the whole legacy browser directory blindly: some specs hardcode API/remote URLs or historical output paths.
+- User-approved vet-tech contract: read the limited active appointment intake board and check patients in; veterinary history/dashboard/clinical writes remain forbidden. `VetAppointments` must not request vet-only history or expose doctor controls for techs.
+- `security-concurrency-audit.spec.js` requires local APIs :8001/:8002 sharing only `pawesome_e2e_audit` and `E2E_AUDIT_DATABASE=pawesome_e2e_audit`; it uses a bounded synthetic row lock to exercise true concurrent retries.
+- Current checkpoint and remaining gaps: `docs/audit/SYSTEM_AUDIT_TRACKER.md`. Local MariaDB passes are not MySQL 8 CI or production-readiness proof.
