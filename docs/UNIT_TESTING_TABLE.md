@@ -3,7 +3,7 @@
 Pawesome test results, grouped by module. Each Status comes from an actual
 test run (backend, frontend unit and E2E 2026-11-08), not from assumption.
 
-- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-08): 901 passed, 1 skipped, 0 failed (4,082 assertions), including `LandingPageContentAdminTest` (13 tests). The skip is the GD-dependent test (GD is not installed locally).
+- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-12): 923 passed, 1 skipped, 0 failed (4,603 assertions), including `LandingPageContentAdminTest` (13 tests). The skip is the GD-dependent test (GD is not installed locally).
 - **Frontend unit (Vitest + React Testing Library):** 29 passed in 6 files (`client.test.js`, `StatusBadge.test.jsx`, `ProtectedRoute.test.jsx`, `Login.test.jsx`, `Modal.test.jsx`, `DatePickerInput.test.jsx`).
 - **Frontend E2E (Playwright):** against the live dev stack, run serially (one worker). Latest full run (2026-11-08): 583 passed, 1 failed, 1 flaky (passed on retry), 2 skipped, 0 did not run, of 587 (~44 min). The one failure — `booking-channel-gating` walk-in counter-collection — was a test-side slot-probing gap; it is now availability-driven and verified passing. The two skips are intentional (the after-18:00 check-in gate, and booking rules covered by `CustomerBookingRulesTest.php`). Statuses in the table are from individual and grouped runs.
 
@@ -42,10 +42,10 @@ Status meanings:
 | Veterinary | Cancellation reason (`VetCancellationReasonTest` 7) | Cancel with predefined reason | Reason stored; invalid reason refused | Working |
 | Veterinary | Medical record form payload (`MedicalRecordFormPayloadTest` 1) | Record form fields | Payload saved | Working |
 | Veterinary | Vet dashboard and deletion reasons in the browser (E2E `vet-dashboard` 7, `deletion-reasons`) | Vet UI navigation; vet service deletion | Pages render; reason required | Working |
-| **Manager** | Payroll computation (`PayrollCalculationTest` 13, `PayrollIndustryTest` 11, `PayrollLeavePolicyAuditTest` 8, `PayrollEndToEndTest` 9, `HrFinanceWorkflowTest` 23) | Attendance, leave, rates, deductions | Gross, deductions, and net correct | Working |
+| **Manager** | Payroll computation (`PayrollCalculationTest` 13, `PayrollIndustryTest` 11, `PayrollLeavePolicyAuditTest` 8, `PayrollEndToEndTest` 9, `HrFinanceWorkflowTest` 23, `PayrollYear2026Test` 6) | Attendance, leave, rates, deductions; all 24 semi-monthly periods of 2026; holiday premiums | Gross, deductions, and net correct; period boundaries enforced | Working |
 | Manager | Day-offs (`DayOffScheduleTest` 9) | Set and clear day-offs | Schedule updated; invalid input refused | Working |
 | Manager | Leave requests (`MyLeaveSelfServiceTest` 5) | Employee leave filing and balance | Balance deducted on approval | Working |
-| Manager | Attendance and corrections (`AttendanceCorrectionConsistencyTest` 13, `ManagerAttendanceApiTest` 4, `BarcodeLookupTest` 23) | Barcode punch; correction request | Punch recorded; correction applied after approval | Working |
+| Manager | Attendance and corrections (`AttendanceCorrectionConsistencyTest` 13, `ManagerAttendanceApiTest` 4, `BarcodeLookupTest` 23, `PayrollYear2026Test` 6) | Barcode/kiosk punch; correction request; kiosk→payroll feed | Punch recorded; correction applied after approval; kiosk punches counted in payroll | Working |
 | Manager | Staff directory (`ManagerPeopleEndpointTest` 5) | Staff list request | Scoped staff data returned | Working |
 | Manager | Receipt scanner settings and metrics (`ReceiptScannerSettingsTest` 6, new) | Provider patterns, clinic accounts, metrics request | Settings saved; metrics return per-reader data; customer gets 403 | Working |
 | Manager | Dashboard (E2E `manager-dashboard` 7, `manager-responsive-audit` 3) | Dashboard refresh; navigation | Data reloads; navigation works | Working |
@@ -71,9 +71,19 @@ Status meanings:
 ## Failing and not-run items
 
 ### PHPUnit
-No failing tests in the full run (2026-11-08). `VetUxHandoffTest::test_receptionist_can_approve_vet_request_at_rescheduled_slot`
-now passes; its fixture dates were made holiday-aware. One skip remains: the
-`ReceiptScannerTest` image-downscale case, which skips when PHP GD is unavailable.
+No failing tests in the full run (2026-11-12): 923 passed, 1 skipped (the
+`ReceiptScannerTest` image-downscale case, which skips when PHP GD is unavailable).
+The new `PayrollYear2026Test` (6 tests, 446 assertions) verifies the attendance
+kiosk → payroll connection end-to-end: PIN-gated barcode punches land on
+`attendance` rows (source `barcode`, schedule-aware late flags) and are counted
+by `/api/manager/payroll/compute` and `/generate`. While building it, a real
+defect was found and fixed: `Attendance::calculateHours()` read `break_time`
+through the `datetime:H:i` cast, so a reloaded row's `(string)` value
+(`'2026-01-05 01:00:00'`) parsed the year as hours — every check-out re-save
+silently wrote `total_hours = 0` and `overtime_hours = 0` for kiosk staff.
+The model now formats the cast value back to `H:i`, and overnight punches
+(check-out before check-in) roll the check-out to the next day, matching the
+service-side `nightDiffMinutes` convention.
 
 ### Playwright E2E (full serial run, 2026-11-08)
 - Result: 583 passed, 1 failed, 1 flaky (passed on retry), 2 skipped, 0 did not run, of 587 (~44 min).

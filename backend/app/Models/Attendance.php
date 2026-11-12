@@ -80,12 +80,20 @@ class Attendance extends Model
         if ($this->check_in && $this->check_out) {
             $checkIn  = \Carbon\Carbon::parse($this->check_in);
             $checkOut = \Carbon\Carbon::parse($this->check_out);
+            if ($checkOut->lt($checkIn)) {
+                $checkOut->addDay(); // overnight shift crosses midnight
+            }
 
             $totalMinutes = $checkIn->diffInMinutes($checkOut);
 
             // Break time: parse H:i as integer minutes (avoids diffInMinutes-from-midnight bug)
             if ($this->break_time) {
-                $parts        = explode(':', (string) $this->break_time);
+                // The datetime cast returns a Carbon on reloaded rows — format
+                // it back to H:i; a raw string passes through unchanged.
+                $rawBreak     = $this->break_time instanceof \Carbon\Carbon
+                    ? $this->break_time->format('H:i')
+                    : (string) $this->break_time;
+                $parts        = explode(':', $rawBreak);
                 $breakMinutes = ((int) $parts[0]) * 60 + ((int) ($parts[1] ?? 0));
             } else {
                 $breakMinutes = \App\Support\CompanySchedule::breakMinutes();
