@@ -57,9 +57,10 @@ export const useLandingPageContent = () => {
   }, []);
 
   useEffect(() => {
-    if (!getCached()) {
-      refetch();
-    }
+    // Always revalidate in the background. Cached content still paints
+    // instantly, and admin changes propagate within seconds instead of
+    // waiting out the full cache TTL.
+    refetch();
   }, [refetch]);
 
   // Listen for admin-triggered cache invalidation

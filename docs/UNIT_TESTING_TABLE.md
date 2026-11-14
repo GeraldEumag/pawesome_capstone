@@ -3,8 +3,8 @@
 Pawesome test results, grouped by module. Each Status comes from an actual
 test run (backend, frontend unit and E2E 2026-11-08), not from assumption.
 
-- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-14): 930 passed, 1 skipped, 0 failed (4,651 assertions), including `LandingPageContentAdminTest` (13 tests). The skip is the GD-dependent test (GD is not installed locally).
-- **Frontend unit (Vitest + React Testing Library):** 29 passed in 6 files (`client.test.js`, `StatusBadge.test.jsx`, `ProtectedRoute.test.jsx`, `Login.test.jsx`, `Modal.test.jsx`, `DatePickerInput.test.jsx`).
+- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-15): 937 passed, 1 skipped, 0 failed (4,697 assertions), including `LandingPageContentAdminTest` (13 tests) and `Attendance2027SeederTest` (7 tests). The skip is the GD-dependent test (GD is not installed locally).
+- **Frontend unit (Vitest + React Testing Library):** 32 passed in 7 files (`client.test.js`, `StatusBadge.test.jsx`, `ProtectedRoute.test.jsx`, `Login.test.jsx`, `Modal.test.jsx`, `DatePickerInput.test.jsx`, `DynamicHero.test.jsx`).
 - **Frontend E2E (Playwright):** against the live dev stack, run serially (one worker). Latest full run (2026-11-08): 583 passed, 1 failed, 1 flaky (passed on retry), 2 skipped, 0 did not run, of 587 (~44 min). The one failure — `booking-channel-gating` walk-in counter-collection — was a test-side slot-probing gap; it is now availability-driven and verified passing. The two skips are intentional (the after-18:00 check-in gate, and booking rules covered by `CustomerBookingRulesTest.php`). Statuses in the table are from individual and grouped runs.
 
 Status meanings:
@@ -46,6 +46,7 @@ Status meanings:
 | Manager | Day-offs (`DayOffScheduleTest` 9) | Set and clear day-offs | Schedule updated; invalid input refused | Working |
 | Manager | Leave requests (`MyLeaveSelfServiceTest` 5) | Employee leave filing and balance | Balance deducted on approval | Working |
 | Manager | Attendance and corrections (`AttendanceCorrectionConsistencyTest` 13, `ManagerAttendanceApiTest` 4, `BarcodeLookupTest` 23, `PayrollYear2026Test` 6) | Barcode/kiosk punch; correction request; kiosk→payroll feed | Punch recorded; correction applied after approval; kiosk punches counted in payroll | Working |
+| Manager | 2027 attendance demo seed (`Attendance2027SeederTest` 7, new) | `Attendance2027Seeder` full-year run | Imperfect Jan–Dec 2027 rows (lates, absences, leaves, undertime, OT, missed punches, rest-day/holiday work, mid-year hire); idempotent re-run; payroll computes from them | Working |
 | Manager | Staff directory (`ManagerPeopleEndpointTest` 5) | Staff list request | Scoped staff data returned | Working |
 | Manager | Receipt scanner settings and metrics (`ReceiptScannerSettingsTest` 6, new) | Provider patterns, clinic accounts, metrics request | Settings saved; metrics return per-reader data; customer gets 403 | Working |
 | Manager | Dashboard (E2E `manager-dashboard` 7, `manager-responsive-audit` 3) | Dashboard refresh; navigation | Data reloads; navigation works | Working |
@@ -86,6 +87,23 @@ The model now formats the cast value back to `H:i`, and overnight punches
 (check-out before check-in) roll the check-out to the next day, matching the
 service-side `nightDiffMinutes` convention.
 
+`Attendance2027SeederTest` (7 tests) pins the demo/payroll seeder: realistic
+imperfect Jan–Dec 2027 attendance for staff users and four non-account
+employees — personas (reliable/steady/frequently-late/irregular/mid-year
+hire), absences incl. a scripted stretch, leave blocks, undertime, overtime,
+missed punches, Sunday rest-day work, and two worked regular holidays — plus
+2027 PH holidays, idempotent re-runs, and a `compute` row with real
+consequences. The seeder's `run()` no-ops under `testing` so DatabaseSeeder
+registration stays safe.
+
+On the landing page, replaced images used to flash for ~1s before the
+admin-configured one appeared: with no fresh cache, `DynamicHero`/`DynamicAbout`
+rendered bundled default photos while `/api/landing-page` was in flight. The
+components now render a neutral shimmer while loading (verified by
+`DynamicHero.test.jsx`), and `useLandingPageContent` always revalidates in the
+background so admin changes appear within seconds instead of waiting out the
+5-minute cache TTL.
+
 ### Playwright E2E (full serial run, 2026-11-08)
 - Result: 583 passed, 1 failed, 1 flaky (passed on retry), 2 skipped, 0 did not run, of 587 (~44 min).
 - The one failure — `booking-channel-gating.spec.js` "walk-in booking: queued for counter collection" — was a test-side gap: its fixture blind-posted candidate dates instead of asking the real availability endpoint. It is now availability-driven (same pattern as the spec's online-booking test) and verified passing in isolation.
@@ -98,4 +116,4 @@ All failures were investigated to root cause and fixed in test or app code; none
 
 ## Coverage gaps (not covered by any test)
 - Telegram bot messaging — intentionally skipped (out of scope per owner decision)
-- Frontend unit coverage is still selective: 29 Vitest tests cover `client`, `Login`, `ProtectedRoute`, `StatusBadge`, `Modal`, and `DatePickerInput`; most other components have none.
+- Frontend unit coverage is still selective: 32 Vitest tests cover `client`, `Login`, `ProtectedRoute`, `StatusBadge`, `Modal`, `DatePickerInput`, and `DynamicHero`; most other components have none.

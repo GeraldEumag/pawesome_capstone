@@ -8,8 +8,12 @@ const DEFAULT_HERO = {
   primary_cta: "Explore services",
 };
 
-const DynamicHero = ({ content, onBookService }) => {
+const DynamicHero = ({ content, loading = false, onBookService }) => {
   const data = content ?? DEFAULT_HERO;
+  // While the first fetch is in flight there is no configured image yet —
+  // render a neutral shimmer instead of the bundled default so a replaced
+  // image never flashes before the real one arrives.
+  const imagePending = loading && !data.image;
 
   return (
     <section id="home" className="landing-hero">
@@ -30,13 +34,17 @@ const DynamicHero = ({ content, onBookService }) => {
         </div>
 
         <div className="landing-hero-visual">
-          <img
-            className="landing-hero-image"
-            src={data.image || pawesomeLogo}
-            alt="A comfortable pet care space at Pawesome Retreat"
-            fetchpriority="high"
-            decoding="async"
-          />
+          {imagePending ? (
+            <div className="landing-hero-image landing-media-skeleton" aria-hidden="true" />
+          ) : (
+            <img
+              className="landing-hero-image"
+              src={data.image || pawesomeLogo}
+              alt="A comfortable pet care space at Pawesome Retreat"
+              fetchpriority="high"
+              decoding="async"
+            />
+          )}
         </div>
       </div>
     </section>

@@ -18,6 +18,7 @@ Last updated: 2026-11-08. All seven role batches (1-7) are covered. Latest full 
 | Public | anonymous | `GET /api/health`, `/api/settings/public`, `/api/landing-page` | n/a | allowed | `CustomerBatch1SystemTest` | `CustomerBatch1SystemTest.php` | Working |
 | Public | anonymous | `/attendance-kiosk` (PIN gate) | `KioskGate` | allowed | `KioskPinTest` | `KioskPinTest.php` | Working (backend) |
 | Public | anonymous | `POST /api/kiosk/punch` → payroll feed | `BarcodeAttendanceController` → `attendance` | PIN or staff token | `PayrollYear2026Test` | `PayrollYear2026Test.php` | Working (backend) |
+| Public | anonymous | Landing hero/about image load | `DynamicHero`, `DynamicAbout` | shimmer until CMS content resolves; no bundled-default flash | `DynamicHero.test.jsx` | `DynamicHero.test.jsx` | Working (unit) |
 | Public | anonymous | Landing mobile drawer | `LandingPage` | allowed | `public-pages-responsive-audit` | none | Working |
 | Public | anonymous | Landing chatbot | `LandingChatbot` | allowed | none in batch 1 | none | Not covered |
 
@@ -142,6 +143,7 @@ Last updated: 2026-11-08. All seven role batches (1-7) are covered. Latest full 
 | Manager | manager | dashboard/staff/people/reports role gate | `ManagerBatch6SystemTest` | 401 guest, 403 customer+cashier, 200 manager | yes | Working |
 | Manager | admin | manager workspace access | `ManagerBatch6SystemTest` | 200 | yes | Working |
 | Manager | manager | attendance contract, payroll scope, dashboard, responsive | `manager-attendance-contract`, `manager-payroll-scope`, `manager-dashboard`, `manager-responsive-audit` | pass after fixture/selector fixes | yes | Working |
+| Manager | manager | 2027 payroll demo seed | `Attendance2027SeederTest.php` | realistic imperfect Jan–Dec 2027 attendance; payroll computes lates/absences/OT; idempotent | yes | Working |
 
 ## Batch 7: Admin
 

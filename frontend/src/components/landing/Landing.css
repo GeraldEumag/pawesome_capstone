@@ -2745,3 +2745,26 @@ body {
   .landing-logo-text strong { font-size: 0.88rem; }
   .landing-hero-copy h1 { font-size: 2rem !important; }
 }
+
+/* Neutral shimmer shown while CMS images load - prevents bundled
+   default photos from flashing before admin-configured ones arrive. */
+.landing-media-skeleton {
+  background: linear-gradient(100deg, rgba(255, 95, 147, 0.07) 40%, rgba(255, 95, 147, 0.16) 50%, rgba(255, 95, 147, 0.07) 60%), #fdf3f7;
+  background-size: 200% 100%;
+  animation: landing-media-shimmer 1.4s ease-in-out infinite;
+}
+
+.landing-media-skeleton-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+@keyframes landing-media-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-media-skeleton { animation: none; }
+}

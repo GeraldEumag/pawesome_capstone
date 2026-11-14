@@ -210,7 +210,7 @@ const LandingPage = () => {
       </nav>
 
       <main>
-        <DynamicHero content={getSection("hero")} onBookService={scrollToServices} />
+        <DynamicHero content={getSection("hero")} loading={loading} onBookService={scrollToServices} />
 
         <div id="featured-services-anchor">
           <DynamicFeaturedServices
@@ -219,7 +219,7 @@ const LandingPage = () => {
           />
         </div>
 
-        <DynamicAbout content={getSection("about")} />
+        <DynamicAbout content={getSection("about")} loading={loading} />
       </main>
 
       <footer id="contact" className="landing-footer">

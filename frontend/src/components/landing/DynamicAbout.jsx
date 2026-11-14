@@ -23,9 +23,13 @@ const resolvePhotos = (data) => {
   return DEFAULT_ABOUT_PHOTOS;
 };
 
-const DynamicAbout = ({ content }) => {
+const DynamicAbout = ({ content, loading = false }) => {
   const data = content ?? DEFAULT_ABOUT;
   const points = (Array.isArray(data.points) ? data.points : DEFAULT_ABOUT.points).slice(0, 3);
+  // While the first fetch is in flight there is no configured photo set —
+  // show a neutral shimmer instead of the bundled defaults so replaced
+  // photos never flash before the real ones arrive.
+  const imagePending = loading && !content;
   const photos = resolvePhotos(data);
   const [activeIdx, setActiveIdx] = useState(0);
   const activePhoto = photos[activeIdx] ?? photos[0];
@@ -34,31 +38,37 @@ const DynamicAbout = ({ content }) => {
     <section id="about" className="landing-about">
       <div className="landing-about-card">
         <div className="landing-about-image">
-          <img
-            key={activePhoto.image}
-            src={activePhoto.image}
-            alt={activePhoto.caption || "Pawesome Retreat pet care facility"}
-            loading="lazy"
-            decoding="async"
-          />
-          {photos.length > 1 && (
+          {imagePending ? (
+            <div className="landing-media-skeleton landing-media-skeleton-fill" aria-hidden="true" />
+          ) : (
             <>
-              <button
-                type="button"
-                className="landing-about-arrow landing-about-arrow-prev"
-                aria-label="Previous facility photo"
-                onClick={() => setActiveIdx((idx) => (idx - 1 + photos.length) % photos.length)}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-              <button
-                type="button"
-                className="landing-about-arrow landing-about-arrow-next"
-                aria-label="Next facility photo"
-                onClick={() => setActiveIdx((idx) => (idx + 1) % photos.length)}
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
+              <img
+                key={activePhoto.image}
+                src={activePhoto.image}
+                alt={activePhoto.caption || "Pawesome Retreat pet care facility"}
+                loading="lazy"
+                decoding="async"
+              />
+              {photos.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="landing-about-arrow landing-about-arrow-prev"
+                    aria-label="Previous facility photo"
+                    onClick={() => setActiveIdx((idx) => (idx - 1 + photos.length) % photos.length)}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </button>
+                  <button
+                    type="button"
+                    className="landing-about-arrow landing-about-arrow-next"
+                    aria-label="Next facility photo"
+                    onClick={() => setActiveIdx((idx) => (idx + 1) % photos.length)}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
