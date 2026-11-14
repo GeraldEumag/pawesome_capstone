@@ -3,7 +3,7 @@
 Pawesome test results, grouped by module. Each Status comes from an actual
 test run (backend, frontend unit and E2E 2026-11-08), not from assumption.
 
-- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-12): 923 passed, 1 skipped, 0 failed (4,603 assertions), including `LandingPageContentAdminTest` (13 tests). The skip is the GD-dependent test (GD is not installed locally).
+- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-14): 930 passed, 1 skipped, 0 failed (4,651 assertions), including `LandingPageContentAdminTest` (13 tests). The skip is the GD-dependent test (GD is not installed locally).
 - **Frontend unit (Vitest + React Testing Library):** 29 passed in 6 files (`client.test.js`, `StatusBadge.test.jsx`, `ProtectedRoute.test.jsx`, `Login.test.jsx`, `Modal.test.jsx`, `DatePickerInput.test.jsx`).
 - **Frontend E2E (Playwright):** against the live dev stack, run serially (one worker). Latest full run (2026-11-08): 583 passed, 1 failed, 1 flaky (passed on retry), 2 skipped, 0 did not run, of 587 (~44 min). The one failure — `booking-channel-gating` walk-in counter-collection — was a test-side slot-probing gap; it is now availability-driven and verified passing. The two skips are intentional (the after-18:00 check-in gate, and booking rules covered by `CustomerBookingRulesTest.php`). Statuses in the table are from individual and grouped runs.
 
@@ -51,6 +51,7 @@ Status meanings:
 | Manager | Dashboard (E2E `manager-dashboard` 7, `manager-responsive-audit` 3) | Dashboard refresh; navigation | Data reloads; navigation works | Working |
 | **Admin** | Role and permission matrix (`AuthorizationMatrixTest` 11, `P1SecurityIntegrityTest` 15) | Requests per role | Each role reaches only its own modules | Working |
 | Admin | Deletion reasons (`DeletionReasonAuditTest` 6) | Delete with and without reason | Reason required and audited | Working |
+| Admin | Deleted-account email reuse (`DeletedUserEmailReuseTest` 7) | Re-register after admin/salary/receptionist delete; restore conflict | Tombstones free email/username; restore returns them or 422s when reclaimed | Working |
 | Admin | Audit logs (`AuditLogTest` 9, `AuditRegressionTest` 10) | Auditable actions | Entries written | Working |
 | Admin | Theme settings (`SystemThemeSettingsTest` 3) | Theme setting update | Setting saved and returned | Working |
 | Admin | Attendance kiosk PIN (`KioskPinTest` 4, new) | Correct PIN; wrong PIN; blank; unset PIN | Correct PIN unlocks; others refused | Working |

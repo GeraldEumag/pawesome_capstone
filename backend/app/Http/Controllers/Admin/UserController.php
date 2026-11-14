@@ -33,8 +33,8 @@ class UserController extends Controller
             'first_name' => 'nullable|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'username' => 'required|string|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
+            'username' => 'required|string|max:255|unique:users,username,NULL,id,deleted_at,NULL',
             'password' => 'required|string|min:6',
             'phone' => 'sometimes|string|max:20',
             'address' => 'sometimes|string|max:255',
@@ -170,8 +170,8 @@ class UserController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
-            'username' => 'sometimes|string|max:255|unique:users,username,' . $id,
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id . ',id,deleted_at,NULL',
+            'username' => 'sometimes|string|max:255|unique:users,username,' . $id . ',id,deleted_at,NULL',
             'role' => 'sometimes|string|in:admin,manager,receptionist,super_receptionist,veterinary,vet_tech,cashier,inventory,customer',
             'is_active' => 'boolean',
         ]);
@@ -302,6 +302,17 @@ class UserController extends Controller
             ],
         ]);
 
+        // The linked customer row is kept (deletion_reason records why), but
+        // its email must leave the unique index so the same address can
+        // register a new account. The hook only fires on delete(), so the
+        // live customer row is scrubbed here directly.
+        if ($user->customer && $user->customer->email) {
+            $user->customer->original_email = $user->customer->email;
+            $user->customer->email = "deleted_{$user->customer->id}@customers.invalid";
+            $user->customer->save();
+        }
+
+        // User::deleting tombstones email/username/employee_no into original_*.
         $user->delete();
 
         return response()->json(['message' => 'User deleted successfully']);
@@ -314,7 +325,25 @@ class UserController extends Controller
             return response()->json(['message' => 'User not found or not deleted'], 404);
         }
 
-        $user->restore();
+        if (!$user->restore()) {
+            return response()->json([
+                'message' => 'Cannot restore: the original email, username, or employee number is now used by another account.'
+            ], 422);
+        }
+
+        // Put the linked customer's email back too, when it is still free.
+        $customer = $user->customer()->withTrashed()->first();
+        if ($customer && $customer->original_email) {
+            $taken = \App\Models\Customer::withTrashed()
+                ->where('id', '!=', $customer->id)
+                ->where('email', $customer->original_email)
+                ->exists();
+            if (!$taken) {
+                $customer->email = $customer->original_email;
+                $customer->original_email = null;
+                $customer->save();
+            }
+        }
 
         ActivityLog::log(auth()->id(), 'user_restored', "User #{$user->id} ({$user->email}) restored", [
             'category' => 'user_management',

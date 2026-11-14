@@ -35,6 +35,43 @@ class Customer extends Model
     ];
 
     /**
+     * Soft-delete frees the unique email index so the same address can
+     * register again; the original is kept in original_email for the
+     * audit trail and the restore path.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Customer $customer) {
+            if ($customer->email) {
+                $customer->original_email = $customer->email;
+                $customer->email = "deleted_{$customer->id}@customers.invalid";
+                // runSoftDelete() only writes deleted_at — save the swap here.
+                $customer->save();
+            }
+        });
+
+        static::restoring(function (Customer $customer) {
+            if (!$customer->original_email) {
+                return true;
+            }
+
+            $taken = static::withTrashed()
+                ->where('id', '!=', $customer->id)
+                ->where('email', $customer->original_email)
+                ->exists();
+
+            if ($taken) {
+                return false;
+            }
+
+            $customer->email = $customer->original_email;
+            $customer->original_email = null;
+
+            return true;
+        });
+    }
+
+    /**
      * Person names are stored in ALL CAPS — business/email convention.
      */
     public function setNameAttribute($value): void

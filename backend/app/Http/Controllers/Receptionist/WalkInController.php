@@ -74,7 +74,7 @@ class WalkInController extends Controller
             'customer' => 'required_if:customer_mode,new|array',
             'customer.first_name' => 'required_if:customer_mode,new|string|max:255',
             'customer.last_name' => 'required_if:customer_mode,new|string|max:255',
-            'customer.email' => 'required_if:customer_mode,new|email|max:255|unique:users,email',
+            'customer.email' => 'required_if:customer_mode,new|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
             'customer.phone' => 'required_if:customer_mode,new|string|max:20',
             'pet' => 'required_if:customer_mode,new|array',
             'pet.name' => 'required_if:customer_mode,new|string|max:255',

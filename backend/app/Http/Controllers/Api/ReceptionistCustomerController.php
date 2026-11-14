@@ -108,10 +108,13 @@ class ReceptionistCustomerController extends Controller
         $customer->save();
 
         // A customer linked to a user account loses portal access too —
-        // login rejects inactive users.
+        // login rejects inactive users. The account row is soft-deleted so
+        // its email/username leave the unique indexes and can re-register;
+        // an admin restore can bring both records back.
         if ($customer->user) {
             $customer->user->is_active = false;
             $customer->user->save();
+            $customer->user->delete();
         }
 
         $customer->delete();

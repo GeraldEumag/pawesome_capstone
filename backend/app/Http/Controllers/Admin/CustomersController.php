@@ -101,7 +101,7 @@ class CustomersController extends Controller
         // Flexible validation - either email or phone must be provided
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'nullable|string|email|max:255|unique:customers,email',
+            'email' => 'nullable|string|email|max:255|unique:customers,email,NULL,id,deleted_at,NULL',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'is_active' => 'boolean',
@@ -143,7 +143,7 @@ class CustomersController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:customers,email,' . $id,
+            'email' => 'sometimes|string|email|max:255|unique:customers,email,' . $id . ',id,deleted_at,NULL',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'is_active' => 'boolean',
@@ -194,7 +194,11 @@ class CustomersController extends Controller
             return response()->json(['message' => 'Customer not found or not deleted'], 404);
         }
 
-        $customer->restore();
+        if (!$customer->restore()) {
+            return response()->json([
+                'message' => 'Cannot restore: the original email is now used by another customer.'
+            ], 422);
+        }
 
         return response()->json(['message' => 'Customer restored successfully']);
     }

@@ -200,6 +200,84 @@ class User extends Authenticatable
                 $user->employee_no = Employee::nextEmployeeNo();
             }
         });
+
+        // Soft-delete frees the unique identity columns (email, username,
+        // employee_no are DB-unique) so the same identity can register again;
+        // originals are preserved in original_* for audit and restore.
+        // runSoftDelete() only writes deleted_at — the swap must save itself.
+        static::deleting(function (User $user) {
+            $user->tombstoneIdentity();
+            $user->save();
+        });
+
+        static::restoring(function (User $user) {
+            return $user->restoreIdentity();
+        });
+    }
+
+    /**
+     * Replace unique identity columns with deterministic tombstones so the
+     * real values leave the unique indexes while the row is trashed.
+     */
+    public function tombstoneIdentity(): void
+    {
+        if ($this->email) {
+            $this->original_email = $this->email;
+            $this->email = "deleted_{$this->id}@users.invalid";
+        }
+        if ($this->username) {
+            $this->original_username = $this->username;
+            $this->username = "deleted_{$this->id}";
+        }
+        if ($this->employee_no) {
+            $this->original_employee_no = $this->employee_no;
+            $this->employee_no = "DEL-{$this->id}";
+        }
+    }
+
+    /**
+     * Put the preserved identity back on restore. Returns false when another
+     * account has since claimed the email, username, or employee number —
+     * the restore must not steal identifiers from a live account.
+     */
+    public function restoreIdentity(): bool
+    {
+        $hasOriginals = $this->original_email || $this->original_username || $this->original_employee_no;
+
+        if ($hasOriginals) {
+            $conflict = static::withTrashed()
+                ->where('id', '!=', $this->id)
+                ->where(function ($q) {
+                    if ($this->original_email) {
+                        $q->orWhere('email', $this->original_email);
+                    }
+                    if ($this->original_username) {
+                        $q->orWhere('username', $this->original_username);
+                    }
+                    if ($this->original_employee_no) {
+                        $q->orWhere('employee_no', $this->original_employee_no);
+                    }
+                })->exists();
+
+            if ($conflict) {
+                return false;
+            }
+        }
+
+        if ($this->original_email) {
+            $this->email = $this->original_email;
+            $this->original_email = null;
+        }
+        if ($this->original_username) {
+            $this->username = $this->original_username;
+            $this->original_username = null;
+        }
+        if ($this->original_employee_no) {
+            $this->employee_no = $this->original_employee_no;
+            $this->original_employee_no = null;
+        }
+
+        return true;
     }
 
     /**
