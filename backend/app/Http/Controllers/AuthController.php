@@ -9,6 +9,7 @@ use App\Mail\EmailVerificationMail;
 use App\Mail\PasswordChangedMail;
 use App\Mail\PasswordResetMail;
 use App\Services\EmailDeliveryService;
+use App\Support\PasswordPolicy;
 use App\Services\FileStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class AuthController extends Controller
             'last_name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,NULL,id,deleted_at,NULL',
             'email' => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
-            'password' => 'required|string|min:8',
+            'password' => ['required', PasswordPolicy::rules()],
             'phone' => 'sometimes|nullable|regex:/^09[0-9]{9}$/',
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:255',
@@ -270,7 +271,7 @@ class AuthController extends Controller
         
         $validator = Validator::make($request->all(), [
             'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => ['required', PasswordPolicy::rules(), 'confirmed'],
         ]);
 
         if ($validator->fails()) {
@@ -377,7 +378,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'token' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => ['required', PasswordPolicy::rules(), 'confirmed'],
         ]);
 
         if ($validator->fails()) {

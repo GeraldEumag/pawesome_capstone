@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SystemSetting;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +33,23 @@ class ApiTokenAuth
             || ($accessToken->expires_at && $accessToken->expires_at->isPast())
             || ($expiration && !$accessToken->created_at->gt(now()->subMinutes($expiration)))) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        // Inactivity timeout (F-04): the admin "Session Timeout" setting is
+        // advertised as "idle time before automatic logout" — enforce it
+        // against the token's last use. last_used_at is refreshed below,
+        // throttled to one write per minute so hot API clients don't add a
+        // DB write per request; timeout granularity is therefore ~1 minute.
+        $sessionTimeout = (int) SystemSetting::get('security_session_timeout', 60);
+        if ($sessionTimeout < 15 || $sessionTimeout > 480) {
+            $sessionTimeout = 60;
+        }
+        $lastActivity = $accessToken->last_used_at ?? $accessToken->created_at;
+        if ($lastActivity && $lastActivity->lt(now()->subMinutes($sessionTimeout))) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        if (!$accessToken->last_used_at || $accessToken->last_used_at->lt(now()->subMinute())) {
+            $accessToken->forceFill(['last_used_at' => now()])->save();
         }
 
         $user = $accessToken->tokenable;

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\SystemSetting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -56,12 +57,21 @@ class RouteServiceProvider extends ServiceProvider
         });
 
         // Strict rate limit for authentication endpoints per account and IP.
+        // The per-account threshold honors the admin-configured
+        // security_max_login_attempts setting (bounded to the same 3-10
+        // range the settings UI enforces); per-minute decay keeps the
+        // lockout temporary and the login|IP key keeps it per-identity —
+        // no permanent lockout, no enumeration oracle.
         RateLimiter::for('auth', function (Request $request) {
             $login = strtolower((string) $request->input('login', $request->input('email', 'guest')));
+            $maxAttempts = (int) SystemSetting::get('security_max_login_attempts', 5);
+            if ($maxAttempts < 3 || $maxAttempts > 10) {
+                $maxAttempts = 5;
+            }
 
             return [
                 Limit::perMinute(config('app.api_rate_limit_per_minute'))->by('auth-ip:' . $request->ip()),
-                Limit::perMinute(5)->by('auth-account:' . $login . '|' . $request->ip()),
+                Limit::perMinute($maxAttempts)->by('auth-account:' . $login . '|' . $request->ip()),
             ];
         });
 

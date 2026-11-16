@@ -42,7 +42,6 @@ const AdminSettings = () => {
     requireUppercase: true,
     maxLoginAttempts: 5,
     sessionTimeout: 60,
-    twoFactorAuth: false,
     kioskPin: "",
   });
 
@@ -513,22 +512,6 @@ const AdminSettings = () => {
                     }
                   />
                   <small>Idle time before automatic logout</small>
-                </div>
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={securitySettings.twoFactorAuth}
-                      onChange={(e) =>
-                        setSecuritySettings({
-                          ...securitySettings,
-                          twoFactorAuth: e.target.checked,
-                        })
-                      }
-                    />
-                    <span className="checkmark"></span>
-                    Enable Two-Factor Authentication (2FA)
-                  </label>
                 </div>
               </div>
 

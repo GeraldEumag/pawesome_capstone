@@ -69,7 +69,6 @@ class SystemSettingController extends Controller
                 'requireUppercase'   => (bool) SystemSetting::get('security_require_uppercase', true),
                 'maxLoginAttempts'   => (int) SystemSetting::get('security_max_login_attempts', 5),
                 'sessionTimeout'     => (int) SystemSetting::get('security_session_timeout', 60),
-                'twoFactorAuth'      => (bool) SystemSetting::get('security_two_factor_auth', false),
                 'kioskPin'           => (string) SystemSetting::get('attendance_kiosk_pin', ''),
             ],
             'notifications' => [
@@ -114,7 +113,6 @@ class SystemSettingController extends Controller
             'requireUppercase'    => 'boolean',
             'maxLoginAttempts'    => 'required|integer|min:3|max:10',
             'sessionTimeout'      => 'required|integer|min:15|max:480',
-            'twoFactorAuth'       => 'boolean',
         ]);
 
         SystemSetting::set('security_min_password_length', $request->minPasswordLength);
@@ -123,7 +121,6 @@ class SystemSettingController extends Controller
         SystemSetting::set('security_require_uppercase', $request->boolean('requireUppercase') ? '1' : '0');
         SystemSetting::set('security_max_login_attempts', $request->maxLoginAttempts);
         SystemSetting::set('security_session_timeout', $request->sessionTimeout);
-        SystemSetting::set('security_two_factor_auth', $request->boolean('twoFactorAuth') ? '1' : '0');
 
         return response()->json(['message' => 'Security settings saved successfully.']);
     }

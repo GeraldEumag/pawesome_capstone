@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\User;
 use App\Services\EmailDeliveryService;
+use App\Support\PasswordPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -35,7 +36,7 @@ class UserController extends Controller
             'last_name' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,NULL,id,deleted_at,NULL',
             'username' => 'required|string|max:255|unique:users,username,NULL,id,deleted_at,NULL',
-            'password' => 'required|string|min:6',
+            'password' => ['required', PasswordPolicy::rules(6)],
             'phone' => 'sometimes|string|max:20',
             'address' => 'sometimes|string|max:255',
             'city' => 'sometimes|string|max:255',

@@ -719,7 +719,6 @@ const ProfileSettings = () => {
     emailNotifications: true,
     pushNotifications: false,
     autoSave: true,
-    twoFactorAuth: false,
   });
 
   // Get role-specific icons and titles
@@ -1465,20 +1464,6 @@ const ProfileSettings = () => {
                               type="checkbox"
                               checked={settings.autoSave}
                               onChange={(e) => handleSettingChange("autoSave", e.target.checked)}
-                            />
-                            <span className="slider"></span>
-                          </ToggleSwitch>
-                        </SettingItem>
-                        <SettingItem>
-                          <SettingLabel>
-                            <FontAwesomeIcon icon={faShieldAlt} />
-                            Two-Factor Auth
-                          </SettingLabel>
-                          <ToggleSwitch>
-                            <input
-                              type="checkbox"
-                              checked={settings.twoFactorAuth}
-                              onChange={(e) => handleSettingChange("twoFactorAuth", e.target.checked)}
                             />
                             <span className="slider"></span>
                           </ToggleSwitch>

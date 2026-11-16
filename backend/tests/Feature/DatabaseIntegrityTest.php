@@ -200,8 +200,8 @@ class DatabaseIntegrityTest extends TestCase
             'last_name' => 'Admin',
             'username' => 'newadminuser',
             'email' => 'newadmin@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
             'role' => 'admin',
             'date_of_birth' => '1990-01-15',
         ], $this->withAuth($this->admin, $this->adminToken));
