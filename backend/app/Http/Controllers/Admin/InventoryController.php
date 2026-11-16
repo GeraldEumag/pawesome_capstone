@@ -829,8 +829,29 @@ class InventoryController extends Controller
                 'reason' => 'nullable|string|max:255',
             ]);
 
-            return DB::transaction(function () use ($validated, $batchId) {
+            // Unlocked read to find the parent item: locks must be taken
+            // item-then-batch, the same order as every other stock mutation
+            // (deductStock, adjustStock, updateStock). Locking batch-then-item
+            // would invert that order and could deadlock against a concurrent
+            // deduction holding the item lock while writing this batch.
+            $itemId = InventoryBatch::whereKey($batchId)->value('inventory_item_id');
+            if (!$itemId) {
+                return response()->json(['success' => false, 'message' => 'Batch not found.'], 404);
+            }
+
+            return DB::transaction(function () use ($validated, $batchId, $itemId) {
+                $item = InventoryItem::lockForUpdate()->findOrFail($itemId);
                 $batch = InventoryBatch::lockForUpdate()->findOrFail($batchId);
+
+                // Revalidate under the locks: the batch read above raced other
+                // writers, so confirm ownership and quantity bounds again.
+                if ((int) $batch->inventory_item_id !== (int) $item->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Batch does not belong to the resolved inventory item.',
+                    ], 422);
+                }
+
                 $oldQuantity = $batch->remaining_quantity;
                 $newQuantity = $validated['quantity'];
 
@@ -845,9 +866,6 @@ class InventoryController extends Controller
 
                 $delta = $newQuantity - $oldQuantity;
 
-                // Lock the item too so its counter update serializes with
-                // other stock mutations on the same row.
-                $item = InventoryItem::lockForUpdate()->findOrFail($batch->inventory_item_id);
                 $stockBefore = (int) $item->stock;
                 $item->stock += $delta;
                 $item->save();

@@ -53,7 +53,7 @@ app(EmailDeliveryService::class)->intent(
 | Gap | Fix |
 |---|---|
 | `Inventory\DashboardController::adjustStock` did read-modify-write **without** a transaction or row lock — a concurrent deduction between read and `reconcileToStock` could drift batches vs the counter. | Wrapped the mutation in `DB::transaction` + `InventoryItem::lockForUpdate()` (same pattern the Admin `updateStock` already used). |
-| `Admin\InventoryController::adjustBatch` had no transaction/lock, and accepted `remaining_quantity` **greater than** the batch's received `quantity` — inflating remaining fabricated stock units. | Wrapped in `DB::transaction` with locks on both batch and item rows; added `newQuantity > batch->quantity → 422` guard. |
+| `Admin\InventoryController::adjustBatch` had no transaction/lock, and accepted `remaining_quantity` **greater than** the batch's received `quantity` — inflating remaining fabricated stock units. | Wrapped in `DB::transaction`; added `newQuantity > batch->quantity → 422` guard. **Post-review correction:** locks taken **item → batch** (matching `deductStock`/`adjustStock`/`updateStock` — every other mutation locks the item row first). The batch is read unlocked only to resolve `inventory_item_id`, then both rows are locked and ownership + quantity bounds are revalidated under the locks — preventing an AB-BA deadlock with concurrent deductions. |
 
 No semantic changes — `add` stays forbidden, reconciliation math and log shape are identical; the fixes only serialize the writes and close the phantom-stock hole.
 
