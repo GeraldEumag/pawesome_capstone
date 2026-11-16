@@ -84,10 +84,74 @@ class Phase4InventoryPayslipTest extends TestCase
         $this->assertSame($payroll->id, (int) $delivery->source_id);
         $this->assertSame($this->employee->id, (int) $delivery->user_id);
         $this->assertSame('phase4.payee@example.com', Crypt::decryptString($delivery->recipient_email));
+        $payload = Crypt::decryptString($delivery->payload);
         $this->assertStringContainsString(
             \App\Mail\PayslipReleasedMail::class,
-            Crypt::decryptString($delivery->payload)
+            $payload
         );
+        // The serialized mailable carries authoritative payroll fields —
+        // reference code and gross pay flow from the payroll row itself.
+        $this->assertStringContainsString($payroll->payroll_id, $payload);
+        $this->assertStringContainsString('12500', $payload);
+    }
+
+    public function test_payslip_mailable_renders_professional_layout(): void
+    {
+        $html = (new \App\Mail\PayslipReleasedMail(
+            'Test <b>Employee</b>',
+            'Jan 01 - Jan 15, 2026',
+            11000.00,
+            'https://frontend.example/cashier/payroll',
+            'payee@example.com',
+            'PAYROLL-2026-001',
+            '2026-01-15',
+            'Bank Transfer',
+            12500.00
+        ))->render();
+
+        // Paid status chip, net-pay hero, and peso formatting
+        $this->assertStringContainsString('Paid', $html);
+        $this->assertStringContainsString('Net Pay', $html);
+        $this->assertStringContainsString('₱11,000.00', $html);
+
+        // Authoritative payroll details
+        $this->assertStringContainsString('Payroll reference', $html);
+        $this->assertStringContainsString('PAYROLL-2026-001', $html);
+        $this->assertStringContainsString('Gross pay', $html);
+        $this->assertStringContainsString('₱12,500.00', $html);
+        $this->assertStringContainsString('Bank Transfer', $html);
+        $this->assertStringContainsString('Jan 15, 2026', $html);
+
+        // Confidentiality notice and CTA
+        $this->assertStringContainsString('confidential payroll information', $html);
+        $this->assertStringContainsString('View Payslip', $html);
+
+        // Dynamic values are Blade-escaped, not raw HTML
+        $this->assertStringNotContainsString('<b>Employee</b>', $html);
+        $this->assertStringContainsString('&lt;b&gt;Employee&lt;/b&gt;', $html);
+    }
+
+    public function test_payslip_mailable_renders_with_optional_fields_null(): void
+    {
+        $html = (new \App\Mail\PayslipReleasedMail(
+            'Test Employee',
+            'Jan 01 - Jan 15, 2026',
+            11000.00,
+            'https://frontend.example/cashier/payroll',
+            'payee@example.com'
+        ))->render();
+
+        // Core content still renders
+        $this->assertStringContainsString('Net Pay', $html);
+        $this->assertStringContainsString('₱11,000.00', $html);
+        $this->assertStringContainsString('Jan 01 - Jan 15, 2026', $html);
+        $this->assertStringContainsString('View Payslip', $html);
+
+        // Absent optional fields produce no empty detail rows
+        $this->assertStringNotContainsString('Payroll reference', $html);
+        $this->assertStringNotContainsString('Gross pay', $html);
+        $this->assertStringNotContainsString('Payment method', $html);
+        $this->assertStringNotContainsString('Paid on', $html);
     }
 
     public function test_repeat_release_does_not_duplicate_intent(): void

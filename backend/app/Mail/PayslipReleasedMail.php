@@ -19,6 +19,10 @@ class PayslipReleasedMail extends Mailable implements ShouldQueue
         public readonly float  $netPay,
         public readonly string $payslipUrl,
         public readonly string $email,
+        public readonly ?string $payrollRef = null,
+        public readonly ?string $paidAt = null,
+        public readonly ?string $paymentMethod = null,
+        public readonly ?float  $grossPay = null,
     ) {}
 
     public function envelope(): Envelope
@@ -35,10 +39,14 @@ class PayslipReleasedMail extends Mailable implements ShouldQueue
             view: 'emails.payslip-released',
             text: 'emails.text.payslip-released',
             with: [
-                'employeeName' => $this->employeeName,
-                'payPeriod'    => $this->payPeriod,
-                'netPay'       => $this->netPay,
-                'payslipUrl'   => $this->payslipUrl,
+                'employeeName'  => $this->employeeName,
+                'payPeriod'     => $this->payPeriod,
+                'netPay'        => $this->netPay,
+                'payslipUrl'    => $this->payslipUrl,
+                'payrollRef'    => $this->payrollRef,
+                'paidAt'        => $this->paidAt,
+                'paymentMethod' => $this->paymentMethod,
+                'grossPay'      => $this->grossPay,
             ],
         );
     }

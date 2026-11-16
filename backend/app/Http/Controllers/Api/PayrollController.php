@@ -447,7 +447,11 @@ class PayrollController extends Controller
                                 ?? trim(($payroll->pay_period_start?->toDateString() ?? '') . ' – ' . ($payroll->pay_period_end?->toDateString() ?? ''), ' –'),
                             (float) $payroll->net_pay,
                             config('app.frontend_url') . '/' . $rolePath . '/payroll',
-                            $employeeEmail
+                            $employeeEmail,
+                            $payroll->payroll_id,
+                            $payroll->payment_date?->toDateString() ?? $payroll->processed_at?->toDateString(),
+                            $payroll->payment_method,
+                            (float) $payroll->gross_pay
                         ),
                         [
                             'event_key'      => 'payroll.payslip_released',
