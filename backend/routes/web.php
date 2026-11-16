@@ -7,4 +7,8 @@ Route::get('/', function () {
         'status' => 'ok',
         'service' => config('app.name') . ' API',
     ]);
-});
+})->withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+]);
