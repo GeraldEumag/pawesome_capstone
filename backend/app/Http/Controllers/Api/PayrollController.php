@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PayslipReleasedMail;
 use App\Models\Attendance;
 use App\Models\Notification;
 use App\Models\Payroll;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\EmailDeliveryService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\WorkflowNotifier;
 use Carbon\Carbon;
@@ -428,6 +430,35 @@ class PayrollController extends Controller
                     'related_type' => 'payroll',
                     'related_id' => $payroll->id,
                 ]);
+
+                // Payslip release email via the durable outbox. Created inside
+                // this transaction so 'paid' + the email intent commit
+                // atomically; occurrence_key dedupes any retry/replay — one
+                // payslip email per payroll row, ever.
+                $employeeEmail = $payroll->user?->email;
+                if ($employeeEmail) {
+                    $role = strtolower((string) ($payroll->user->role ?? ''));
+                    $rolePath = ['veterinary' => 'veterinary', 'super_receptionist' => 'receptionist'][$role] ?? $role;
+
+                    app(EmailDeliveryService::class)->intent(
+                        new PayslipReleasedMail(
+                            $payeeName,
+                            $payroll->pay_period_label
+                                ?? trim(($payroll->pay_period_start?->toDateString() ?? '') . ' – ' . ($payroll->pay_period_end?->toDateString() ?? ''), ' –'),
+                            (float) $payroll->net_pay,
+                            config('app.frontend_url') . '/' . $rolePath . '/payroll',
+                            $employeeEmail
+                        ),
+                        [
+                            'event_key'      => 'payroll.payslip_released',
+                            'occurrence_key' => 'payroll.payslip:' . $payroll->id,
+                            'recipient'      => $employeeEmail,
+                            'source_type'    => 'payroll',
+                            'source_id'      => $payroll->id,
+                            'user_id'        => $payroll->user_id,
+                        ]
+                    );
+                }
             }
 
             return response()->json([

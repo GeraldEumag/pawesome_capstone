@@ -829,55 +829,67 @@ class InventoryController extends Controller
                 'reason' => 'nullable|string|max:255',
             ]);
 
-            $batch = InventoryBatch::findOrFail($batchId);
-            $oldQuantity = $batch->remaining_quantity;
-            $newQuantity = $validated['quantity'];
-            $delta = $newQuantity - $oldQuantity;
+            return DB::transaction(function () use ($validated, $batchId) {
+                $batch = InventoryBatch::lockForUpdate()->findOrFail($batchId);
+                $oldQuantity = $batch->remaining_quantity;
+                $newQuantity = $validated['quantity'];
 
-            // Update batch
-            $batch->remaining_quantity = $newQuantity;
-            if ($newQuantity <= 0) {
-                $batch->status = 'depleted';
-            }
-            $batch->save();
+                // Remaining can never exceed the batch's received quantity —
+                // raising it above would fabricate stock.
+                if ($newQuantity > (int) $batch->quantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Remaining quantity cannot exceed the batch quantity.',
+                    ], 422);
+                }
 
-            // Update item stock
-            $item = $batch->inventoryItem;
-            $stockBefore = (int) $item->stock;
-            $item->stock += $delta;
-            $item->save();
-            $stockAfter = (int) $item->stock;
+                $delta = $newQuantity - $oldQuantity;
 
-            // Log the adjustment
-            InventoryLog::create([
-                'inventory_item_id' => $item->id,
-                'delta' => $delta,
-                'quantity' => abs($delta),
-                'type' => 'batch_adjustment',
-                'movement_type' => 'batch_adjustment',
-                'reason' => $validated['reason'] ?? 'Batch adjustment',
-                'reference_type' => 'adjustment',
-                'stock_before' => $stockBefore,
-                'stock_after' => $stockAfter,
-                'previous_stock' => $stockBefore,
-                'new_stock' => $stockAfter,
-                'performed_by' => auth()->user()?->name,
-                'role' => auth()->user()?->role,
-                'user_id' => auth()->id(),
-                'details' => json_encode([
-                    'batch_id' => $batch->id,
-                    'batch_no' => $batch->batch_no,
-                    'old_quantity' => $oldQuantity,
-                    'new_quantity' => $newQuantity,
-                ]),
-            ]);
+                // Lock the item too so its counter update serializes with
+                // other stock mutations on the same row.
+                $item = InventoryItem::lockForUpdate()->findOrFail($batch->inventory_item_id);
+                $stockBefore = (int) $item->stock;
+                $item->stock += $delta;
+                $item->save();
+                $stockAfter = (int) $item->stock;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Batch adjusted successfully',
-                'batch' => $batch->fresh(),
-                'item' => $item->fresh(),
-            ]);
+                $batch->remaining_quantity = $newQuantity;
+                if ($newQuantity <= 0) {
+                    $batch->status = 'depleted';
+                }
+                $batch->save();
+
+                // Log the adjustment
+                InventoryLog::create([
+                    'inventory_item_id' => $item->id,
+                    'delta' => $delta,
+                    'quantity' => abs($delta),
+                    'type' => 'batch_adjustment',
+                    'movement_type' => 'batch_adjustment',
+                    'reason' => $validated['reason'] ?? 'Batch adjustment',
+                    'reference_type' => 'adjustment',
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
+                    'previous_stock' => $stockBefore,
+                    'new_stock' => $stockAfter,
+                    'performed_by' => auth()->user()?->name,
+                    'role' => auth()->user()?->role,
+                    'user_id' => auth()->id(),
+                    'details' => json_encode([
+                        'batch_id' => $batch->id,
+                        'batch_no' => $batch->batch_no,
+                        'old_quantity' => $oldQuantity,
+                        'new_quantity' => $newQuantity,
+                    ]),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Batch adjusted successfully',
+                    'batch' => $batch->fresh(),
+                    'item' => $item->fresh(),
+                ]);
+            });
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

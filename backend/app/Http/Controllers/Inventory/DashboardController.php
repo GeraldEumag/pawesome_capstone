@@ -538,63 +538,68 @@ class DashboardController extends Controller
             ], 422);
         }
 
-        $item = InventoryItem::findOrFail($id);
-        $current = (int) $item->stock;
-        $quantity = (int) $validated['quantity'];
+        return DB::transaction(function () use ($request, $id, $validated) {
+            // Read-modify-write under a row lock: reconcileToStock derives the
+            // batch delta from the counter, so a concurrent deduction between
+            // read and write would otherwise drift batches vs stock.
+            $item = InventoryItem::lockForUpdate()->findOrFail($id);
+            $current = (int) $item->stock;
+            $quantity = (int) $validated['quantity'];
 
-        $newStock = match ($validated['type']) {
-            'add' => $current + $quantity,
-            'remove' => max(0, $current - $quantity),
-            default => $quantity,
-        };
+            $newStock = match ($validated['type']) {
+                'add' => $current + $quantity,
+                'remove' => max(0, $current - $quantity),
+                default => $quantity,
+            };
 
-        if ($newStock !== $current && $item->hasRealBatches()) {
-            // Batch-tracked items: reconcile batches to the target so the flat
-            // counter never drifts from batch quantities.
-            $this->inventoryService->reconcileToStock(
-                $item,
-                $newStock,
-                $validated['reason'] ?? 'Manual stock adjustment',
-                'manual_adjustment',
-                $validated['type']
-            );
-        } else {
-            $item->update(['stock' => $newStock]);
+            if ($newStock !== $current && $item->hasRealBatches()) {
+                // Batch-tracked items: reconcile batches to the target so the flat
+                // counter never drifts from batch quantities.
+                $this->inventoryService->reconcileToStock(
+                    $item,
+                    $newStock,
+                    $validated['reason'] ?? 'Manual stock adjustment',
+                    'manual_adjustment',
+                    $validated['type']
+                );
+            } else {
+                $item->update(['stock' => $newStock]);
 
-            InventoryLog::create([
-                'inventory_item_id' => $item->id,
-                'delta' => $newStock - $current,
-                'quantity' => abs($newStock - $current),
-                'type' => $validated['type'],
-                'movement_type' => 'manual_adjustment',
-                'reason' => $validated['reason'] ?? 'Manual stock adjustment',
-                'reference_type' => $validated['type'],
-                'stock_before' => $current,
-                'stock_after' => $newStock,
+                InventoryLog::create([
+                    'inventory_item_id' => $item->id,
+                    'delta' => $newStock - $current,
+                    'quantity' => abs($newStock - $current),
+                    'type' => $validated['type'],
+                    'movement_type' => 'manual_adjustment',
+                    'reason' => $validated['reason'] ?? 'Manual stock adjustment',
+                    'reference_type' => $validated['type'],
+                    'stock_before' => $current,
+                    'stock_after' => $newStock,
+                    'previous_stock' => $current,
+                    'new_stock' => $newStock,
+                    'performed_by' => $request->user()?->name,
+                    'role' => $request->user()?->role,
+                    'user_id' => $request->user()?->id,
+                ]);
+            }
+
+            WorkflowNotifier::notifyRole('inventory', 'Stock Adjustment Made', "{$item->name}: {$current} -> {$newStock}", 'info', 'inventory_item', $item->id);
+            ActivityLog::log($request->user()?->id, 'inventory_adjusted', "Inventory adjusted {$item->name}", [
+                'category' => 'inventory',
+                'reference_type' => 'inventory_item',
+                'reference_id' => $item->id,
+                'metadata' => ['previous_stock' => $current, 'new_stock' => $newStock],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock adjusted successfully',
+                'item' => $item->fresh(),
                 'previous_stock' => $current,
                 'new_stock' => $newStock,
-                'performed_by' => $request->user()?->name,
-                'role' => $request->user()?->role,
-                'user_id' => $request->user()?->id,
+                'adjustment' => $newStock - $current,
             ]);
-        }
-
-        WorkflowNotifier::notifyRole('inventory', 'Stock Adjustment Made', "{$item->name}: {$current} -> {$newStock}", 'info', 'inventory_item', $item->id);
-        ActivityLog::log($request->user()?->id, 'inventory_adjusted', "Inventory adjusted {$item->name}", [
-            'category' => 'inventory',
-            'reference_type' => 'inventory_item',
-            'reference_id' => $item->id,
-            'metadata' => ['previous_stock' => $current, 'new_stock' => $newStock],
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Stock adjusted successfully',
-            'item' => $item->fresh(),
-            'previous_stock' => $current,
-            'new_stock' => $newStock,
-            'adjustment' => $newStock - $current,
-        ]);
+        });
     }
 
     private function formatLog(InventoryLog $log): array
