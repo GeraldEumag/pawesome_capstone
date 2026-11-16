@@ -1,0 +1,17 @@
+# Deny all direct HTTP access to this project tree.
+# XAMPP serves C:/xampp/htdocs as DocumentRoot, which would otherwise expose
+# .env, source code, storage, and backend utility scripts over HTTP.
+# The app is served by `php artisan serve` (php -S ignores .htaccess), so
+# this only affects Apache access.
+#
+# This intentionally denies EVERYTHING under this project, including
+# backend/public/ — re-granting it would expose storage/app/public files
+# directly through Apache, bypassing the API's authorization checks.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

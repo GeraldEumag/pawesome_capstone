@@ -42,7 +42,7 @@ test.describe('Boarding itemized billing E2E', () => {
   test.setTimeout(180000);
 
   test.beforeEach(() => {
-    execSync(`${process.env.PHP_BINARY || 'php'} pawesome_e2e_payment_fixture_seed.php`, {
+    execSync("${process.env.PHP_BINARY || 'php'} " + (process.env.PAWESOME_SEED_SCRIPT || 'C:/xampp/pawesome-maintenance/pawesome_e2e_payment_fixture_seed.php'), {
       cwd: backendDir,
       stdio: 'inherit',
     });

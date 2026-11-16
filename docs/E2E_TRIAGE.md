@@ -161,7 +161,7 @@ Note: `receptionist/bookings` row lookups were also made specific to the fixture
 - `phase4-payment-workflow` boarding-approval test: `?range=all&tab=all` on the hotel page; pet name "Buddy" no longer matches the seeded fixture ("cate"), so the row is located after the marker search instead.
 - `boarding-billing`: `?range=all&tab=all` so the seeded `PW-E2E-BILLING` boarding is visible.
 
-Notes: `phase4-payment-workflow` reseeds fixtures via `backend/pawesome_e2e_payment_fixture_seed.php` in beforeEach — verified the seeder still runs cleanly.
+Notes: `phase4-payment-workflow` reseeds fixtures via `C:/xampp/pawesome-maintenance/pawesome_e2e_payment_fixture_seed.php` (relocated out of `backend/` during F-01 containment; overridable via `PAWESOME_SEED_SCRIPT`) in beforeEach — verified the seeder still runs cleanly.
 
 ### Batch 3 update (confinement proof test)
 The `phase4-payment-workflow` confinement verify test is the one remaining intermittent failure:

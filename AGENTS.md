@@ -69,12 +69,21 @@ npx playwright test e2e/cross-role-main-workflow.spec.js --reporter=list
 ```
 
 ### Audit Scripts
+
+Loose root-level PHP scripts were removed from `backend/` during the F-01
+security containment (Phase 0): the repository must not carry
+HTTP-reachable password/token/mutation utilities. The retained audit and
+fixture utilities now live in `C:/xampp/pawesome-maintenance/` — outside
+the Apache document root and outside the repository. They resolve the
+backend via `PAWESOME_BACKEND` (default `C:/xampp/htdocs/Pawesome_Capstone/backend`);
+see `C:/xampp/pawesome-maintenance/README.md`.
+
 ```bash
-cd backend
-php pawesome_cross_role_e2e_audit.php          # Gate A: Cross-role E2E
-php pawesome_security_rbac_audit.php           # Gate B: Security & RBAC
-php pawesome_database_readiness_audit.php      # Gate C: Database readiness
-php pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
+php C:/xampp/pawesome-maintenance/pawesome_cross_role_e2e_audit.php          # Gate A: Cross-role E2E
+php C:/xampp/pawesome-maintenance/pawesome_security_rbac_audit.php           # Gate B: Security & RBAC
+php C:/xampp/pawesome-maintenance/pawesome_database_readiness_audit.php      # Gate C: Database readiness
+php C:/xampp/pawesome-maintenance/pawesome_report_reconciliation_audit.php   # Gate D: Report reconciliation
+php C:/xampp/pawesome-maintenance/route_audit_analyzer.php [output.json]     # Route/middleware evidence
 ```
 
 ## Test Credentials
@@ -588,7 +597,7 @@ Automatic receipt reading for customer e-wallet proofs — see
 ## Current audit verification notes (2026-11-08)
 
 - Frontend unit verification: `npm run test:unit`; restore missing declared packages with the committed npm lockfile (`npm ci`), not a new Yarn lock.
-- `backend/route_audit_analyzer.php [new-output.json]` reads effective routes and resolved middleware, and refuses to overwrite existing evidence. Legacy Gate scripts still need path/safety review before execution.
+- `C:/xampp/pawesome-maintenance/route_audit_analyzer.php [new-output.json]` reads effective routes and resolved middleware, and refuses to overwrite existing evidence. Reviewed live mutation specs require an explicitly isolated API/database/storage target before execution.
 - Reviewed live mutation specs require an explicitly isolated API/database/storage target. Do not run the whole legacy browser directory blindly: some specs hardcode API/remote URLs or historical output paths.
 - User-approved vet-tech contract: read the limited active appointment intake board and check patients in; veterinary history/dashboard/clinical writes remain forbidden. `VetAppointments` must not request vet-only history or expose doctor controls for techs.
 - `security-concurrency-audit.spec.js` requires local APIs :8001/:8002 sharing only `pawesome_e2e_audit` and `E2E_AUDIT_DATABASE=pawesome_e2e_audit`; it uses a bounded synthetic row lock to exercise true concurrent retries.
