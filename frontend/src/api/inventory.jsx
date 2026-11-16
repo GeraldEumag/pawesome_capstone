@@ -679,8 +679,8 @@ export const inventoryApi = {
   adjustBatchStock: async (batchId, newQuantity, reason = "Manual adjustment") => {
     validateId(batchId, "Batch ID");
     try {
-      return await apiRequest(`/inventory/batches/${batchId}/adjust`, {
-        method: "POST",
+      return await apiRequest(`/inventory/batches/${batchId}`, {
+        method: "PUT",
         body: JSON.stringify({ quantity: newQuantity, reason }),
       });
     } catch (error) {
