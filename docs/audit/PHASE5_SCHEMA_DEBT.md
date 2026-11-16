@@ -12,7 +12,7 @@ Verified by full-repo grep (`app/`, `routes/`, `tests/`, `database/seeders`, `fr
 | Table | Verified state | Evidence | Phase 5 resolution |
 |---|---|---|---|
 | `booking_requests` | **Dead** | Zero code references anywhere; only its own 2026-04-28 migration creates it. Superseded by `service_requests`. | Documented drop candidate — requires a data-archive decision before a drop migration (post-capstone ops item, needs prod row-count + export). **Not dropped.** |
-| `vet_appointments` | **Live-legacy read** | `Admin\ReportsController::appointmentsBase()` (line ~796) reads it for legacy report rows. | Retained; documented as legacy report source alongside `appointments`. |
+| ~~`vet_appointments`~~ | **Does not exist** — not a table | `ReportsController`'s `vet_appointments` *report key* (~line 796) is a label on `appointmentsBase()`, which queries `DB::table('appointments')` — no separate table. (The AUDIT_REPORT's "vet_appointments read by legacy path" claim conflated the report key with a table name.) | No table to retain or drop; report key is label-only on the canonical `appointments` table. |
 | `grooming_appointments` | **Live-legacy read** | `BookingAvailabilityService` (line ~185) counts it toward groomer blocking, guarded by `Schema::hasTable`. | Retained; documented — removing the table is safe *only* because the service guards its absence, but existing rows still block slots. |
 | `attendance_records` | **Live parallel pool** | `AttendanceRecordController` (index/create/summary) + `ReportsController` (~425) + `AttendanceRecord` model. | Retained; documented as the thin legacy attendance store parallel to `attendance`(+corrections). |
 | `hotel_rooms` | **Live — managed dual pool** | 7+ controllers + `BookingAvailabilityService` blocking. | See contract below. |
@@ -69,7 +69,7 @@ No backend code changed; no schema changes; no data touched.
 ## 6. Deferred (documented, not executed)
 
 - `booking_requests` drop migration — needs production row-count + archive export first.
-- Legacy-table consolidation (`vet_appointments`, `grooming_appointments`, `attendance_records`) — each has live readers; removal is a data-migration project, not a cleanup commit.
+- Legacy-table consolidation (`grooming_appointments`, `attendance_records`) — each has live readers; removal is a data-migration project, not a cleanup commit. (`vet_appointments` was removed from this list — it is a report label, not a table.)
 - Payable-construct consolidation — the six constructs each have active services; the map documents canonical sources instead.
 
 ## 7. Stop gate

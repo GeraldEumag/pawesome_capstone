@@ -27,7 +27,7 @@ Source of each item: `docs/audit/AUDIT_REPORT.md` findings D-01..D-08 and F-02/F
 
 | # | Manuscript says | Reality (verified) | Edit |
 |---|---|---|---|
-| D-01 (PDF ~p88) | "Django for server-side development, Python for application logic" | Laravel 12 / PHP 8.2+ backend, React 18.3 + Vite frontend, MySQL | Replace with the actual stack; the manuscript's own later chapter already describes Laravel/React — this line is a leftover |
+| D-01 (PDF ~p88) | "Django for server-side development, Python for application logic" | Laravel 12 / PHP 8.2+ backend, React **18.3.1** + Vite 6 frontend, MySQL (verified against `frontend/package.json` + `package-lock.json`; earlier "React 19" notes were a `react-is@19.2.7` misread) | Replace with the actual stack; the manuscript's own later chapter already describes Laravel/React — this line is a leftover |
 | D-02 (p88–93) | ~10 references to "Telegram chatbot" | Chatbot is in-app only (`TelegramBotController`/`TelegramService` exist but are unrouted dead code) | Replace with "in-app chatbot"; the IPO section's exclusion is already correct |
 | F-02 (use case + Fig 58) | Customer store ordering as a live workflow; receptionist order-monitoring UI | Descoped (Phase 3): customer checkout/proof-upload/cancel → HTTP 410; receptionist approve/reject/cancel → 410; **historical order history, receipts, and reporting preserved** | Rewrite the use case as a *descoped* feature: historical records remain readable; self-service ordering was evaluated and intentionally retired. Delete the receptionist order-monitoring UI claims (component deleted). |
 
@@ -36,16 +36,16 @@ Source of each item: `docs/audit/AUDIT_REPORT.md` findings D-01..D-08 and F-02/F
 | # | Conflict | Edit |
 |---|---|---|
 | D-03 | "Agile Incremental Model" / "Agile Scrum Model 2025" / "Agile Scrum methodology" used interchangeably | Pick one canonical name (recommend "Agile Scrum methodology") and normalize all occurrences |
-| D-04 | "Purposive sampling" (Data Analysis Plan) vs "Random sampling" (Sampling Technique) | State the actual sampling used consistently in both sections |
+| D-04 | "Purposive sampling" (Data Analysis Plan) vs "Random sampling" (Sampling Technique) | **AUTHOR/ADVISER DECISION — do not resolve from code.** The manuscript must describe the participant-selection process that actually occurred, not whichever term reads consistently. Purposive sampling is conventional for qualified-IT-evaluator recruitment, but only the researchers can attest to the real method. Reconcile both sections once confirmed |
 | D-06 | Architecture text lists 11 modules; Fig 71 shows 10 differently-decomposed modules | Align the narrative list with Fig 71's decomposition (Vet/Grooming/Hotel/POS split) |
 | D-07 | Placeholder citations: "[Complete title, publisher, and link]", "[Title of document]. [URL]" ×2 | Complete the references or remove the entries |
-| D-08 | Narrative mentions "veterinary assistants"/"hotel attendants"; use-case defines 7 roles; system has `vet_tech` + `super_receptionist` | Normalize to the real role set: customer, receptionist, cashier, inventory, veterinary, vet_tech, manager, admin, super_receptionist — or explicitly document which roles are composite/derived |
+| D-08 | Narrative mentions "veterinary assistants"/"hotel attendants"; use-case defines 7 roles | **Nine assignable roles** (verified via `Admin\UserController` validation + `EnsureRole` middleware): customer, receptionist, cashier, inventory, veterinary, vet_tech, manager, admin, super_receptionist. `super_receptionist` is a **composite** (receptionist+cashier+inventory); `admin` bypasses staff checks but is blocked from customer routes; `vet`/`veterinarian`→`veterinary` and `super_admin`→`admin` are aliases, not roles; `payroll`/`staff`/`groomer` are legacy strings in scheduler lists, not assignable; `department`/`position` are columns, not roles | Normalize to the verified nine-role taxonomy and explain the composite role rather than presenting nine equal roles |
 
 ### 2.3 Simplified artifacts — annotate or regenerate
 
 | # | Item | Reality | Edit |
 |---|---|---|---|
-| D-05 | ERD (Fig 16): 16 entities | ~98-table schema | Either annotate Fig 16 as a *conceptual* ERD and reference an appendix listing the real table groups (auth/users, pets, service requests, appointments, boarding/hotel rooms, inventory+batches+suppliers, sales/POS, payroll/attendance/leave/13th-month, payments/receipts/settlements, visit invoices, notifications/email outbox, chat), or regenerate the figure from the live schema |
+| D-05 | ERD (Fig 16): 16 entities | **93 tables** (verified via `information_schema` on the migrated schema: 9 Laravel framework tables — cache/jobs/sessions/tokens/migrations — and 84 application tables) | Either annotate Fig 16 as a *conceptual* ERD and reference an appendix listing the real table groups (auth/users, pets, service requests, appointments, boarding/hotel rooms, inventory+batches+suppliers, sales/POS, payroll/attendance/leave/13th-month, payments/receipts/settlements, visit invoices, notifications/email outbox, chat), or regenerate the figure from the live schema. Suggested wording: *"The system database consists of 93 tables, comprising 9 framework-related tables and 84 application-specific tables."* |
 
 ### 2.4 New true claims the manuscript may now make (Phases 0–5)
 
