@@ -51,7 +51,7 @@ Pawesome is a pet-care management system with customer and staff workspaces: cus
 
 The existence of a page or API route does not by itself prove a workflow works. Each procedure below is tagged with a verification status (§1.6).
 
-**Customer product checkout is currently unavailable.** The customer store checkout endpoint and related order write actions return a disabled response (HTTP 410). Service bookings and their payments are unaffected — see §4.5.
+**Customer product checkout is out of scope** (approved descope decision). The customer store checkout endpoint and related order write actions return a disabled response (HTTP 410). Service bookings and their payments are unaffected — see §4.5.
 
 ### 1.3 Intended users and role access
 
@@ -211,16 +211,24 @@ Customer sidebar labels (verified live on 2026-10-22): **Services**, **My Pets**
 
 **Screenshots:** Figures UM-006 (cashier-side queue) and UM-015 (`UM-015-customer-request-paid.png`).
 
-### 4.5 Customer store orders — DISABLED (code-confirmed)
+### 4.5 Customer store orders — OUT OF SCOPE (approved descope)
+
+Customer self-service product ordering was reviewed during the security
+remediation and formally **descoped** — it is not part of the delivered
+system. Historical `customer_orders`/`customer_order_items` records are
+retained for reporting, receipts, and payment evidence; no data was
+removed.
 
 Keep these flows separate:
 
 - Public, read-only product/category data exists, but there is no customer browsing/cart route in the customer module.
-- The customer can read existing store-order records, but customer store checkout, order payment-proof submission, and cancellation write paths return HTTP 410. Receptionist order processing and cashier customer-order verification are likewise disabled.
-- The cashier **POS** cart is a staff-side workflow — not a customer checkout.
+- The customer can read existing store-order records (history, receipts), but customer store checkout, order payment-proof submission, and cancellation write paths return HTTP 410 by design. Receptionist order approval/rejection/cancellation is likewise disabled (410).
+- The cashier **POS** cart is a staff-side workflow — not a customer checkout — and is unaffected.
 - Service requests and service payments (§4.2–§4.4) are unaffected.
 
-Do not attempt a customer store order. Confirm with the project owner whether customer ordering is in final scope.
+Do not attempt a customer store order. Self-service ordering would require
+separately approved new scope; the read-only order history and staff order
+reports remain available for existing records.
 
 ### 4.6 Notifications, history, medical, reports, profile — TESTED (pages render)
 

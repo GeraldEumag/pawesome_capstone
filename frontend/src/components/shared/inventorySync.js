@@ -2,7 +2,7 @@
  * ╔══════════════════════════════════════════════════════════════════╗
  * ║           UNIFIED INVENTORY DATA - SINGLE SOURCE OF TRUTH        ║
  * ╠══════════════════════════════════════════════════════════════════╣
- * ║  Used by: CashierPOS, CustomerStore, InventoryReports, Admin      ║
+ * ║  Used by: CashierPOS, InventoryReports, Admin                     ║
  * ║  Features: FIFO tracking, stock management, sync updates         ║
  * ║  Refresh: 30-second auto-refresh for live data                   ║
  * ╚══════════════════════════════════════════════════════════════════╝
@@ -21,7 +21,7 @@
 export const sharedProducts = [];
 export const sharedServices = [];
 
-// Categorize products for CustomerStore
+// Categorize products (used by CashierPOS product grouping)
 export const categorizeProducts = (products) => {
   const categories = {
     Food: [],

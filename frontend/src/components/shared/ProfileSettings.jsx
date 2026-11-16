@@ -7,7 +7,7 @@ import {
   faEye, faEyeSlash, faSpinner, faExclamationTriangle,
   faCheckCircle, faMapMarkerAlt, faPhone, faEnvelope,
   faShieldAlt, faCalendarAlt, faPencilAlt, faKey,
-  faIdBadge, faGlobe, faHeart, faStore, faShoppingCart,
+  faIdBadge, faGlobe, faHeart,
   faCashRegister, faHistory, faCreditCard, faBell,
   faCog, faPalette, faLanguage,
 } from "@fortawesome/free-solid-svg-icons";
