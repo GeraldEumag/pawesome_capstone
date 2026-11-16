@@ -103,7 +103,9 @@ php C:/xampp/pawesome-maintenance/route_audit_analyzer.php [output.json]     # R
 
 Transactional email covers: customer email verification, password reset links,
 password-changed and account-welcome notices, lifecycle notifications
-(`CustomerNotificationMail`), and authoritative payment receipts
+(`CustomerNotificationMail`), payslip-release notices
+(`PayslipReleasedMail`, intent created inside `Api\PayrollController::markAsPaid`'s
+transaction, occurrence-deduped per payroll), and authoritative payment receipts
 (`PaymentReceiptMail`). **Every** customer-facing email flows through the
 durable `email_deliveries` outbox — a producer creates an intent row inside
 the business transaction, `email-deliveries:dispatch` publishes it to the
