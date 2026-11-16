@@ -1,0 +1,1019 @@
+{
+  "run": "defense-1794858237313",
+  "started_at": "2026-11-16T19:43:57.314Z",
+  "scenarios": [
+    {
+      "name": "S1 customer registration + pet",
+      "steps": [
+        {
+          "action": "register invalid email",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "register missing fields",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "register valid",
+          "expected": "200/201",
+          "actual": {
+            "status": 201,
+            "msg": "User registered successfully. Please check your email to verify your account."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "register duplicate email",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: new customer row",
+          "expected": "role=customer, unverified",
+          "actual": {
+            "row": "29\tcustomer\t1"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "unverified customer booking POST",
+          "expected": "403 (verified gate)",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "create pet missing name",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "create pet valid",
+          "expected": "200/201",
+          "actual": {
+            "status": 201,
+            "id": 17
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: pet row linked",
+          "expected": "pet row w/ customer",
+          "actual": {
+            "row": "17\tPanelDog\tDog\t21"
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S2 grooming booking + input abuse",
+      "steps": [
+        {
+          "action": "booking past date",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "booking invalid pet_id",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "booking valid",
+          "expected": "200/201 on some slot",
+          "actual": {
+            "status": 201,
+            "id": 33,
+            "date": "2026-11-18",
+            "slot": "10:00",
+            "lastErr": "Selected time is outside shop opening hours. Please choose between 10:00 AM – 6:00 PM."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "immediate duplicate submit",
+          "expected": "422 slot taken (dedupe)",
+          "actual": {
+            "status": 422,
+            "dupOf": 33,
+            "msg": "This time is no longer available. Please choose another slot."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: service_request rows",
+          "expected": "persisted",
+          "actual": {
+            "rows": "33\tpending\tunpaid\t350.00\tNULL"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "re-fetch after 'refresh' (history)",
+          "expected": "record visible",
+          "actual": {
+            "status": 200,
+            "found": true
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S3 receptionist approve + schedule",
+      "steps": [
+        {
+          "action": "receptionist sees new pending request",
+          "expected": "listed",
+          "actual": {
+            "status": 200,
+            "sees": true
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "approve pending request",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Request approved successfully."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: status=approved, priced",
+          "expected": "approved + amount",
+          "actual": {
+            "row": "33\tapproved\t3\t350.00\tNULL"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer sees updated status",
+          "expected": "approved in list",
+          "actual": {
+            "status": 200,
+            "contains_approved": true
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "double approve",
+          "expected": "idempotent 200 'already approved' OR 422",
+          "actual": {
+            "status": 200,
+            "msg": "Request is already approved."
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S4 boarding room double-booking",
+      "steps": [
+        {
+          "action": "boarding availability endpoint",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "keys": [
+              "success",
+              "check_in",
+              "check_out",
+              "rooms",
+              "message"
+            ]
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer boarding request",
+          "expected": "200/201",
+          "actual": {
+            "status": 201,
+            "id": 17
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "verify vaccination card",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Vaccination card verified successfully."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "receptionist approve+assign room",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Boarding request approved and inventory deducted"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "2nd overlapping booking request",
+          "expected": "200/201 or 422 at create",
+          "actual": {
+            "status": 422,
+            "msg": "Unprocessable Content"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: room reservations",
+          "expected": "inspect",
+          "actual": {
+            "reservations": "15\t6\tapproved\t2026-12-10\t2026-12-10\r\n14\t6\tapproved\t2026-12-09\t2026-12-09"
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S5-7 payment proof upload, reject, verify, receipt",
+      "steps": [
+        {
+          "action": "upload .txt as proof",
+          "expected": "422",
+          "actual": {
+            "status": 422,
+            "msg": "The payment proof field must be a file of type: jpg, jpeg, png, webp, pdf."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "upload valid PNG proof",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Payment submitted successfully. Waiting for cashier verification."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: payment pending w/ ref",
+          "expected": "pending",
+          "actual": {
+            "row": "33\tpending\tgcash\tGC-defense-1794858237313-1"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "cashier queue contains request",
+          "expected": "listed",
+          "actual": {
+            "status": 200,
+            "found": true
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "reject w/o reason",
+          "expected": "422",
+          "actual": {
+            "status": 422,
+            "msg": "Rejection reason is required."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "reject w/ reason",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Service request payment rejected"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: rejected propagates",
+          "expected": "rejected",
+          "actual": {
+            "row": "rejected"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "resubmit proof",
+          "expected": "200",
+          "actual": {
+            "status": 200
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: pending again w/ new ref",
+          "expected": "pending",
+          "actual": {
+            "row": "pending\tGC-defense-1794858237313-2"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "cashier verify",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Service request payment verified successfully."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: paid + verified_by",
+          "expected": "paid",
+          "actual": {
+            "row": "paid\t5\t1"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "double verify",
+          "expected": "409/422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer receipt",
+          "expected": "200 + amount",
+          "actual": {
+            "status": 200,
+            "total": "350.00"
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S8-9 POS sale, oversell, concurrency",
+      "steps": [
+        {
+          "action": "POS products list",
+          "expected": "sellable items",
+          "actual": {
+            "status": 200,
+            "picked": [
+              "23:APOQUEL 5.4MG@₱140x98",
+              "829:ATROPINE - PER AMPULE@₱150x10"
+            ]
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "POS sale",
+          "expected": "200 + receipt",
+          "actual": {
+            "status": 200,
+            "total": "580.00",
+            "txn": "TRX-6AFB5D1CCD854"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: sale row",
+          "expected": "total=₱580",
+          "actual": {
+            "row": "43\t580.00\tcompleted"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "same-key replay (double-click)",
+          "expected": "replayed, no 2nd sale",
+          "actual": {
+            "status": 200,
+            "replayed": "true"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: exactly one sale",
+          "expected": "count=1",
+          "actual": {
+            "count": "1",
+            "saleId": 43
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "same key + different payload",
+          "expected": "409",
+          "actual": {
+            "status": 409
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "stock deducted item 23",
+          "expected": "stock 98->96, log=1",
+          "actual": {
+            "before": 98,
+            "after": "96",
+            "logs": "1"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "stock deducted item 829",
+          "expected": "stock 10->8, log=1",
+          "actual": {
+            "before": 10,
+            "after": "8",
+            "logs": "1"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "client-sent unit_price=0.01",
+          "expected": "server price ₱140 honored",
+          "actual": {
+            "status": 200,
+            "total": 140
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "oversell qty>stock",
+          "expected": "422/500 blocked, no negative",
+          "actual": {
+            "status": 422,
+            "msg": "Transaction failed: Insufficient stock for APOQUEL 5.4MG. Available: 5, Requested: 6"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "stock unchanged after oversell",
+          "expected": "=5",
+          "actual": {
+            "stock": "5"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "concurrent 4+4 vs stock 5",
+          "expected": "exactly one succeeds, stock=1",
+          "actual": {
+            "s1": 200,
+            "s2": 422,
+            "successes": 1,
+            "finalStock": "1"
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S10 veterinary consult -> medical record -> billing",
+      "steps": [
+        {
+          "action": "customer vet request",
+          "expected": "200/201",
+          "actual": {
+            "status": 201,
+            "id": 34
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "receptionist approve vet req",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Request approved successfully."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: appointment created",
+          "expected": "scheduled",
+          "actual": {
+            "row": "39\tscheduled\t7"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "vet sees appointment",
+          "expected": "listed",
+          "actual": {
+            "status": 200,
+            "sees": true
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "check-in (if required)",
+          "expected": "200/422",
+          "actual": {
+            "status": 200
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "vet start consult",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Appointment started successfully"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "write clinical fields",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Medical record updated successfully"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "finalize medical record",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "msg": "Medical record finalized successfully"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "complete consultation",
+          "expected": "200->checkout",
+          "actual": {
+            "status": 200,
+            "msg": "Consultation finalized. The visit closes automatically once the cashier verifies payment."
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "DB: checkout + attribution",
+          "expected": "checkout",
+          "actual": {
+            "row": "39\tcheckout\t7"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "medical record persists",
+          "expected": "200 + diagnosis",
+          "actual": {
+            "status": 200,
+            "hasDx": true
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S11 manager reports + exports",
+      "steps": [
+        {
+          "action": "GET /manager/reports/sales (today)",
+          "expected": "200, no crash",
+          "actual": {
+            "status": 200,
+            "size": 398
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/payments (today)",
+          "expected": "200, no crash",
+          "actual": {
+            "status": 200,
+            "size": 11849
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/inventory (today)",
+          "expected": "200, no crash",
+          "actual": {
+            "status": 200,
+            "size": 6707
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/services (today)",
+          "expected": "200, no crash",
+          "actual": {
+            "status": 200,
+            "size": 6808
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/overview (today)",
+          "expected": "200, no crash",
+          "actual": {
+            "status": 200,
+            "size": 20135
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/summary (today)",
+          "expected": "200, no crash",
+          "actual": {
+            "status": 200,
+            "size": 581
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "sales report empty range",
+          "expected": "200 empty",
+          "actual": {
+            "status": 200,
+            "empty": true
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "sales report reversed range",
+          "expected": "200 empty or 422",
+          "actual": {
+            "status": 200
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "sales total reconciliation",
+          "expected": "SQL=₱0.00",
+          "actual": {
+            "sql_total": "0.00"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payments count reconciliation",
+          "expected": "SQL=0",
+          "actual": {
+            "sql": "0"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "export /admin/reports/customers/export",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "ctype": "text/csv; charset=utf-8"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "export /admin/reports/customers/export-pdf",
+          "expected": "200",
+          "actual": {
+            "status": 200,
+            "ctype": "application/json"
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S12 cross-role authorization + IDOR",
+      "steps": [
+        {
+          "action": "customer POST /cashier/pos/transaction",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer GET /receptionist/requests",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer GET /manager/reports/sales",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer GET /admin/users",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "customer GET /inventory/items",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "receptionist POST /cashier/payment-requests/33/verify",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "receptionist GET /cashier/pos/transactions",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "cashier POST /receptionist/requests/33/approve",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "cashier GET /veterinary/medical-records",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "inventory POST /cashier/pos/transaction",
+          "expected": "401/403",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager POST /inventory/items/1/adjust-stock",
+          "expected": "401/403/404/405",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "vet_tech POST /veterinary/consultations/1/complete",
+          "expected": "401/403/404/422",
+          "actual": {
+            "status": 403
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "panelCustomer GET /customer/pets/1",
+          "expected": "404",
+          "actual": {
+            "status": 404
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "panelCustomer PUT /customer/pets/1",
+          "expected": "403/404",
+          "actual": {
+            "status": 404
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "panelCustomer GET /customer/pets/1/medical-history",
+          "expected": "403/404",
+          "actual": {
+            "status": 404
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "forged token",
+          "expected": "401",
+          "actual": {
+            "status": 401
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "deactivated user token",
+          "expected": "401/403",
+          "actual": {
+            "status": 401
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S13 edge cases: malformed input, empty states, abuse",
+      "steps": [
+        {
+          "action": "malformed types",
+          "expected": "422",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "negative extra field",
+          "expected": "200/422 no crash",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "sql-injection-flavored search",
+          "expected": "200 no crash",
+          "actual": {
+            "status": 200
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "xss-flavored search",
+          "expected": "200 no crash",
+          "actual": {
+            "status": 200
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "POS huge qty",
+          "expected": "rejected, no negative",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "stock still valid",
+          "expected": ">=0",
+          "actual": {
+            "stock": "1"
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "oversized 6MB upload",
+          "expected": "422/413",
+          "actual": {
+            "status": 422
+          },
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    }
+  ],
+  "finished_at": "2026-11-16T19:44:58.653Z",
+  "summary": {
+    "steps": 98,
+    "failed_steps": 0,
+    "scenarios_failed": 0
+  }
+}

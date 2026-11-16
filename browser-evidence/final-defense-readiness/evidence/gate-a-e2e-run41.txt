@@ -1,0 +1,24 @@
+[pass] [auth] Login as customer
+    detail: {"email":"customer@example.com","token_len":52}
+[pass] [auth] Login as receptionist
+    detail: {"email":"receptionist@example.com","token_len":52}
+[pass] [auth] Login as cashier
+    detail: {"email":"cashier@example.com","token_len":52}
+[pass] [auth] Login as inventory
+    detail: {"email":"inventory@example.com","token_len":52}
+[pass] [auth] Login as veterinary
+    detail: {"email":"vet@example.com","token_len":52}
+[pass] [auth] Login as manager
+    detail: {"email":"manager@example.com","token_len":52}
+[pass] [auth] Login as admin
+    detail: {"email":"admin@example.com","token_len":52}
+[pass] [customer] Buddy pet resolved
+    detail: {"pet_id":1}
+[fail] [customer] Customer vet request creation failed
+    detail: {"status":422,"body":"{\"success\":false,\"message\":\"This time is no longer available. Please choose another slot.\",\"errors\":{\"requested_time\":[\"Time slot overlaps an existing booking.\"]}}"}
+
+═══════════════════════════════════════════════════════════════
+PAWESOME CROSS-ROLE E2E AUDIT: FAIL
+Pass: 8  Fail: 1  Warn: 0  Blockers: 0
+Report: C:/xampp/htdocs/Pawesome_Capstone/browser-evidence/cross-role-e2e-audit/audit-report-20261116-210648.json
+═══════════════════════════════════════════════════════════════

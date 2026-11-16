@@ -1,0 +1,142 @@
+
+=== C1: FRESH MIGRATION VIABILITY ===
+[PASS] [C1-migration] All migrations ran (0 migrations, 0 pending, 0 failed)
+[PASS] [C1-migration] migrations table has 182 records
+
+=== C2: REQUIRED TABLES ===
+[PASS] [C2-tables] Table exists: users
+[PASS] [C2-tables] Table exists: customers
+[PASS] [C2-tables] Table exists: pets
+[PASS] [C2-tables] Table exists: service_requests
+[PASS] [C2-tables] Table exists: appointments
+[PASS] [C2-tables] Table exists: grooming_appointments
+[PASS] [C2-tables] Table exists: vet_appointments
+[PASS] [C2-tables] Table exists: boardings
+[PASS] [C2-tables] Table exists: boarding_rooms
+[PASS] [C2-tables] Table exists: hotel_rooms
+[PASS] [C2-tables] Table exists: boarding_room_reservations
+[PASS] [C2-tables] Table exists: inventory_items
+[PASS] [C2-tables] Table exists: inventory_batches
+[PASS] [C2-tables] Table exists: inventory_logs
+[PASS] [C2-tables] Table exists: service_item_usages
+[PASS] [C2-tables] Table exists: payments
+[PASS] [C2-tables] Table exists: customer_orders
+[PASS] [C2-tables] Table exists: sales
+[PASS] [C2-tables] Table exists: sale_items
+[PASS] [C2-tables] Table exists: invoices
+[PASS] [C2-tables] Table exists: medical_records
+[PASS] [C2-tables] Table exists: vaccinations
+[PASS] [C2-tables] Table exists: medical_confinements
+[PASS] [C2-tables] Table exists: payrolls
+[PASS] [C2-tables] Table exists: attendance_records
+[PASS] [C2-tables] Table exists: notifications
+[PASS] [C2-tables] Table exists: activity_logs
+[PASS] [C2-tables] Table exists: login_logs
+[PASS] [C2-tables] Table exists: personal_access_tokens
+[PASS] [C2-tables] Table exists: chatbot_logs
+[PASS] [C2-tables] Table exists: chatbot_faqs
+[PASS] [C2-tables] Table exists: services
+[PASS] [C2-tables] Table exists: suppliers
+[PASS] [C2-tables] Table exists: gift_cards
+[PASS] [C2-tables] Table exists: system_settings
+[PASS] [C2-tables] Table exists: add_ons
+[PASS] [C2-tables] Table exists: booking_addons
+[PASS] [C2-tables] Table exists: boarding_care_logs
+[PASS] [C2-tables] Total tables in database: 700
+
+=== C3: KEYS & INDEXES ===
+[PASS] [C3-keys] Primary key exists on users (id)
+[PASS] [C3-keys] Primary key exists on customers (id)
+[PASS] [C3-keys] Primary key exists on pets (id)
+[PASS] [C3-keys] Primary key exists on service_requests (id)
+[PASS] [C3-keys] Primary key exists on appointments (id)
+[PASS] [C3-keys] Primary key exists on boardings (id)
+[PASS] [C3-keys] Primary key exists on inventory_items (id)
+[PASS] [C3-keys] Primary key exists on payrolls (id)
+[PASS] [C3-keys] Primary key exists on payments (id)
+[PASS] [C3-keys] Primary key exists on medical_records (id)
+[PASS] [C3-keys] Foreign key constraints found: 136
+[MEDIUM] [C3-keys] No enforced FK: appointments.service_request_id → service_requests (column exists, relationship is logical only)
+[PASS] [C3-keys] FK exists: appointments.pet_id → pets
+[PASS] [C3-keys] FK exists: appointments.veterinarian_id → users
+[MEDIUM] [C3-keys] No enforced FK: service_requests.customer_id → customers (column exists, relationship is logical only)
+[PASS] [C3-keys] FK exists: service_item_usages.inventory_item_id → inventory_items
+[PASS] [C3-keys] FK exists: medical_records.appointment_id → appointments
+[PASS] [C3-keys] FK exists: medical_records.pet_id → pets
+[PASS] [C3-keys] FK exists: payrolls.user_id → users
+[PASS] [C3-keys] Unique index on users.email
+[PASS] [C3-keys] Unique index on users.username
+[PASS] [C3-keys] Unique index on personal_access_tokens.token
+[PASS] [C3-keys] Unique index on inventory_items.sku
+
+=== C4: boarding_rooms vs hotel_rooms ===
+[PASS] [C4-ambiguity] boarding_rooms table exists with 16 records
+[PASS] [C4-ambiguity] hotel_rooms table exists with 6 records
+[PASS] [C4-ambiguity] boardings references hotel_room_id (hotel_rooms is authoritative for room assignment)
+[MEDIUM] [C4-ambiguity] BoardingController references BOTH HotelRoom and BoardingRoom — dual-table design: boarding_rooms=catalog/types, hotel_rooms=physical room assignment
+[PASS] [C4-ambiguity] Routes reference HotelRoomController
+[PASS] [C4-ambiguity] Routes reference BoardingRoomController
+[PASS] [C4-ambiguity] boardings using hotel_room_id: 0 (no boarding_room_id column in boardings)
+
+=== C5: sales vs payments vs invoices ===
+[PASS] [C5-ambiguity] payments exists with 35 records
+[PASS] [C5-ambiguity] customer_orders exists with 0 records
+[WARN] [C5-ambiguity] transactions does not exist
+[WARN] [C5-ambiguity] service_billings does not exist
+[PASS] [C5-ambiguity] service_item_usages exists with 45 records
+[PASS] [C5-ambiguity] CashierPaymentController references: payments
+[PASS] [C5-ambiguity] CashierDashboardController references: payments, customer_orders, transactions
+[PASS] [C5-ambiguity] POSController references: payments, transactions
+[PASS] [C5-ambiguity] ServiceBillingController references: payments, service_item_usages
+[PASS] [C5-ambiguity] ServiceBillingService references: payments
+[PASS] [C5-ambiguity] service_item_usages: 45 records (this IS the service billing line-item table — no separate service_billings table exists or is needed)
+[PASS] [C5-ambiguity] service_item_usages is the line-item table (has service_id, service_type, is_paid)
+[PASS] [C5-ambiguity] POS sales flow: sales=35, sale_items, payments=35, invoices=35 — these are related POS tables, NOT duplicate authority
+[PASS] [C5-ambiguity] customer_orders: 0 records (separate from POS sales — this is the customer online order table)
+
+=== C6: SEED/REFERENCE DATA ===
+[PASS] [C6-seed] Admin user exists (1 records)
+[PASS] [C6-seed] Manager user exists (1 records)
+[PASS] [C6-seed] Cashier user exists (1 records)
+[PASS] [C6-seed] Receptionist user exists (1 records)
+[PASS] [C6-seed] Veterinary user exists (1 records)
+[PASS] [C6-seed] Inventory user exists (1 records)
+[PASS] [C6-seed] Customer user exists (22 records)
+[PASS] [C6-seed] Services seeded: 29
+[PASS] [C6-seed] Inventory items seeded: 853
+[PASS] [C6-seed] Customers seeded: 22
+[PASS] [C6-seed] Pets seeded: 17
+
+=== C7: CRUD PERSISTENCE & CROSS-MODULE ===
+[PASS] [C7-relations] No orphan appointments (all service_request_id references valid)
+[PASS] [C7-relations] No orphan service_requests (all customer_id references valid users)
+[PASS] [C7-relations] service_requests.customer_id references users.id (34 match users, 32 match customers — by design)
+[PASS] [C7-relations] No orphan medical_records (all appointment_id references valid)
+[PASS] [C7-relations] No orphan service_item_usages (all inventory_item_id references valid)
+[PASS] [C7-relations] No orphan payrolls (all user_id references valid)
+
+=== C8: ORPHANS & DUPLICATE AUTHORITY ===
+[PASS] [C8-orphans] No orphan pets (all customer_id references valid)
+[PASS] [C8-orphans] No orphan customers (all user_id references valid)
+
+  [41;1m Illuminate\Database\QueryException [49;22m
+
+[39;1m  SQLSTATE[42S02]: Base table or view not found: 1146 Table 'pawesome_e2e_audit.vet_appointments' doesn't exist (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: pawesome_e2e_audit, SQL: select count(*) as aggregate from `vet_appointments`)[39;22m
+
+  at [32mC:\xampp\htdocs\Pawesome_Capstone\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php[39m:[32m838[39m
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+  [33m1   [39m[39;1mC:\xampp\htdocs\Pawesome_Capstone\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php[39;22m:[39;1m420[39;22m
+  [90m    PDOException::("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'pawesome_e2e_audit.vet_appointments' doesn't exist")[39m
+
+  [33m2   [39m[39;1mC:\xampp\htdocs\Pawesome_Capstone\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php[39;22m:[39;1m420[39;22m
+  [90m    PDO::prepare("select count(*) as aggregate from `vet_appointments`")[39m
+

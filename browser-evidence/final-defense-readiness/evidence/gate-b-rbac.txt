@@ -1,0 +1,162 @@
+
+=== B2: AUTHENTICATION ===
+[PASS] [B2-auth] Valid login as customer :: {"token_len":52}
+[PASS] [B2-auth] Valid login as receptionist :: {"token_len":52}
+[PASS] [B2-auth] Valid login as cashier :: {"token_len":52}
+[PASS] [B2-auth] Valid login as inventory :: {"token_len":52}
+[PASS] [B2-auth] Valid login as veterinary :: {"token_len":52}
+[PASS] [B2-auth] Valid login as manager :: {"token_len":52}
+[PASS] [B2-auth] Valid login as admin :: {"token_len":52}
+[PASS] [B2-auth] Invalid password rejected with 401
+[PASS] [B2-auth] Nonexistent account rejected with 401
+[PASS] [B2-auth] Missing token rejected on /auth/me with 401
+[PASS] [B2-auth] Invalid token rejected with 401
+[PASS] [B2-auth] Logout succeeded
+[PASS] [B2-auth] Revoked token rejected after logout
+
+=== B3: RBAC MATRIX ===
+[PASS] [B3-rbac] customer blocked from GET /admin/dashboard :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /admin/dashboard :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /admin/dashboard :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /admin/dashboard :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /admin/dashboard :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /admin/dashboard :: {"status":403}
+[PASS] [B3-rbac] admin allowed GET /admin/dashboard :: {"status":200}
+[PASS] [B3-rbac] customer blocked from GET /admin/users :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /admin/users :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /admin/users :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /admin/users :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /admin/users :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /admin/users :: {"status":403}
+[PASS] [B3-rbac] admin allowed GET /admin/users :: {"status":200}
+[PASS] [B3-rbac] customer blocked from GET /manager/dashboard :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /manager/dashboard :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /manager/dashboard :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /manager/dashboard :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /manager/dashboard :: {"status":403}
+[PASS] [B3-rbac] manager allowed GET /manager/dashboard :: {"status":200}
+[PASS] [B3-rbac] admin allowed GET /manager/dashboard :: {"status":200}
+[PASS] [B3-rbac] customer blocked from GET /manager/reports/overview :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /manager/reports/overview :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /manager/reports/overview :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /manager/reports/overview :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /manager/reports/overview :: {"status":403}
+[PASS] [B3-rbac] manager allowed GET /manager/reports/overview :: {"status":200}
+[PASS] [B3-rbac] admin allowed GET /manager/reports/overview :: {"status":200}
+[PASS] [B3-rbac] customer blocked from GET /cashier/dashboard :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /cashier/dashboard :: {"status":403}
+[PASS] [B3-rbac] cashier allowed GET /cashier/dashboard :: {"status":200}
+[PASS] [B3-rbac] inventory blocked from GET /cashier/dashboard :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /cashier/dashboard :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /cashier/dashboard :: {"status":403}
+[FAIL] [B3-rbac] admin SHOULD be blocked from GET /cashier/dashboard but got 200 :: {"body":"{\"today_sales\":\"4435.00\",\"today_transactions\":21,\"monthly_sales\":\"5785.00\",\"monthly_transactions\":35,\"pending_payments\":9,\"completed_payments\":0,\"recent_sales\":[{\"id\":45,\
+[PASS] [B3-rbac] customer blocked from GET /cashier/payment-requests :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /cashier/payment-requests :: {"status":403}
+[PASS] [B3-rbac] cashier allowed GET /cashier/payment-requests :: {"status":200}
+[PASS] [B3-rbac] inventory blocked from GET /cashier/payment-requests :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /cashier/payment-requests :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /cashier/payment-requests :: {"status":403}
+[FAIL] [B3-rbac] admin SHOULD be blocked from GET /cashier/payment-requests but got 200 :: {"body":"{\"payments\":[{\"id\":25,\"payable_type\":\"service_request\",\"type\":\"service_request\",\"source\":\"service_request\",\"payment_source\":\"service_request\",\"customer_name\":\"Panel Cus
+[PASS] [B3-rbac] customer blocked from GET /inventory/dashboard :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /inventory/dashboard :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /inventory/dashboard :: {"status":403}
+[PASS] [B3-rbac] inventory allowed GET /inventory/dashboard :: {"status":200}
+[PASS] [B3-rbac] veterinary blocked from GET /inventory/dashboard :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /inventory/dashboard :: {"status":403}
+[PASS] [B3-rbac] admin allowed GET /inventory/dashboard :: {"status":200}
+[PASS] [B3-rbac] customer blocked from GET /inventory/items :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /inventory/items :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /inventory/items :: {"status":403}
+[PASS] [B3-rbac] inventory allowed GET /inventory/items :: {"status":200}
+[PASS] [B3-rbac] veterinary blocked from GET /inventory/items :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /inventory/items :: {"status":403}
+[PASS] [B3-rbac] admin allowed GET /inventory/items :: {"status":200}
+[PASS] [B3-rbac] customer blocked from GET /receptionist/requests/pending :: {"status":403}
+[PASS] [B3-rbac] receptionist allowed GET /receptionist/requests/pending :: {"status":200}
+[PASS] [B3-rbac] cashier blocked from GET /receptionist/requests/pending :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /receptionist/requests/pending :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /receptionist/requests/pending :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /receptionist/requests/pending :: {"status":403}
+[FAIL] [B3-rbac] admin SHOULD be blocked from GET /receptionist/requests/pending but got 200 :: {"body":"{\"success\":true,\"requests\":[{\"id\":19,\"request_type\":\"vet\",\"service_type\":\"vet\",\"type\":\"vet\",\"customer_name\":\"CUSTOMER\",\"customer\":\"CUSTOMER\",\"customer_id\":9,\"cust
+[PASS] [B3-rbac] customer blocked from GET /receptionist/veterinarians/available :: {"status":403}
+[PASS] [B3-rbac] receptionist allowed GET /receptionist/veterinarians/available :: {"status":200}
+[PASS] [B3-rbac] cashier blocked from GET /receptionist/veterinarians/available :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /receptionist/veterinarians/available :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /receptionist/veterinarians/available :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /receptionist/veterinarians/available :: {"status":403}
+[FAIL] [B3-rbac] admin SHOULD be blocked from GET /receptionist/veterinarians/available but got 200 :: {"body":"{\"success\":true,\"data\":[{\"id\":7,\"name\":\"VETERINARIAN\",\"email\":\"vet@example.com\",\"role\":\"veterinary\"}],\"veterinarians\":[{\"id\":7,\"name\":\"VETERINARIAN\",\"email\":\"vet@
+[PASS] [B3-rbac] customer blocked from GET /veterinary/dashboard :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /veterinary/dashboard :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /veterinary/dashboard :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /veterinary/dashboard :: {"status":403}
+[PASS] [B3-rbac] veterinary allowed GET /veterinary/dashboard :: {"status":200}
+[PASS] [B3-rbac] manager blocked from GET /veterinary/dashboard :: {"status":403}
+[FAIL] [B3-rbac] admin SHOULD be blocked from GET /veterinary/dashboard but got 200 :: {"body":"{\"today_appointments\":0,\"approved_appointments\":1,\"pending_appointments\":0,\"completed_appointments\":2,\"total_patients\":4,\"new_patients_this_month\":4,\"upcoming_appointments\":[{\"
+[PASS] [B3-rbac] customer blocked from GET /veterinary/appointments :: {"status":403}
+[PASS] [B3-rbac] receptionist blocked from GET /veterinary/appointments :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /veterinary/appointments :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /veterinary/appointments :: {"status":403}
+[PASS] [B3-rbac] veterinary allowed GET /veterinary/appointments :: {"status":200}
+[PASS] [B3-rbac] manager blocked from GET /veterinary/appointments :: {"status":403}
+[FAIL] [B3-rbac] admin SHOULD be blocked from GET /veterinary/appointments but got 200 :: {"body":"{\"success\":true,\"message\":\"OK\",\"data\":[{\"id\":11,\"service_request_id\":null,\"customer_id\":1,\"pet_id\":3,\"service_id\":1,\"veterinarian_id\":7,\"status\":\"checkout\",\"scheduled
+[PASS] [B3-rbac] customer allowed GET /customer/overview :: {"status":200}
+[PASS] [B3-rbac] receptionist blocked from GET /customer/overview :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /customer/overview :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /customer/overview :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /customer/overview :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /customer/overview :: {"status":403}
+[PASS] [B3-rbac] admin blocked from GET /customer/overview :: {"status":403}
+[PASS] [B3-rbac] customer allowed GET /customer/my-requests :: {"status":200}
+[PASS] [B3-rbac] receptionist blocked from GET /customer/my-requests :: {"status":403}
+[PASS] [B3-rbac] cashier blocked from GET /customer/my-requests :: {"status":403}
+[PASS] [B3-rbac] inventory blocked from GET /customer/my-requests :: {"status":403}
+[PASS] [B3-rbac] veterinary blocked from GET /customer/my-requests :: {"status":403}
+[PASS] [B3-rbac] manager blocked from GET /customer/my-requests :: {"status":403}
+[PASS] [B3-rbac] admin blocked from GET /customer/my-requests :: {"status":403}
+[PASS] [B3-rbac] customer blocked from GET /billing/inventory-items :: {"status":403}
+[PASS] [B3-rbac] receptionist allowed GET /billing/inventory-items :: {"status":200}
+[PASS] [B3-rbac] cashier allowed GET /billing/inventory-items :: {"status":200}
+[PASS] [B3-rbac] inventory allowed GET /billing/inventory-items :: {"status":200}
+[PASS] [B3-rbac] veterinary allowed GET /billing/inventory-items :: {"status":200}
+[PASS] [B3-rbac] manager blocked from GET /billing/inventory-items :: {"status":403}
+[PASS] [B3-rbac] admin allowed GET /billing/inventory-items :: {"status":200}
+
+=== B4: IDOR / OWNERSHIP ===
+[PASS] [B4-idor] Customer blocked from pet 10 (not owned) :: {"status":404}
+[PASS] [B4-idor] Customer blocked from cancelling request 25 (not owned) :: {"status":404}
+[PASS] [B4-idor] Customer blocked from payslip 1 (not own) :: {"status":403}
+[PASS] [B4-idor] Cashier blocked from admin user list :: {"status":403}
+[PASS] [B4-idor] Veterinary blocked from manager dashboard :: {"status":403}
+[PASS] [B4-idor] Inventory blocked from receptionist approve :: {"status":403}
+
+=== B5: STATIC ROUTE AUDIT ===
+[PASS] [B5-routes] No sensitive routes missing auth middleware :: {"total_routes":631}
+[PASS] [B5-routes] No sensitive routes missing role middleware (auth-only routes are intentionally open to any authenticated user)
+[MEDIUM] [B5-routes] Boarding room/add-on catalog endpoints are public (no auth) — acceptable for marketing but exposes inventory :: {"routes":["api\/boarding\/add-ons","api\/boarding\/rooms","api\/boarding\/rooms\/available","api\/boarding\/rooms\/calculate-total","api\/boarding\/rooms\/types","api\/boarding\/rooms\/{id}"]}
+
+=== B6: PRODUCTION CONFIG ===
+[HIGH] [B6-config] APP_DEBUG=true in .env (must be false in production) :: {"value":"true"}
+[PASS] [B6-config] .env.example APP_DEBUG=false (production-safe default)
+[MEDIUM] [B6-config] APP_ENV=local in .env (expected production for deployment) :: {"value":"local"}
+[PASS] [B6-config] APP_KEY is set
+[MEDIUM] [B6-config] DB_PASSWORD is empty/placeholder in .env — local dev only, must be set in production
+[PASS] [B6-config] CORS supports_credentials is configured (not hardcoded true)
+[PASS] [B6-config] CORS does not include placeholder vercel URL
+[PASS] [B6-config] CORS allowed_origins is env-driven (not hardcoded wildcard)
+[PASS] [B6-config] .env is gitignored
+[PASS] [B6-config] .env is not tracked by git
+
+=== B7: FILE UPLOAD SECURITY ===
+[PASS] [B7-upload] Valid PNG payment proof accepted
+[PASS] [B7-upload] PHP executable upload rejected :: {"status":422}
+[PASS] [B7-upload] Mismatched MIME/extension (PHP content with .png) rejected :: {"status":422}
+[PASS] [B7-upload] Oversize file (>5MB) rejected :: {"status":422}
+[PASS] [B7-upload] Path traversal filename rejected :: {"status":422}
+[PASS] [B7-upload] Private filesystem disk is configured for sensitive uploads
+[PASS] [B7-upload] Unauthenticated payment proof view blocked :: {"status":401}
+
+═══════════════════════════════════════════════════════════════
+PAWESOME SECURITY & RBAC AUDIT: FAIL
+Pass: 134  Fail: 6  Warn: 0  Critical: 0  High: 1  Medium: 3
+Report: C:/xampp/htdocs/Pawesome_Capstone/browser-evidence/security-rbac-audit/security-rbac-audit-20261116-205404.json
+═══════════════════════════════════════════════════════════════

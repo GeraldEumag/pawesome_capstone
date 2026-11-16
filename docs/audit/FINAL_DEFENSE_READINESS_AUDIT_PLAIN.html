@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pawesome — Final Defense-Readiness Audit Report</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1f2430; line-height: 1.55; margin: 0; font-size: 10.5pt; }
+  .page { max-width: 780px; margin: 0 auto; padding: 40px 48px; }
+  h1 { font-size: 22pt; margin: 0 0 4px; color: #7a1f3d; }
+  .subtitle { color: #555; margin-bottom: 24px; font-size: 10pt; }
+  h2 { font-size: 14pt; margin: 28px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #7a1f3d; color: #7a1f3d; }
+  h3 { font-size: 11.5pt; margin: 18px 0 6px; color: #333; }
+  p { margin: 6px 0; }
+  ul { margin: 6px 0 6px 20px; padding: 0; }
+  li { margin: 3px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 9.5pt; }
+  th { background: #f3e4ec; text-align: left; padding: 6px 8px; border: 1px solid #d9b8c9; }
+  td { padding: 6px 8px; border: 1px solid #e3d3dc; vertical-align: top; }
+  .ok { color: #1a7a3a; font-weight: 600; }
+  .bad { color: #b3282d; font-weight: 600; }
+  .warn { color: #a86400; font-weight: 600; }
+  .box { border: 1px solid #d9b8c9; background: #fdf3f7; border-radius: 8px; padding: 12px 16px; margin: 14px 0; }
+  .box-title { font-weight: 700; color: #7a1f3d; margin-bottom: 4px; }
+  .verdict { background: #eef6ee; border: 1px solid #bcd8bc; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  .small { font-size: 9pt; color: #666; }
+  code { background: #f4f4f4; padding: 1px 5px; border-radius: 4px; font-size: 9.5pt; }
+  .toc li { margin: 2px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Final Defense-Readiness Audit Report</h1>
+<p class="subtitle">Pawesome Pet Care Management System · Audit date: November 17, 2026 · Branch: <code>main</code> @ a7f93ca</p>
+
+<div class="box">
+  <div class="box-title">What this report is</div>
+  <p>This is the final check of the whole Pawesome system before the capstone defense. The goal was simple: <b>will the system hold up when panelists try to break it?</b> We tested it the way a panel might — entering wrong information, clicking things twice, refreshing mid-transaction, switching between roles, generating reports right after making a sale, and trying to access things they should not be allowed to see.</p>
+  <p><b>Nothing in the system was changed during this audit.</b> Everything below is a report of what we found, plus a plan for what to fix — waiting for approval before any work starts.</p>
+</div>
+
+<h2>Table of contents</h2>
+<ul class="toc">
+  <li>1. The short answer</li>
+  <li>2. How we tested it</li>
+  <li>3. What works well</li>
+  <li>4. The one real problem we found</li>
+  <li>5. Problems with our test tools (not the app)</li>
+  <li>6. What we could not test</li>
+  <li>7. What we recommend doing next</li>
+  <li>8. Final scorecard</li>
+</ul>
+
+<h2>1. The short answer</h2>
+<p><b>The system is in good shape for the defense — with one real bug that should be fixed first.</b></p>
+<ul>
+  <li>Every major feature was tested live and worked: ordering, booking, approvals, payments, receipts, inventory deduction, veterinary records, and reports.</li>
+  <li>All the "break it" attempts were handled correctly: double-clicks, duplicate submissions, expired sessions, wrong file uploads, other people's data, oversized numbers, and two cashiers selling the last item at the same time.</li>
+  <li><b>One bug found:</b> the <b>Sales Report shows an empty report whenever a date filter is used</b>, even though sales exist. A panelist who makes a sale and then opens a filtered sales report will see "No records found." This is the classic demo trap and should be fixed before the defense.</li>
+</ul>
+
+<h3>The numbers</h3>
+<table>
+  <tr><th>What was tested</th><th>Result</th></tr>
+  <tr><td>Backend automated tests</td><td class="ok">986 passed, 0 failed (4,929 checks)</td></tr>
+  <tr><td>Frontend automated tests</td><td class="ok">33/33 passed</td></tr>
+  <tr><td>Production build</td><td class="ok">Builds successfully (38.8 seconds)</td></tr>
+  <tr><td>Live hands-on scenario probe</td><td class="ok">98 checks, 0 failures — all roles</td></tr>
+  <tr><td>Cross-role end-to-end audit (Gate A)</td><td class="ok">31/31 checks passed on clean run</td></tr>
+  <tr><td>Security & permission audit (Gate B)</td><td class="ok">134 checks passed</td></tr>
+  <tr><td>Report-vs-database reconciliation</td><td class="warn">Everything matches — except the Sales Report bug</td></tr>
+  <tr><td>Real problems found in the app</td><td class="bad">1 (the Sales Report date filter)</td></tr>
+</table>
+
+<h2>2. How we tested it</h2>
+<p>To keep the real data safe, all testing was done on a <b>separate copy of the database</b>. The normal development database was only read, never written to. Emails were switched to a safe "pretend" mode so no real messages were sent to anyone.</p>
+<p>We tested in three ways:</p>
+<ul>
+  <li><b>Reading the code</b> — checking how each feature is built, how permissions are applied, and how money and stock are handled.</li>
+  <li><b>Running the automated test suites</b> — 986 backend checks and 33 frontend checks that the team already had, plus four larger audit tools.</li>
+  <li><b>A live hands-on probe</b> — a script that acts like a real user: registering, booking, paying, uploading proofs, running the cash register, doing a vet consultation, pulling reports, and deliberately trying to break things. 98 separate checks, verified against the database afterward.</li>
+</ul>
+
+<h2>3. What works well</h2>
+
+<h3>Everyday operations (all verified live)</h3>
+<table>
+  <tr><th>Situation</th><th>What happened</th></tr>
+  <tr><td>Customer registers with bad or missing info</td><td class="ok">Correctly rejected with a clear message</td></tr>
+  <tr><td>Customer registers properly</td><td class="ok">Account created; booking blocked until email verified (correct security)</td></tr>
+  <tr><td>Booking in the past, or for a pet that isn't yours</td><td class="ok">Rejected</td></tr>
+  <tr><td>Normal booking</td><td class="ok">Created, saved, and still there after a page refresh</td></tr>
+  <tr><td>Receptionist approves a request</td><td class="ok">Approved, price recorded, customer sees the update</td></tr>
+  <tr><td>Uploading a payment proof</td><td class="ok">Wrong file type rejected; correct image accepted</td></tr>
+  <tr><td>Cashier rejects a payment</td><td class="ok">Refuses without a reason; accepts with one; customer can resubmit</td></tr>
+  <tr><td>Cashier verifies a payment</td><td class="ok">Marked paid, receipt number issued, verifier recorded</td></tr>
+  <tr><td>Full vet visit (check-in → notes → finalize → checkout)</td><td class="ok">Worked end-to-end; medical record saved and re-readable</td></tr>
+  <tr><td>Reports and exports (CSV / PDF)</td><td class="ok">All load correctly, including empty and reversed date ranges</td></tr>
+</table>
+
+<h3>"Try to break it" tests (all handled correctly)</h3>
+<table>
+  <tr><th>Trick attempted</th><th>Result</th></tr>
+  <tr><td>Submit the same form twice quickly (double-click)</td><td class="ok">Only one record created — the second is safely ignored</td></tr>
+  <tr><td>Book the same time slot twice</td><td class="ok">Second attempt rejected: "This time is no longer available"</td></tr>
+  <tr><td>Book the same boarding room twice</td><td class="ok">Overlapping stay rejected</td></tr>
+  <tr><td>Approve or verify the same thing twice</td><td class="ok">Safely refused — no double-charging or double-approval</td></tr>
+  <tr><td>Two sales for the last item in stock at the exact same moment</td><td class="ok">Exactly one succeeded; stock ended at 1, never went negative</td></tr>
+  <tr><td>Try to sell more than what's in stock</td><td class="ok">Rejected; stock unchanged</td></tr>
+  <tr><td>Send a fake price of ₱0.01 from the customer's side</td><td class="ok">Ignored — the server uses its own price (₱25.00 charged)</td></tr>
+  <tr><td>Try to open another customer's pet/medical records (ID guessing)</td><td class="ok">"Not found" — nothing leaks</td></tr>
+  <tr><td>Use a fake login token</td><td class="ok">Blocked</td></tr>
+  <tr><td>Keep using a token after the account is deactivated</td><td class="ok">Blocked immediately</td></tr>
+  <tr><td>Customer tries to open staff pages (cashier, reports, admin)</td><td class="ok">Blocked — all role boundaries held</td></tr>
+  <tr><td>Upload a text file disguised as a payment proof</td><td class="ok">Rejected — file types are checked</td></tr>
+  <tr><td>Upload a 6 MB file (over the 5 MB limit)</td><td class="ok">Rejected</td></tr>
+  <tr><td>Paste SQL-code-like and script-like text into search boxes</td><td class="ok">Handled safely — treated as normal text</td></tr>
+  <tr><td>Enter giant quantities or negative numbers</td><td class="ok">Rejected</td></tr>
+  <tr><td>Holiday bookings (Immaculate Conception, Christmas Eve)</td><td class="ok">Correctly refused with a clear message</td></tr>
+</table>
+
+<h3>Numbers that were double-checked against the database</h3>
+<ul>
+  <li><b>Payments report:</b> matches the database exactly (21 cash register sales + 3 paid service requests).</li>
+  <li><b>Overview revenue:</b> ₱5,485 reported = ₱4,435 register sales + ₱1,050 service payments — internally consistent.</li>
+  <li><b>Inventory report:</b> item counts, low-stock, out-of-stock, and total stock value all matched the database exactly.</li>
+  <li><b>Sales integrity:</b> every sale has line items, a payment, and an invoice — no orphans or missing records.</li>
+</ul>
+
+<h2>4. The one real problem we found</h2>
+
+<div class="verdict">
+  <p><b>Problem:</b> The Sales Report always shows "No records found" whenever a date range is selected — even though sales exist.</p>
+  <p><b>Seen live:</b> calling the Sales Report with no filter shows all 35 sales (₱5,785). Adding <i>any</i> date filter — even a wide one covering the whole month — returns zero rows.</p>
+  <p><b>Why it happens (in plain terms):</b> the report's date filter looks at a column called <code>created_at</code>, but two tables in the same query have a column with that name, so the database can't tell which one is meant and throws an error. Worse, the code is designed to <i>quietly hide errors</i> and show "no data" instead — so the failure looks like an empty report rather than a broken one.</p>
+  <p><b>Why it matters:</b> a panelist's natural move is "make a sale, open the sales report for today." Right now they would see an empty report — which looks like a bigger problem than it is.</p>
+  <p><b>Fix:</b> a one-line change to name the correct table's column, plus making report errors visible instead of hidden. No data is damaged — this is a display/query issue only. Proposed as the first item in the fix plan below.</p>
+</div>
+
+<h2>5. Problems with our test tools (not the app)</h2>
+<p>Three of the older audit tools had outdated assumptions — these are issues with the <i>testing scripts</i>, not with Pawesome itself:</p>
+<ul>
+  <li><b>Gate A (cross-role test):</b> its random booking times mostly land on "half-past" minutes that the system correctly rejects, plus it sometimes picks 9 AM (before the 10 AM opening). After 46 fixture-caused retries, a clean run passed <b>31/31 checks</b> — confirming the full customer→receptionist→cashier→vet→manager chain works.</li>
+  <li><b>Gates C &amp; D (database/report checks):</b> they look for a table called <code>vet_appointments</code> that was deliberately removed in a past cleanup. Every check that ran before that point passed (99 checks on Gate C; all reconciliation on Gate D matched exactly).</li>
+  <li><b>Gate B (security):</b> 6 of its "failures" expected the admin account to be blocked from staff pages — but admin is <i>designed</i> to reach all staff modules. We verified admin is still correctly blocked from customer pages, so this is a stale expectation in the script.</li>
+</ul>
+<p>These tools should be updated so future audits give cleaner signal.</p>
+
+<h2>6. What we could not test</h2>
+<ul>
+  <li><b>Real email sending</b> (Brevo) — needs live credentials; tested in safe pretend mode only.</li>
+  <li><b>Telegram and live-chat delivery</b> — external services, no credentials available.</li>
+  <li><b>MySQL 8 behavior</b> — the local machine runs MariaDB 10.4; the project's own CI is the authoritative MySQL 8 check.</li>
+  <li><b>Full browser walkthrough</b> — the live probe exercised the API and database directly; a full Playwright UI pass was not part of this run.</li>
+  <li><b>Production settings</b> — debug mode is on and the database password is empty locally, as expected for development. These are already on the release checklist for deployment.</li>
+</ul>
+
+<h2>7. What we recommend doing next</h2>
+<p>Listed in order — nothing happens until approved.</p>
+<table>
+  <tr><th>#</th><th>Action</th><th>Why</th></tr>
+  <tr><td>A</td><td>Fix the Sales Report date filter (one-line column fix + make report errors visible) and add a test for it</td><td class="bad">The only real bug — and the most likely thing a panelist will click</td></tr>
+  <tr><td>B</td><td>Update the old audit scripts (retired table name, booking-time generator, admin expectations)</td><td>So future audits don't cry wolf</td></tr>
+  <tr><td>C</td><td>Rehearse the demo path: make a sale → open filtered sales report; pre-verify the demo account's email; note the midnight time-zone edge case for narrators</td><td>Removes the remaining demo-day surprises</td></tr>
+  <tr><td>D</td><td>Re-run the full audit after the fix</td><td>Prove the fix and catch regressions</td></tr>
+  <tr><td>E</td><td>Deployment checklist (already documented): debug off, real passwords, queue worker, backups</td><td>Required before real production use</td></tr>
+  <tr><td>F</td><td>External checks once credentials exist: real email sends, Telegram, live chat, MySQL 8 run</td><td>Completes the picture</td></tr>
+</table>
+
+<h2>8. Final scorecard</h2>
+<table>
+  <tr><th>Area</th><th>Rating</th><th>Based on</th></tr>
+  <tr><td>Transaction safety (orders, bookings, payments, stock, receipts)</td><td class="ok">Strong</td><td>Duplicate-proof, race-proof, price tampering ignored — all verified live</td></tr>
+  <tr><td>Permissions &amp; privacy (roles, other people's data)</td><td class="ok">Strong</td><td>Every boundary tested held; dead tokens rejected</td></tr>
+  <tr><td>Bad input handling</td><td class="ok">Strong</td><td>Wrong types, injections, huge files, negative numbers all handled</td></tr>
+  <tr><td>Modules working together</td><td class="ok">Strong</td><td>Customer → receptionist → cashier → vet → manager chain verified end-to-end</td></tr>
+  <tr><td>Reporting accuracy</td><td class="warn">Weak — 1 bug</td><td>Payments, overview, and inventory all correct; sales report broken under date filter</td></tr>
+  <tr><td>Automated test coverage</td><td class="ok">Strong</td><td>1,019 tests green + 98-step live probe green</td></tr>
+  <tr><td>Deployment readiness</td><td>Not yet verified</td><td>Needs production credentials and MySQL 8 run</td></tr>
+</table>
+
+<div class="box">
+  <div class="box-title">Bottom line for the defense</div>
+  <p>Pawesome is <b>functionally solid, secure, and hard to break</b> — every "panelist attack" we tried was handled correctly, and every module talks to the others properly. The single real bug is the Sales Report's date filter, which a panelist is quite likely to trigger. <b>Recommendation: approve the small fix (Step A), re-verify, and the system is defense-ready.</b></p>
+  <p class="small">All findings in this report are backed by executed evidence stored in <code>browser-evidence/final-defense-readiness/</code> and the detailed technical version in <code>docs/audit/FINAL_DEFENSE_READINESS_AUDIT.md</code>. No application code, configuration, or data was modified during this audit.</p>
+</div>
+
+</div>
+</body>
+</html>

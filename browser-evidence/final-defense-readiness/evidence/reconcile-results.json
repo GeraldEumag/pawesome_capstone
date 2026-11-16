@@ -1,0 +1,122 @@
+{
+  "sql_sales_total": "4435.00",
+  "sql_sales_count": "21",
+  "sql_sr_paid_total": "1050.00",
+  "sql_sr_paid_count": "3",
+  "sql_inv_deductions": "0",
+  "sql_payments": "4435.00\t21",
+  "report_sales_status": 200,
+  "report_sales_keys": [
+    "success",
+    "data",
+    "message"
+  ],
+  "sales_nums": [
+    [
+      "data.summary.total_revenue",
+      0
+    ],
+    [
+      "data.summary.total_orders",
+      0
+    ],
+    [
+      "data.salespeople.0.id",
+      1
+    ],
+    [
+      "data.salespeople.1.id",
+      5
+    ],
+    [
+      "data.salespeople.2.id",
+      2
+    ]
+  ],
+  "pays_nums": [
+    [
+      "summary.total_payments",
+      37
+    ],
+    [
+      "summary.total_amount",
+      7035
+    ],
+    [
+      "summary.paid",
+      24
+    ],
+    [
+      "data.summary.total_payments",
+      37
+    ],
+    [
+      "data.summary.total_amount",
+      7035
+    ],
+    [
+      "data.summary.paid",
+      24
+    ],
+    [
+      "charts.trend.0.count",
+      37
+    ],
+    [
+      "charts.payment_methods.0.count",
+      12
+    ],
+    [
+      "charts.payment_methods.0.amount",
+      2600
+    ],
+    [
+      "charts.payment_methods.1.count",
+      21
+    ],
+    [
+      "charts.payment_methods.1.amount",
+      4435
+    ],
+    [
+      "charts.payment_methods.2.count",
+      4
+    ]
+  ],
+  "over_nums": [
+    [
+      "data.summary.total_customers",
+      22
+    ],
+    [
+      "data.summary.total_users",
+      30
+    ],
+    [
+      "data.summary.total_orders",
+      0
+    ],
+    [
+      "data.summary.total_services",
+      22
+    ],
+    [
+      "data.summary.total_payments",
+      16
+    ],
+    [
+      "data.summary.total_revenue",
+      5485
+    ],
+    [
+      "data.summary.paid_orders",
+      0
+    ],
+    [
+      "data.top_services.0.revenue",
+      3000
+    ]
+  ],
+  "cashier_hist_status": 200,
+  "cashier_hist_count": 20
+}

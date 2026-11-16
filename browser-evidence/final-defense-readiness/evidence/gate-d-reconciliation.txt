@@ -1,0 +1,52 @@
+
+=== LOGGING IN ALL ROLES ===
+  admin: logged in
+  manager: logged in
+  cashier: logged in
+  inventory: logged in
+  veterinary: logged in
+  receptionist: logged in
+  customer: logged in
+
+=== D2: SALES RECONCILIATION ===
+[FAIL] [D2-sales] Admin total_revenue vs sales table MISMATCH (API=11385, DB=5785, diff=5600)
+[FAIL] [D2-sales] Admin today_revenue vs DB MISMATCH (API=5485, DB=4435, diff=1050)
+[FAIL] [D2-sales] Manager sales_total MISMATCH (API=11385, DB=10385, diff=1000)
+[PASS] [D2-sales] Manager total_orders (API=34, DB=34)
+[PASS] [D2-sales] Manager total_service_requests (API=34, DB=34)
+[PASS] [D2-sales] Cashier today_sales (API=4435, DB=4435)
+[PASS] [D2-sales] DB: sales=35, sale_items=42, payments=35, invoices=35
+[PASS] [D2-sales] All sales have sale_items
+[PASS] [D2-sales] All completed sales have payments
+
+=== D3: INVENTORY RECONCILIATION ===
+[PASS] [D3-inventory] Inventory total_items (API=853, DB=853)
+[PASS] [D3-inventory] Inventory low_stock_items (API=277, DB=277)
+[PASS] [D3-inventory] Inventory out_of_stock_items (API=456, DB=456)
+[PASS] [D3-inventory] Inventory total_stock_value (API=1886247, DB=1886247)
+[PASS] [D3-inventory] Inventory logs present: 465 records
+[PASS] [D3-inventory] Inventory logs: sale=42, restock=401, adjustment=0 | service_item_usages: 45
+
+=== D4: SERVICE/BOOKING RECONCILIATION ===
+
+  [41;1m Illuminate\Database\QueryException [49;22m
+
+[39;1m  SQLSTATE[42S02]: Base table or view not found: 1146 Table 'pawesome_e2e_audit.vet_appointments' doesn't exist (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: pawesome_e2e_audit, SQL: select count(*) as aggregate from `vet_appointments`)[39;22m
+
+  at [32mC:\xampp\htdocs\Pawesome_Capstone\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php[39m:[32m838[39m
+    834▕             $exceptionType = $this->isUniqueConstraintError($e)
+    835▕                 ? UniqueConstraintViolationException::class
+    836▕                 : QueryException::class;
+    837▕ 
+  ➜ 838▕             throw new $exceptionType(
+    839▕                 $this->getNameWithReadWriteType(),
+    840▕                 $query,
+    841▕                 $this->prepareBindings($bindings),
+    842▕                 $e,
+
+  [33m1   [39m[39;1mC:\xampp\htdocs\Pawesome_Capstone\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php[39;22m:[39;1m420[39;22m
+  [90m    PDOException::("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'pawesome_e2e_audit.vet_appointments' doesn't exist")[39m
+
+  [33m2   [39m[39;1mC:\xampp\htdocs\Pawesome_Capstone\backend\vendor\laravel\framework\src\Illuminate\Database\Connection.php[39;22m:[39;1m420[39;22m
+  [90m    PDO::prepare("select count(*) as aggregate from `vet_appointments`")[39m
+
