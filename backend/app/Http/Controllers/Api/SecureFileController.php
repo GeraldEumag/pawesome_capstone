@@ -275,6 +275,23 @@ class SecureFileController extends Controller
      */
     public function viewProfilePhoto(Request $request, $userId)
     {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // Authorization (F-09): the owner may view their own photo; staff
+        // roles may view photos they need for operational UIs. Customers
+        // cannot fetch other users' photos — this also blocks ID
+        // enumeration of arbitrary profiles.
+        $isOwner = (int) $user->id === (int) $userId;
+        $isStaff = $user->role !== 'customer';
+
+        if (!$isOwner && !$isStaff) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $targetUser = DB::table('users')->where('id', $userId)->first();
         
         if (!$targetUser) {
@@ -291,6 +308,14 @@ class SecureFileController extends Controller
         if (str_starts_with($filePath, '/api/')) {
             return response()->json(['message' => 'Profile photo not found'], 404);
         }
+
+        // Path confinement: profile photos must live under profile_photos/
+        // on the public disk. Defense-in-depth against a poisoned DB value
+        // pointing at an unrelated stored file.
+        if (str_contains($filePath, '..') || !str_starts_with($filePath, 'profile_photos/')) {
+            return response()->json(['message' => 'Profile photo not found'], 404);
+        }
+
         $disk = 'public';
         
         if (!Storage::disk($disk)->exists($filePath)) {
@@ -324,7 +349,7 @@ class SecureFileController extends Controller
         return response($fileContents)
             ->header('Content-Type', $mimeType)
             ->header('Content-Disposition', $this->inlineDisposition('profile_' . $userId . '.' . $extension))
-            ->header('Cache-Control', 'public, max-age=86400') // Cache for 1 day
+            ->header('Cache-Control', 'private, max-age=3600') // authenticated content — no shared caches
             ->header('X-Content-Type-Options', 'nosniff');
     }
 

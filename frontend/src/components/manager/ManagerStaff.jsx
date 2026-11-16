@@ -31,7 +31,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
-import { resolveAvatarUrl } from "../../utils/avatar";
+import AuthImg from "../shared/AuthImg";
 import { formatCurrency } from "../../utils/currency";
 import RowActionPopover from "../shared/RowActionPopover";
 import Modal from "../shared/Modal";
@@ -971,7 +971,7 @@ const ManagerStaff = () => {
                             }
                           >
                             {person.avatar ? (
-                              <img src={resolveAvatarUrl(person.avatar)} alt={person.name} />
+                              <AuthImg src={person.avatar} alt={person.name} />
                             ) : (
                               person.name.charAt(0).toUpperCase()
                             )}
@@ -1316,7 +1316,7 @@ const ProfileModal = ({ staff, activeTab, onTabChange, onClose }) => {
                   }
                 >
                   {staff.avatar ? (
-                    <img src={resolveAvatarUrl(staff.avatar)} alt={staff.name} />
+                    <AuthImg src={staff.avatar} alt={staff.name} />
                   ) : (
                     staff.name.charAt(0)
                   )}

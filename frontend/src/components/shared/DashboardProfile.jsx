@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { formatRoleLabel } from "../../utils/roleLabels";
-import { resolveAvatarUrl } from "../../utils/avatar";
+import { useAuthenticatedImage } from "../../utils/avatar";
 import "./DashboardProfile.css";
 
 const ROLE_PROFILE_PATHS = {
@@ -22,6 +22,7 @@ export default function DashboardProfile({
   image = "",
 }) {
   const navigate = useNavigate();
+  const imageSrc = useAuthenticatedImage(image);
 
   const handleNavigate = () => {
     const path = ROLE_PROFILE_PATHS[role] || "/profile";
@@ -37,14 +38,14 @@ export default function DashboardProfile({
         title="View profile"
       >
         <span className="dashboard-profile-avatar">
-          {image ? (
+          {imageSrc ? (
             <img
-              src={resolveAvatarUrl(image)}
+              src={imageSrc}
               alt={`${name} profile`}
               onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
             />
           ) : null}
-          <FaUserCircle size={24} style={{ display: image ? "none" : "block" }} />
+          <FaUserCircle size={24} style={{ display: imageSrc ? "none" : "block" }} />
         </span>
 
         <span className="dashboard-profile-info">

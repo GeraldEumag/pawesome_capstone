@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
-import { resolveAvatarUrl } from "../../utils/avatar";
+import { useAuthenticatedImage } from "../../utils/avatar";
 
 const getInitials = (name) => {
   const parts = String(name || "?").trim().split(" ").filter(Boolean);
@@ -12,7 +12,7 @@ const getInitials = (name) => {
 const CustomerAvatar = ({ customer, size = 48, className = "", showInitialsFallback = true }) => {
   const [imgError, setImgError] = useState(false);
 
-  const photoUrl = resolveAvatarUrl(
+  const photoUrl = useAuthenticatedImage(
     customer?.profile_photo ||
     customer?.user?.profile_photo ||
     customer?.avatar ||

@@ -1257,10 +1257,8 @@ Route::middleware(['auth.api', 'throttle:api'])->prefix('files')->group(function
     Route::get('/vaccination-cards/{id}/view', [SecureFileController::class, 'viewVaccinationCard']);
     Route::get('/pet-photos/{petId}/view', [SecureFileController::class, 'viewPetImage']);
     Route::get('/care-logs/{id}/view', [SecureFileController::class, 'viewCareLogPhoto']);
-});
-
-// Profile photos are public (avatars are not sensitive)
-Route::prefix('files')->group(function () {
+    // Profile photos: authenticated — owner or staff only (F-09). The
+    // previous unauthenticated route allowed ID enumeration of avatars.
     Route::get('/profile-photos/{userId}/view', [SecureFileController::class, 'viewProfilePhoto']);
 });
 

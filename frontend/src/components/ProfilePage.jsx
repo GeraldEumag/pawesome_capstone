@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, uploadProfilePhoto } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import { resolveAvatarUrl } from "../utils/avatar";
+import { useAuthenticatedImage } from "../utils/avatar";
 import "./ProfilePage.css";
 
 export default function ProfilePage({
@@ -64,6 +64,8 @@ export default function ProfilePage({
     newPassword: false,
     confirmPassword: false,
   });
+
+  const profileImageSrc = useAuthenticatedImage(profileData.profileImage);
 
   const showMessage = (text, type = "success") => {
     setMessage(text);
@@ -283,9 +285,9 @@ export default function ProfilePage({
       <div className="profile-hero-card">
         <div className="profile-hero-left">
           <div className="profile-hero-avatar">
-            {profileData.profileImage ? (
-              <img
-                src={resolveAvatarUrl(profileData.profileImage)}
+            {profileImageSrc ? (
+                <img
+                src={profileImageSrc}
                 alt="Profile"
                 onError={(e) => { e.target.style.display = "none"; }}
               />
@@ -353,9 +355,9 @@ export default function ProfilePage({
 
                 <div className="profile-avatar-section">
                   <div className="profile-avatar-main">
-                    {profileData.profileImage ? (
-                      <img
-                        src={resolveAvatarUrl(profileData.profileImage)}
+                    {profileImageSrc ? (
+                        <img
+                        src={profileImageSrc}
                         alt="Profile"
                         onError={(e) => { e.target.style.display = "none"; }}
                       />

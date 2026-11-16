@@ -12,7 +12,7 @@ import {
   faCog, faPalette, faLanguage,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, uploadProfilePhoto } from "../../api/client";
-import { resolveAvatarUrl } from "../../utils/avatar";
+import { useAuthenticatedImage } from "../../utils/avatar";
 import styled, { createGlobalStyle } from "styled-components";
 import {
   fadeIn, pulse,
@@ -698,6 +698,8 @@ const ProfileSettings = () => {
     profileImage: null,
   });
 
+  const profileImageSrc = useAuthenticatedImage(profileData.profileImage);
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -1084,9 +1086,9 @@ const ProfileSettings = () => {
                   <AvatarSection>
                     <AvatarRing>
                       <AvatarInner>
-                        {profileData.profileImage ? (
+                        {profileImageSrc ? (
                           <AvatarImage
-                            src={resolveAvatarUrl(profileData.profileImage)}
+                            src={profileImageSrc}
                             alt="Avatar"
                             onError={(e) => { e.target.style.display = "none"; }}
                           />

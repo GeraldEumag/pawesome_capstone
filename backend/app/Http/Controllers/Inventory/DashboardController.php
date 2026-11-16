@@ -782,8 +782,22 @@ class DashboardController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        // Whitelisted public payload — internal purchasing fields (cost,
+        // supplier, supplier_id, reorder_level) must not be exposed (F-03).
         return response()->json([
-            'item' => $item,
+            'item' => [
+                'id'          => $item->id,
+                'name'        => $item->name,
+                'sku'         => $item->sku,
+                'category'    => $item->category,
+                'description' => $item->description,
+                'brand'       => $item->brand,
+                'price'       => (float) $item->price,
+                'stock'       => $item->stock,
+                'status'      => $item->status,
+                'is_sellable' => (bool) $item->is_sellable,
+                'photo_url'   => $item->photo_url,
+            ],
             'in_stock' => $item->stock > 0,
             'stock_status' => $item->stock > 0 ? 'available' : 'out_of_stock',
         ]);

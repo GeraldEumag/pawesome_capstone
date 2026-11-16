@@ -911,6 +911,16 @@ class InventoryService
     }
 
     /**
+     * Fields exposed by customer-facing inventory endpoints. Internal
+     * purchasing data (cost, supplier, supplier_id, reorder_level, batch
+     * quantities, audit fields) must never appear here — F-03.
+     */
+    private const PUBLIC_ITEM_FIELDS = [
+        'id', 'name', 'sku', 'category', 'description', 'brand',
+        'price', 'stock', 'status', 'is_sellable', 'photo',
+    ];
+
+    /**
      * Get public items (read-only for store/pos)
      */
     public function getPublicItems(array $filters = []): array
@@ -919,11 +929,13 @@ class InventoryService
         // remains compatible with MySQL ONLY_FULL_GROUP_BY.
         $items = DB::table('inventory_items')
             ->select(
-                'inventory_items.*',
-                DB::raw('(select MIN(inventory_batches.expiration_date)
-                    from inventory_batches
-                    where inventory_batches.inventory_item_id = inventory_items.id
-                    and inventory_batches.status = "active") as nearest_expiration')
+                array_merge(
+                    array_map(fn ($f) => "inventory_items.{$f}", self::PUBLIC_ITEM_FIELDS),
+                    [DB::raw('(select MIN(inventory_batches.expiration_date)
+                        from inventory_batches
+                        where inventory_batches.inventory_item_id = inventory_items.id
+                        and inventory_batches.status = "active") as nearest_expiration')]
+                )
             )
             ->where('inventory_items.status', self::STATUS_ACTIVE)
             ->when(!empty($filters['category']), function ($q) use ($filters) {
@@ -940,13 +952,47 @@ class InventoryService
                 $q->where('inventory_items.stock', '>', 0);
             })
             ->orderBy('inventory_items.name')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id'                 => $item->id,
+                    'name'               => $item->name,
+                    'sku'                => $item->sku,
+                    'category'           => $item->category,
+                    'description'        => $item->description,
+                    'brand'              => $item->brand,
+                    'price'              => (float) $item->price,
+                    'stock'              => $item->stock,
+                    'status'             => $item->status,
+                    'is_sellable'        => (bool) $item->is_sellable,
+                    'photo_url'          => self::publicPhotoUrl($item->photo),
+                    'nearest_expiration' => $item->nearest_expiration,
+                ];
+            });
 
         return [
             'items' => $items,
             'count' => $items->count(),
             'timestamp' => now()->toIso8601String(),
         ];
+    }
+
+    /**
+     * Resolve a stored photo path to a public URL. Mirrors
+     * InventoryItem::getPhotoUrlAttribute() for stdClass rows.
+     */
+    private static function publicPhotoUrl(?string $photo): ?string
+    {
+        if (empty($photo)) {
+            return null;
+        }
+        if (str_starts_with($photo, 'http')) {
+            return $photo;
+        }
+        if (str_starts_with($photo, 'uploads/')) {
+            return asset($photo);
+        }
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($photo);
     }
 
     /**
