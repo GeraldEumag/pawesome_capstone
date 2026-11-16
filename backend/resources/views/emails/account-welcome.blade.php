@@ -3,7 +3,9 @@
 @section('title', 'Your Pawesome account')
 
 @section('content')
-    <p>Hi {{ $name }},</p>
+    <h1 style="font-size:20px;color:#b02a67;margin:0 0 16px 0;">Welcome to Pawesome</h1>
+
+    <p style="margin:0 0 12px 0;">Hi {{ $name }},</p>
     <p>An account has been created for you on Pawesome Retreat Inc.</p>
     <div class="credentials">
         <p style="margin: 0;"><strong>Username:</strong> {{ $username }}</p>

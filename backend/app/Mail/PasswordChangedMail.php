@@ -27,6 +27,7 @@ class PasswordChangedMail extends Mailable implements ShouldBeEncrypted, ShouldQ
             ->with([
                 'name' => $this->name,
                 'email' => $this->email,
+                'changedAt' => now(),
             ]);
     }
 }
