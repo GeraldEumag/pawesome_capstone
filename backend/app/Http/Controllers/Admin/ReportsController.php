@@ -102,21 +102,12 @@ class ReportsController extends Controller
     {
         $today = Carbon::today();
         $year = Carbon::now()->year;
+        $revenue = new RevenueService();
 
-        $dbDriver = DB::getDriverName();
-        if ($dbDriver === 'sqlite') {
-            $monthlyRevenue = Sale::selectRaw('CAST(strftime("%m", created_at) AS INTEGER) as month, SUM(amount) as total')
-                ->whereRaw('strftime("%Y", created_at) = ?', [$year])
-                ->groupBy('month')
-                ->orderBy('month')
-                ->get();
-        } else {
-            $monthlyRevenue = Sale::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
-                ->whereYear('created_at', $year)
-                ->groupBy('month')
-                ->orderByRaw('month')
-                ->get();
-        }
+        // Same [{month, total}] shape the previous Sale::selectRaw produced.
+        $monthlyRevenue = collect($revenue->monthly($year))
+            ->map(fn ($total, $month) => ['month' => (int) $month, 'total' => (float) $total])
+            ->values();
 
         $topServices = Appointment::selectRaw('service_id, COUNT(*) as count')
             ->with('service')
@@ -144,10 +135,10 @@ class ReportsController extends Controller
             'success' => true,
             'timestamp' => now()->toIso8601String(),
             'data' => [
-                'total_revenue' => Sale::sum('amount'),
-                'today_revenue' => Sale::whereDate('created_at', $today)->sum('amount'),
-                'total_transactions' => Sale::count(),
-                'today_transactions' => Sale::whereDate('created_at', $today)->count(),
+                'total_revenue' => $revenue->total(),
+                'today_revenue' => $revenue->total($today, $today->copy()->endOfDay()),
+                'total_transactions' => $revenue->count(),
+                'today_transactions' => $revenue->count($today, $today->copy()->endOfDay()),
                 'total_customers' => Customer::count(),
                 'new_customers' => Customer::where('created_at', '>=', Carbon::now()->subMonth())->count(),
                 'total_users' => User::count(),
@@ -1043,7 +1034,20 @@ class ReportsController extends Controller
         $requests = collect();
 
         if ($this->tableExists('service_requests')) {
-            $requests = $requests->concat($this->serviceRequestsBase($request)
+            // A request fulfilled through a linked appointment, grooming, or
+            // boarding record is reported there — skip the request row so a
+            // single booking is not counted twice (mirrors RevenueService).
+            $serviceRequestsQuery = $this->serviceRequestsBase($request);
+            foreach (['boardings', 'groomings', 'appointments'] as $linked) {
+                if (Schema::hasTable($linked) && Schema::hasColumn($linked, 'service_request_id')) {
+                    $serviceRequestsQuery->whereNotExists(function ($sub) use ($linked) {
+                        $sub->select(DB::raw(1))
+                            ->from($linked)
+                            ->whereColumn("$linked.service_request_id", 'service_requests.id');
+                    });
+                }
+            }
+            $requests = $requests->concat($serviceRequestsQuery
                 ->select([
                     'service_requests.id',
                     DB::raw('COALESCE(service_requests.service_type, service_requests.request_type, "service") as service_type'),
@@ -1075,7 +1079,7 @@ class ReportsController extends Controller
                     DB::raw('customers.email as customer_email'),
                     DB::raw('pets.name as pet_name'),
                     'appointments.status',
-                    DB::raw('NULL as payment_status'),
+                    'appointments.payment_status',
                     'appointments.created_at',
                     DB::raw($this->firstAvailableColumn('appointments', ['price', 'amount', 'total_amount'], '0') . ' as amount'),
                     DB::raw('"appointment" as source'),
@@ -1539,6 +1543,14 @@ class ReportsController extends Controller
         $query = DB::table('users')->where('role', 'customer');
         $this->applyDateRange($query, $request, 'users.created_at');
 
+        // Customer accounts already represented by a `customers` row are
+        // counted there — exclude them so one person is not double-counted.
+        $query->whereNotExists(function ($sub) {
+            $sub->select(DB::raw(1))
+                ->from('customers')
+                ->whereColumn('customers.user_id', 'users.id');
+        });
+
         return $query;
     }
 
@@ -1743,13 +1755,16 @@ class ReportsController extends Controller
 
     private function activeCustomerCount(Request $request): int
     {
-        $query = $this->customerUsersBase($request);
+        // Same deduped union as `total_customers`: active `customers` rows
+        // plus active customer-role users without a customers row.
+        $linkedActive = (int) $this->customersBase($request)->where('is_active', true)->count();
 
+        $unlinkedUsers = $this->customerUsersBase($request);
         if (Schema::hasColumn('users', 'is_active')) {
-            $query->where('is_active', true);
+            $unlinkedUsers->where('is_active', true);
         }
 
-        return (int) $query->count();
+        return $linkedActive + (int) $unlinkedUsers->count();
     }
 
     private function serviceRequestCount(Request $request, string $type): int
@@ -1850,15 +1865,26 @@ class ReportsController extends Controller
         return "$fallback as $alias";
     }
 
+    /**
+     * Resolve a report column expression. Existence alone is not enough —
+     * e.g. `service_requests.total_amount` exists but is NULL on regular
+     * service rows (only boarding fills it; regular rows carry `price`),
+     * so multiple candidates must fall back per row via COALESCE.
+     */
     private function firstAvailableColumn(string $table, array $columns, string $fallback): string
     {
-        foreach ($columns as $column) {
-            if (Schema::hasColumn($table, $column)) {
-                return "$table.$column";
-            }
+        $existing = array_values(array_filter(
+            $columns,
+            fn ($column) => Schema::hasColumn($table, $column)
+        ));
+
+        if ($existing === []) {
+            return $fallback;
         }
 
-        return $fallback;
+        return count($existing) === 1
+            ? "$table.$existing[0]"
+            : 'COALESCE(' . implode(', ', array_map(fn ($c) => "$table.$c", $existing)) . ')';
     }
 
     private function tableExists(string $table): bool

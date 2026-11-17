@@ -39,7 +39,7 @@ class RevenueService
 
         foreach ($this->paidSources() as $source) {
             if ($source['amount'] !== null) {
-                $total += (float) $this->paidQuery($source['table'], $source['amount'], $from, $to)->sum($source['amount']);
+                $total += (float) $this->paidQuery($source['table'], $source['amount'], $from, $to)->sum(DB::raw($source['amount']));
             }
         }
 
@@ -150,7 +150,7 @@ class RevenueService
         foreach ($this->paidSources() as $key => $source) {
             $result[$key] = $source['amount'] === null
                 ? 0.0
-                : (float) $this->paidQuery($source['table'], $source['amount'], $from, $to)->sum($source['amount']);
+                : (float) $this->paidQuery($source['table'], $source['amount'], $from, $to)->sum(DB::raw($source['amount']));
         }
 
         $result['partial_settlements'] = (float) $this->partialSettlementQuery($from, $to)->sum('payment_settlements.amount');
@@ -261,16 +261,26 @@ class RevenueService
         }
     }
 
+    /**
+     * Resolve the amount expression for a paid source. Column existence is
+     * not enough — `service_requests.total_amount` exists but is only
+     * populated for boarding stays; regular service rows carry `price`.
+     * Fall back per row (COALESCE), matching PaymentVerificationService.
+     */
     private function firstColumn(string $table, array $candidates): ?string
     {
         if (!Schema::hasTable($table)) {
             return null;
         }
-        foreach ($candidates as $column) {
-            if (Schema::hasColumn($table, $column)) {
-                return $column;
-            }
+        $existing = array_values(array_filter(
+            $candidates,
+            fn ($column) => Schema::hasColumn($table, $column)
+        ));
+        if ($existing === []) {
+            return null;
         }
-        return null;
+        return count($existing) === 1
+            ? "{$table}.{$existing[0]}"
+            : 'COALESCE(' . implode(', ', array_map(fn ($c) => "{$table}.{$c}", $existing)) . ')';
     }
 }

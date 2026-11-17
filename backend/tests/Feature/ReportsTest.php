@@ -80,9 +80,10 @@ class ReportsTest extends TestCase
 
     public function test_reports_summary_calculates_revenue_correctly(): void
     {
-        // Create sales
-        Sale::factory()->count(5)->create(['amount' => 1000]);
-        Sale::factory()->count(3)->create(['amount' => 500]);
+        // Create POS sales (type 'product' — legacy 'appointment' sales rows
+        // are excluded so appointment revenue is not counted twice)
+        Sale::factory()->count(5)->create(['amount' => 1000, 'type' => 'product']);
+        Sale::factory()->count(3)->create(['amount' => 500, 'type' => 'product']);
 
         $response = $this->getJson('/api/admin/reports/summary', $this->withAdminAuth());
 
@@ -170,12 +171,14 @@ class ReportsTest extends TestCase
         // Yesterday's sales
         Sale::factory()->count(3)->create([
             'amount' => 1000,
+            'type' => 'product',
             'created_at' => now()->subDay()
         ]);
 
         // Today's sales
         Sale::factory()->count(2)->create([
             'amount' => 500,
+            'type' => 'product',
             'created_at' => now()
         ]);
 

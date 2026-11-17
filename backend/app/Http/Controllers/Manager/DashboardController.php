@@ -72,8 +72,8 @@ class DashboardController extends Controller
             'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),
             'pending_appointments' => Appointment::where('status', 'scheduled')->count(),
             'completed_appointments' => Appointment::where('status', 'completed')->count(),
-            'today_revenue' => Sale::whereDate('created_at', $today)->sum('amount'),
-            'monthly_revenue' => Sale::whereMonth('created_at', $today->month)->sum('amount'),
+            'today_revenue' => (new \App\Services\RevenueService())->total($today, $today->copy()->endOfDay()),
+            'monthly_revenue' => (new \App\Services\RevenueService())->total($today->copy()->startOfMonth(), $today->copy()->endOfMonth()),
             'grooming_requests' => $groomingRequests,
             'veterinary_appointments' => $veterinaryAppointments,
             'boarding_bookings' => $boardingBookings,
@@ -240,9 +240,9 @@ class DashboardController extends Controller
                 'total_services' => DB::table('services')->count(),
             ],
             'financial_metrics' => [
-                'today_revenue' => Sale::whereDate('created_at', $today)->sum('amount'),
-                'monthly_revenue' => Sale::whereMonth('created_at', $today->month)->sum('amount'),
-                'yearly_revenue' => Sale::whereYear('created_at', $today->year)->sum('amount'),
+                'today_revenue' => (new \App\Services\RevenueService())->total($today, $today->copy()->endOfDay()),
+                'monthly_revenue' => (new \App\Services\RevenueService())->total($today->copy()->startOfMonth(), $today->copy()->endOfMonth()),
+                'yearly_revenue' => (new \App\Services\RevenueService())->total($today->copy()->startOfYear(), $today->copy()->endOfYear()),
                 'pending_payments' => DB::table('customer_orders')->where('payment_status', 'pending')->count(),
                 'overdue_invoices' => DB::table('customer_orders')
                     ->where('payment_status', 'pending')
@@ -251,7 +251,7 @@ class DashboardController extends Controller
             ],
             'operational_metrics' => [
                 'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),
-                'completed_appointments' => Appointment::whereMonth('scheduled_at', $today->month)->count(),
+                'completed_appointments' => Appointment::whereMonth('scheduled_at', $today->month)->where('status', 'completed')->count(),
                 'pending_orders' => DB::table('customer_orders')->where('status', 'pending')->count(),
                 'low_stock_items' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
                 'occupancy_rate' => DB::table('hotel_rooms')->count() > 0 
@@ -423,8 +423,9 @@ class DashboardController extends Controller
 
     private function calculateRevenueGrowth($today)
     {
-        $currentMonth = Sale::whereMonth('created_at', $today->month)->sum('amount');
-        $previousMonth = Sale::whereMonth('created_at', $today->copy()->subMonth()->month)->sum('amount');
+        $revenue = new \App\Services\RevenueService();
+        $currentMonth = $revenue->total($today->copy()->startOfMonth(), $today->copy()->endOfMonth());
+        $previousMonth = $revenue->total($today->copy()->subMonth()->startOfMonth(), $today->copy()->subMonth()->endOfMonth());
         
         return $previousMonth > 0 ? round((($currentMonth - $previousMonth) / $previousMonth) * 100, 2) : 0;
     }
