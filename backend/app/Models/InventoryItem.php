@@ -92,8 +92,18 @@ class InventoryItem extends Model
                 InventoryLog::create([
                     'inventory_item_id' => $item->id,
                     'delta' => $item->stock,
+                    'quantity' => $item->stock,
+                    'type' => 'initial',
+                    'movement_type' => 'initial_stock',
                     'reason' => 'Initial stock',
                     'reference_type' => 'initial',
+                    'stock_before' => 0,
+                    'stock_after' => $item->stock,
+                    'previous_stock' => 0,
+                    'new_stock' => $item->stock,
+                    'performed_by' => auth()->user()?->name ?? 'System',
+                    'role' => auth()->user()?->role,
+                    'user_id' => auth()->id(),
                 ]);
             }
         });
@@ -523,14 +533,25 @@ class InventoryItem extends Model
      */
     public function decrementStock(int $amount, string $reason = ''): void
     {
+        $before = (int) $this->stock;
         $this->stock -= $amount;
         $this->save();
 
         InventoryLog::create([
             'inventory_item_id' => $this->id,
             'delta' => -$amount,
+            'quantity' => $amount,
+            'type' => 'sale',
+            'movement_type' => 'stock_deduction',
             'reason' => $reason,
             'reference_type' => 'sale',
+            'stock_before' => $before,
+            'stock_after' => (int) $this->stock,
+            'previous_stock' => $before,
+            'new_stock' => (int) $this->stock,
+            'performed_by' => auth()->user()?->name ?? 'System',
+            'role' => auth()->user()?->role,
+            'user_id' => auth()->id(),
         ]);
     }
 
@@ -539,27 +560,49 @@ class InventoryItem extends Model
      */
     public function incrementStock(int $amount, string $reason = ''): void
     {
+        $before = (int) $this->stock;
         $this->stock += $amount;
         $this->save();
 
         InventoryLog::create([
             'inventory_item_id' => $this->id,
             'delta' => $amount,
+            'quantity' => $amount,
+            'type' => 'restock',
+            'movement_type' => 'stock_restock',
             'reason' => $reason,
             'reference_type' => 'restock',
+            'stock_before' => $before,
+            'stock_after' => (int) $this->stock,
+            'previous_stock' => $before,
+            'new_stock' => (int) $this->stock,
+            'performed_by' => auth()->user()?->name ?? 'System',
+            'role' => auth()->user()?->role,
+            'user_id' => auth()->id(),
         ]);
     }
 
     public function updateStock(int $amount, string $reason = ''): void
     {
+        $before = (int) $this->stock;
         $this->stock += $amount;
         $this->save();
 
         InventoryLog::create([
             'inventory_item_id' => $this->id,
             'delta' => $amount,
+            'quantity' => abs($amount),
+            'type' => $amount >= 0 ? 'restock' : 'sale',
+            'movement_type' => $amount >= 0 ? 'stock_restock' : 'stock_deduction',
             'reason' => $reason,
             'reference_type' => $amount >= 0 ? 'restock' : 'sale',
+            'stock_before' => $before,
+            'stock_after' => (int) $this->stock,
+            'previous_stock' => $before,
+            'new_stock' => (int) $this->stock,
+            'performed_by' => auth()->user()?->name ?? 'System',
+            'role' => auth()->user()?->role,
+            'user_id' => auth()->id(),
         ]);
     }
 

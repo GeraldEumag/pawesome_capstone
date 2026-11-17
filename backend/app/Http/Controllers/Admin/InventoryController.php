@@ -265,7 +265,9 @@ class InventoryController extends Controller
         $validated = $request->validate([
             'type' => 'nullable|in:add,remove,set,increment,decrement',
             'adjustment_type' => 'nullable|in:increment,decrement,set,add,remove',
-            'quantity' => 'required|integer|min:1',
+            // min:0 — 'set' may legitimately target zero (the service rejects
+            // non-positive quantities for decrement only).
+            'quantity' => 'required|integer|min:0',
             'reason' => 'required|string|max:255',
             'expiration_date' => 'nullable|date',
         ]);
@@ -317,137 +319,33 @@ class InventoryController extends Controller
         }
 
         try {
-            return DB::transaction(function () use ($validated, $id) {
-                $item = InventoryItem::lockForUpdate()->findOrFail($id);
-                $current = (int) ($item->quantity ?? $item->stock ?? 0);
-                $qty = (int) $validated['quantity'];
-                $expirationDate = $validated['expiration_date'] ?? null;
+            // Delegate to the centralized service: rejects over-draw instead of
+            // silently clamping, keeps batch totals in sync, writes the full
+            // movement log, and fires low-stock notifications. (The previous
+            // inline implementation wrote a non-existent `quantity` column and
+            // crashed for every non-batch item.)
+            $result = $this->inventoryService->adjustStock(
+                $id,
+                (int) $validated['quantity'],
+                $validated['reason'] ?? 'Manual stock adjustment',
+                [
+                    'adjustment_type' => $validated['type'] === 'remove' ? 'decrement' : 'set',
+                    'type' => $validated['type'],
+                    'performed_by' => $request->user()?->name,
+                    'role' => $request->user()?->role,
+                    'user_id' => $request->user()?->id,
+                    'expiration_date' => $validated['expiration_date'] ?? null,
+                ]
+            );
 
-                // Category-based expiry validation
-                $expiryRequiredCategories = [
-                    'food',
-                    'medicine',
-                    'vitamins',
-                    'health',
-                    'grooming',
-                    'shampoo',
-                    'treats',
-                ];
-
-                $category = strtolower($item->category ?? '');
-                $requiresExpiry = collect($expiryRequiredCategories)->contains(function ($key) use ($category) {
-                    return str_contains($category, $key);
-                });
-
-                // Enforce expiry requirement for add operations
-                if ($validated['type'] === 'add' && $qty > 0 && $requiresExpiry && !$expirationDate) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Expiration date is required for this item category.',
-                    ], 422);
-                }
-
-                if ($validated['type'] === 'add') {
-                    $newStock = $current + $qty;
-
-                    if ($qty > 0 && ($expirationDate || $requiresExpiry || $item->hasRealBatches())) {
-                        // Batch-tracked items (or expiry-tracked adds) always
-                        // get a batch so stock stays in sync with batches.
-                        $item->addBatchStock($qty, null, $expirationDate, 'Stock adjustment');
-                        if (Schema::hasColumn($item->getTable(), 'quantity')) {
-                            $item->quantity = $item->stock;
-                            $item->save();
-                        }
-                    } else {
-                        // Simple stock addition without batch
-                        if (Schema::hasColumn($item->getTable(), 'stock')) {
-                            $item->stock = $newStock;
-                        }
-                        $item->quantity = $newStock;
-                        $item->save();
-                    }
-                } elseif ($validated['type'] === 'remove') {
-                    $newStock = max(0, $current - $qty);
-
-                    if ($qty > 0 && $item->hasRealBatches()) {
-                        // Reconcile batches to the remaining count (FEFO write-off)
-                        $this->inventoryService->reconcileToStock(
-                            $item,
-                            $newStock,
-                            $validated['reason'] ?? 'Manual stock removal',
-                            'manual_removal',
-                            'adjustment'
-                        );
-                        $item = $item->fresh();
-                        $newStock = (int) $item->stock;
-                        return response()->json([
-                            'success' => true,
-                            'message' => 'Stock adjusted successfully',
-                            'item' => $item->fresh(),
-                            'stock_before' => $current,
-                            'stock_after' => $newStock,
-                        ]);
-                    }
-
-                    // Non-batch item: simple decrement
-                    if (Schema::hasColumn($item->getTable(), 'stock')) {
-                        $item->stock = $newStock;
-                    }
-                    $item->quantity = $newStock;
-                    $item->save();
-                } else {
-                    $newStock = $qty;
-
-                    if ($item->hasRealBatches()) {
-                        $this->inventoryService->reconcileToStock(
-                            $item,
-                            $newStock,
-                            $validated['reason'] ?? 'Manual stock adjustment',
-                            'stock_adjustment_set',
-                            'set'
-                        );
-                        $item = $item->fresh();
-                        return response()->json([
-                            'success' => true,
-                            'message' => 'Stock adjusted successfully',
-                            'item' => $item,
-                            'stock_before' => $current,
-                            'stock_after' => (int) $item->stock,
-                        ]);
-                    }
-
-                    $item->quantity = $newStock;
-                    if (Schema::hasColumn($item->getTable(), 'stock')) {
-                        $item->stock = $newStock;
-                    }
-                    $item->save();
-                }
-
-                // Refresh item to get updated stock
-                $item = $item->fresh();
-
-                // Log the adjustment
-                InventoryLog::create([
-                    'inventory_item_id' => $item->id,
-                    'delta' => $newStock - $current,
-                    'reason' => $validated['reason'] ?? 'Manual stock adjustment',
-                    'reference_type' => $validated['type'],
-                    'previous_stock' => $current,
-                    'new_stock' => $newStock,
-                    'performed_by' => auth()->user()->name ?? 'System',
-                    'role' => auth()->user()->role ?? 'Staff',
-                    'user_id' => auth()->id(),
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Stock adjusted successfully',
-                    'item' => $item->fresh(),
-                    'previous_stock' => $current,
-                    'new_stock' => $newStock,
-                    'adjustment' => $newStock - $current,
-                ]);
-            });
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock adjusted successfully',
+                'item' => $result['item'],
+                'previous_stock' => $result['previous_stock'],
+                'new_stock' => $result['new_stock'],
+                'adjustment' => $result['adjustment'],
+            ]);
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], 422);
         }

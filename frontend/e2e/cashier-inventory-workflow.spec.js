@@ -171,6 +171,7 @@ async function logout(page) {
 }
 
 const { apiLogin: sharedApiLogin } = require("./test-utils");
+const { enforceAuditStack } = require("./audit-guard");
 
 async function apiLogin(request, role, options) {
   return sharedApiLogin(request, role, options);
@@ -279,6 +280,9 @@ function findPosLog(logs, product, transaction) {
 test.setTimeout(360000);
 
 test("Cashier POS to Inventory Stock Logs to Manager Reports", async ({ page, request }) => {
+  // Mutation guard: refuse to run unless the API provably writes into an
+  // isolated *audit* database (never the development database).
+  await enforceAuditStack(request, test, { role: "inventory", apiLogin });
   ensureEvidenceDir();
   page.setDefaultTimeout(20000);
   attachAudit(page);

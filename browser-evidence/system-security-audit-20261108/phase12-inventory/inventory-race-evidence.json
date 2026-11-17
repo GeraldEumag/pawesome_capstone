@@ -1,12 +1,12 @@
 {
   "result": "PASS",
-  "item_id": 2534,
+  "item_id": 864,
   "before": {
     "item": {
-      "id": 2534,
-      "sku": "P12RACE27577032",
-      "barcode": "P12RBC27577032",
-      "name": "Phase12 Race 27577032",
+      "id": 864,
+      "sku": "P12RACE45497994",
+      "barcode": "P12RBC45497994",
+      "name": "Phase12 Race 45497994",
       "category": "Accessories",
       "brand": "Phase12",
       "supplier": null,
@@ -19,14 +19,14 @@
       "requires_expiry_tracking": 0,
       "issue_method": "FIFO",
       "archived_at": null,
-      "created_at": "2026-11-17 15:59:37",
-      "updated_at": "2026-11-17 15:59:37"
+      "created_at": "2026-11-17 20:58:18",
+      "updated_at": "2026-11-17 20:58:18"
     },
     "batches": [
       {
-        "id": 1184,
-        "inventory_item_id": 2534,
-        "batch_no": "P12-RACE-27577032",
+        "id": 433,
+        "inventory_item_id": 864,
+        "batch_no": "P12-RACE-45497994",
         "received_date": "2026-11-17",
         "manufacturing_date": null,
         "expiration_date": null,
@@ -36,8 +36,8 @@
         "supplier": null,
         "unit_cost": null,
         "notes": "Phase 12 fixture batch",
-        "created_at": "2026-11-17 15:59:37",
-        "updated_at": "2026-11-17 15:59:37"
+        "created_at": "2026-11-17 20:58:18",
+        "updated_at": "2026-11-17 20:58:18"
       }
     ],
     "logs": [],
@@ -50,10 +50,10 @@
         "success": true,
         "message": "Stock adjusted successfully",
         "item": {
-          "id": 2534,
-          "sku": "P12RACE27577032",
-          "barcode": "P12RBC27577032",
-          "name": "Phase12 Race 27577032",
+          "id": 864,
+          "sku": "P12RACE45497994",
+          "barcode": "P12RBC45497994",
+          "name": "Phase12 Race 45497994",
           "category": "Accessories",
           "item_class": "retail",
           "brand": "Phase12",
@@ -76,8 +76,8 @@
           "is_service_consumable": 0,
           "requires_expiry_tracking": 0,
           "issue_method": "FIFO",
-          "created_at": "2026-11-17T15:59:37.000000Z",
-          "updated_at": "2026-11-17T14:59:37.000000Z",
+          "created_at": "2026-11-17T12:58:18.000000Z",
+          "updated_at": "2026-11-17T19:58:19.000000Z",
           "photo_url": null
         },
         "previous_stock": 5,
@@ -99,10 +99,10 @@
   ],
   "after": {
     "item": {
-      "id": 2534,
-      "sku": "P12RACE27577032",
-      "barcode": "P12RBC27577032",
-      "name": "Phase12 Race 27577032",
+      "id": 864,
+      "sku": "P12RACE45497994",
+      "barcode": "P12RBC45497994",
+      "name": "Phase12 Race 45497994",
       "category": "Accessories",
       "brand": "Phase12",
       "supplier": null,
@@ -115,14 +115,14 @@
       "requires_expiry_tracking": 0,
       "issue_method": "FIFO",
       "archived_at": null,
-      "created_at": "2026-11-17 15:59:37",
-      "updated_at": "2026-11-17 14:59:37"
+      "created_at": "2026-11-17 20:58:18",
+      "updated_at": "2026-11-18 03:58:19"
     },
     "batches": [
       {
-        "id": 1184,
-        "inventory_item_id": 2534,
-        "batch_no": "P12-RACE-27577032",
+        "id": 433,
+        "inventory_item_id": 864,
+        "batch_no": "P12-RACE-45497994",
         "received_date": "2026-11-17",
         "manufacturing_date": null,
         "expiration_date": null,
@@ -132,14 +132,14 @@
         "supplier": null,
         "unit_cost": null,
         "notes": "Phase 12 fixture batch",
-        "created_at": "2026-11-17 15:59:37",
-        "updated_at": "2026-11-17 14:59:37"
+        "created_at": "2026-11-17 20:58:18",
+        "updated_at": "2026-11-18 03:58:19"
       }
     ],
     "logs": [
       {
-        "id": 1255,
-        "inventory_item_id": 2534,
+        "id": 541,
+        "inventory_item_id": 864,
         "delta": -4,
         "quantity": 4,
         "type": "stock_adjustment_decrement",
@@ -150,13 +150,13 @@
         "stock_after": 1,
         "previous_stock": 5,
         "new_stock": 1,
-        "reason": "phase12 concurrent stock-out 27577032",
-        "performed_by": "INVENTORY MANAGER",
+        "reason": "phase12 concurrent stock-out 45497994",
+        "performed_by": "Inventory Manager",
         "role": "inventory",
-        "user_id": 6,
+        "user_id": 7,
         "details": "{\"reconciled_batch_id\":null,\"batch_written_off\":4,\"adjustment_type\":\"decrement\"}",
-        "created_at": "2026-11-17 14:59:37",
-        "updated_at": "2026-11-17 14:59:37"
+        "created_at": "2026-11-18 03:58:19",
+        "updated_at": "2026-11-18 03:58:19"
       }
     ],
     "audits": []

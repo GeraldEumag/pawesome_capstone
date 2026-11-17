@@ -538,68 +538,42 @@ class DashboardController extends Controller
             ], 422);
         }
 
-        return DB::transaction(function () use ($request, $id, $validated) {
-            // Read-modify-write under a row lock: reconcileToStock derives the
-            // batch delta from the counter, so a concurrent deduction between
-            // read and write would otherwise drift batches vs stock.
-            $item = InventoryItem::lockForUpdate()->findOrFail($id);
-            $current = (int) $item->stock;
-            $quantity = (int) $validated['quantity'];
+        try {
+            return DB::transaction(function () use ($request, $id, $validated) {
+                $item = InventoryItem::lockForUpdate()->findOrFail($id);
+                $current = (int) $item->stock;
 
-            $newStock = match ($validated['type']) {
-                'add' => $current + $quantity,
-                'remove' => max(0, $current - $quantity),
-                default => $quantity,
-            };
-
-            if ($newStock !== $current && $item->hasRealBatches()) {
-                // Batch-tracked items: reconcile batches to the target so the flat
-                // counter never drifts from batch quantities.
-                $this->inventoryService->reconcileToStock(
-                    $item,
-                    $newStock,
+                // Delegate to the centralized service: rejects over-draw instead
+                // of silently clamping, keeps batch totals in sync, writes the
+                // full movement log, and fires low-stock notifications.
+                $result = $this->inventoryService->adjustStock(
+                    $id,
+                    (int) $validated['quantity'],
                     $validated['reason'] ?? 'Manual stock adjustment',
-                    'manual_adjustment',
-                    $validated['type']
+                    [
+                        'adjustment_type' => $validated['type'] === 'remove' ? 'decrement' : 'set',
+                        'type' => $validated['type'],
+                        'performed_by' => $request->user()?->name,
+                        'role' => $request->user()?->role,
+                        'user_id' => $request->user()?->id,
+                    ]
                 );
-            } else {
-                $item->update(['stock' => $newStock]);
 
-                InventoryLog::create([
-                    'inventory_item_id' => $item->id,
-                    'delta' => $newStock - $current,
-                    'quantity' => abs($newStock - $current),
-                    'type' => $validated['type'],
-                    'movement_type' => 'manual_adjustment',
-                    'reason' => $validated['reason'] ?? 'Manual stock adjustment',
-                    'reference_type' => $validated['type'],
-                    'stock_before' => $current,
-                    'stock_after' => $newStock,
+                $newStock = (int) $result['new_stock'];
+                WorkflowNotifier::notifyRole('inventory', 'Stock Adjustment Made', "{$item->name}: {$current} -> {$newStock}", 'info', 'inventory_item', $item->id);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Stock adjusted successfully',
+                    'item' => $item->fresh(),
                     'previous_stock' => $current,
                     'new_stock' => $newStock,
-                    'performed_by' => $request->user()?->name,
-                    'role' => $request->user()?->role,
-                    'user_id' => $request->user()?->id,
+                    'adjustment' => $newStock - $current,
                 ]);
-            }
-
-            WorkflowNotifier::notifyRole('inventory', 'Stock Adjustment Made', "{$item->name}: {$current} -> {$newStock}", 'info', 'inventory_item', $item->id);
-            ActivityLog::log($request->user()?->id, 'inventory_adjusted', "Inventory adjusted {$item->name}", [
-                'category' => 'inventory',
-                'reference_type' => 'inventory_item',
-                'reference_id' => $item->id,
-                'metadata' => ['previous_stock' => $current, 'new_stock' => $newStock],
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Stock adjusted successfully',
-                'item' => $item->fresh(),
-                'previous_stock' => $current,
-                'new_stock' => $newStock,
-                'adjustment' => $newStock - $current,
-            ]);
-        });
+            });
+        } catch (\Exception $e) {
+            return response()->json(['errors' => [$e->getMessage()]], 422);
+        }
     }
 
     private function formatLog(InventoryLog $log): array
@@ -668,6 +642,35 @@ class DashboardController extends Controller
             'priority' => 'nullable|string|max:50',
             'status' => 'nullable|string|max:50',
         ]);
+
+        // Persist the request as a manager notification — a fabricated id with
+        // no backing record would make "Reorder request recorded" untrue.
+        $item = InventoryItem::findOrFail($payload['item_id']);
+
+        WorkflowNotifier::notifyRole(
+            'manager',
+            'Inventory Reorder Request',
+            sprintf(
+                '%s: current %s, reorder level %s, suggested qty %s (priority: %s) — requested by %s',
+                $payload['item_name'] ?? $item->name,
+                $payload['current_stock'] ?? $item->stock,
+                $payload['reorder_level'] ?? $item->reorder_level,
+                $payload['suggested_quantity'] ?? 'n/a',
+                $payload['priority'] ?? 'normal',
+                $request->user()?->name ?? 'Inventory staff'
+            ),
+            'warning',
+            'inventory_item',
+            $item->id,
+            [
+                'item_id' => $item->id,
+                'sku' => $payload['sku'] ?? $item->sku,
+                'suggested_quantity' => $payload['suggested_quantity'] ?? null,
+                'current_stock' => $payload['current_stock'] ?? $item->stock,
+                'reorder_level' => $payload['reorder_level'] ?? $item->reorder_level,
+                'requested_by' => $request->user()?->name,
+            ]
+        );
 
         return response()->json([
             'success' => true,

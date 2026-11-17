@@ -357,8 +357,14 @@ class InventoryService
                 throw new \Exception('Stock increases must be recorded as a new batch. Use the stock receiving action.');
             }
 
-            if ($quantity <= 0) {
+            // 'set' legitimately targets zero (zeroing an item is a valid
+            // physical-count correction); decrements of zero or less are no-ops
+            // at best and must be rejected.
+            if ($adjustmentType === 'decrement' && $quantity <= 0) {
                 throw new \Exception('Quantity must be greater than zero.');
+            }
+            if ($quantity < 0) {
+                throw new \Exception('Quantity must not be negative.');
             }
 
             $previousStock = (int) ($item->stock ?? 0);
@@ -1244,41 +1250,57 @@ class InventoryService
      */
     public function disposeBatch(int $batchId, string $reason = 'Expired'): array
     {
-        $batch = InventoryBatch::findOrFail($batchId);
-        $item = $batch->inventoryItem;
+        return DB::transaction(function () use ($batchId, $reason) {
+            $batch = InventoryBatch::lockForUpdate()->findOrFail($batchId);
+            $item = InventoryItem::lockForUpdate()->findOrFail($batch->inventory_item_id);
 
-        $disposedQuantity = $batch->remaining_quantity;
+            $disposedQuantity = $batch->remaining_quantity;
+            $stockBefore = (int) $item->stock;
 
-        // Mark batch as disposed
-        $batch->update([
-            'status' => 'disposed',
-            'remaining_quantity' => 0,
-            'notes' => $batch->notes . "\nDisposed: {$reason} on " . now()->toDateTimeString(),
-        ]);
+            // Mark batch as disposed
+            $batch->update([
+                'status' => 'disposed',
+                'remaining_quantity' => 0,
+                'notes' => $batch->notes . "\nDisposed: {$reason} on " . now()->toDateTimeString(),
+            ]);
 
-        // Update main stock
-        $item->decrement('stock', $disposedQuantity);
+            // Update main stock
+            $item->decrement('stock', $disposedQuantity);
+            $item = $item->fresh();
 
-        // Log disposal
-        InventoryLog::create([
-            'inventory_item_id' => $item->id,
-            'delta' => -$disposedQuantity,
-            'reason' => "Batch disposed: {$reason}",
-            'reference_type' => 'disposal',
-            'details' => json_encode([
-                'batch_id' => $batch->id,
-                'batch_no' => $batch->batch_no,
+            // Log disposal — full movement fields so the entry is traceable in
+            // history the same way deductions and adjustments are.
+            InventoryLog::create([
+                'inventory_item_id' => $item->id,
+                'delta' => -$disposedQuantity,
+                'quantity' => $disposedQuantity,
+                'type' => 'disposal',
+                'movement_type' => 'batch_disposal',
+                'reason' => "Batch disposed: {$reason}",
+                'reference_type' => 'disposal',
+                'reference_id' => $batch->id,
+                'stock_before' => $stockBefore,
+                'stock_after' => $item->stock,
+                'previous_stock' => $stockBefore,
+                'new_stock' => $item->stock,
+                'performed_by' => auth()->user()?->name,
+                'role' => auth()->user()?->role,
+                'user_id' => auth()->id(),
+                'details' => json_encode([
+                    'batch_id' => $batch->id,
+                    'batch_no' => $batch->batch_no,
+                    'disposed_quantity' => $disposedQuantity,
+                    'disposal_reason' => $reason,
+                ]),
+            ]);
+
+            return [
+                'message' => 'Batch disposed successfully',
+                'batch' => $batch->fresh(),
+                'item' => $item->fresh(),
                 'disposed_quantity' => $disposedQuantity,
-                'disposal_reason' => $reason,
-            ]),
-        ]);
-
-        return [
-            'message' => 'Batch disposed successfully',
-            'batch' => $batch->fresh(),
-            'item' => $item->fresh(),
-            'disposed_quantity' => $disposedQuantity,
-        ];
+            ];
+        });
     }
 
     /**

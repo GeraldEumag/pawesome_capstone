@@ -11,8 +11,10 @@ const evidenceDir = path.resolve(__dirname, "../../browser-evidence/system-secur
 // The inventory API is currently mounted on one PHP process in the audit stack.
 // Parallel requests against :8001 are sufficient to test row-lock serialization.
 // Cases are independent: a lifecycle failure must not skip the API checks.
-test.beforeEach(() => {
-  test.skip(process.env.E2E_AUDIT_DATABASE !== "pawesome_e2e_audit", "Requires the approved isolated audit database.");
+const { checkAuditEnv, enforceAuditStack, dbQuery: guardDbQuery } = require("./audit-guard");
+const auditDbName = checkAuditEnv().auditDb || "";
+test.beforeEach(async ({ request }) => {
+  await enforceAuditStack(request, test, { role: "inventory", apiLogin });
   expect(apiUrl).toBe("http://127.0.0.1:8001/api");
 });
 
@@ -76,8 +78,7 @@ async function shot(page, name) {
 }
 
 function dbQuery(sql) {
-  const code = `$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]); echo json_encode($db->query(${JSON.stringify(sql)})->fetchAll(PDO::FETCH_ASSOC));`;
-  return JSON.parse(execFileSync("php", ["-r", code], { cwd: path.resolve(__dirname, "../../backend"), encoding: "utf8" }));
+  return guardDbQuery(auditDbName, sql);
 }
 
 function dbItem(itemId) {
@@ -92,7 +93,7 @@ function dbItem(itemId) {
 function dbCreateItem({ name, sku, barcode, stock = 0, batchQuantity = null, batchNo = null }) {
   const stockInt = Number(stock);
   const code = `
-$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDbName}","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $now=date("Y-m-d H:i:s");
 $db->prepare("INSERT INTO inventory_items (sku,barcode,name,category,brand,stock,reorder_level,price,cost,status,is_sellable,is_service_consumable,requires_expiry_tracking,issue_method,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")->execute([$argv[1],$argv[2],$argv[3],"Accessories","Phase12",(int)$argv[6],1,25.00,10.00,"active",1,0,0,"FIFO",$now,$now]);
 $id=(int)$db->lastInsertId();
@@ -165,7 +166,7 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
   // Expand the row and verify the UI-created initial batch.
   await openInventoryRowAction(page, productName, "View Batches");
   const batchPanel = page.locator(".batch-details", { hasText: `Batches for ${productName}` });
-  await expect(batchPanel).toContainText("Batch-001");
+  await expect(batchPanel).toContainText("Batch-001", { timeout: 30000 });
   await expect(batchPanel).toContainText("12");
   screenshots.push(await shot(page, "04-initial-batch"));
 
@@ -263,7 +264,7 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
   // Verify the reports screen's displayed quantity against the persisted item.
   await page.goto("/inventory/reports");
   const reportRow = page.locator(".standard-table tbody tr", { hasText: productName }).first();
-  await expect(reportRow).toContainText(productName);
+  await expect(reportRow).toContainText(productName, { timeout: 30000 });
   await expect(reportRow).toContainText("13");
   screenshots.push(await shot(page, "08-report-reconciliation"));
 
@@ -297,6 +298,7 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
 });
 
 test("Phase 12.3 inventory rejects unauthorized access, tampering, duplicates, and insufficient stock", async ({ request }) => {
+  test.setTimeout(120000); // many sequential API assertions on the single-process audit API
   const unique = Date.now().toString().slice(-8);
   const inventory = await apiLogin(request, "inventory");
   const customer = await apiLogin(request, "customer");

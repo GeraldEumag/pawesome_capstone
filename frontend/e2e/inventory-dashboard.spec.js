@@ -2,7 +2,8 @@ const { test, expect } = require('@playwright/test');
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 
 test.describe('Inventory Dashboard end-to-end', () => {
-  const { loginAs, mockLoginAs, getDashboardPath } = require('./test-utils');
+  const { loginAs, mockLoginAs, getDashboardPath, apiLogin } = require('./test-utils');
+  const { enforceAuditStack } = require('./audit-guard');
   const role = 'inventory';
   const dashboardPath = getDashboardPath(role);
 
@@ -51,8 +52,12 @@ test.describe('Inventory Dashboard end-to-end', () => {
     }
   });
 
-  test('can create new inventory item', async ({ page }) => {
+  test('can create new inventory item', async ({ page, request }) => {
     let createCalled = false;
+
+    if (process.env.E2E_LIVE) {
+      await enforceAuditStack(request, test, { role: 'inventory', apiLogin });
+    }
 
     if (!process.env.E2E_LIVE) {
       await page.route('**/api/inventory/items', route => {
@@ -93,21 +98,29 @@ test.describe('Inventory Dashboard end-to-end', () => {
     expect(hasAddButton).toBeTruthy();
   });
 
-  test('can update stock quantity', async ({ page }) => {
+  test('can update stock quantity', async ({ page, request }) => {
     const mockItems = {
       items: [{ id: 1, name: 'Dog Food', stock: 50, reorder_level: 10, sku: 'FOO-001' }]
     };
     let stockUpdateCalled = false;
 
+    if (process.env.E2E_LIVE) {
+      await enforceAuditStack(request, test, { role: 'inventory', apiLogin });
+    }
+
     if (!process.env.E2E_LIVE) {
-      await page.route('**/api/inventory*', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(mockItems) }));
-      await page.route('**/api/inventory/*/adjust*', route => {
+      // Scope mocks by pathname: a bare '**/api/inventory*' glob also matches
+      // the Vite-served module /src/api/inventory.jsx and corrupts the app
+      // bundle depending on module-load timing.
+      const json = { contentType: 'application/json' };
+      await page.route((url) => url.pathname.startsWith('/api/inventory'), route => route.fulfill({ status: 200, ...json, body: JSON.stringify(mockItems) }));
+      await page.route((url) => /^\/api\/inventory\/\d+\/adjust/.test(url.pathname), route => {
         stockUpdateCalled = true;
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Stock updated' }) });
+        return route.fulfill({ status: 200, ...json, body: JSON.stringify({ success: true, message: 'Stock updated' }) });
       });
-      await page.route('**/api/inventory/*/stock*', route => {
+      await page.route((url) => /^\/api\/inventory\/\d+\/stock/.test(url.pathname), route => {
         stockUpdateCalled = true;
-        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, message: 'Stock updated' }) });
+        return route.fulfill({ status: 200, ...json, body: JSON.stringify({ success: true, message: 'Stock updated' }) });
       });
     }
 

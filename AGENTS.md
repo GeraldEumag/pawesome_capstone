@@ -289,6 +289,48 @@ comes from labels/badges/navigation, never from separate accent colors.
 
 ## Issue Tracking
 
+- **Inventory role full-system audit: FIXED/VERIFIED** — full-stack audit on
+  isolated `pawesome_inventory_audit` (API :8001 + audit frontend :3001 with
+  `VITE_API_BASE_URL=http://127.0.0.1:8001/api`) fixed 8 defects: broken
+  `Admin\InventoryController::updateStock` (wrote nonexistent `quantity`
+  column → SQL error + silent over-draw clamp) and the divergent inventory-role
+  `/{id}/stock` handler — both now delegate to `InventoryService::adjustStock`;
+  `set`-to-zero rejected by `min:1`/service checks; `reorderRequest` fabricated
+  `RR-*` ids (now persists real manager notifications via `WorkflowNotifier`);
+  non-transactional `disposeBatch` and `InventoryItem` created-hook/legacy
+  stock helpers writing actor-less logs (root cause of 12 legacy rows) — all
+  now write full actor/movement/before-after metadata inside transactions;
+  `config/app.php` hardcoded `'UTC'` (now `env('APP_TIMEZONE','UTC')` — needed
+  so `before_or_equal:today` batch dates match non-UTC clients).
+  E2E harness fixes: `test-utils.js::loginAs` now prefers `E2E_API_URL` (a
+  token minted on one DB 401s against another), `inventory-dashboard.spec.js`
+  pathname-scoped its mocks (bare `**/api/inventory*` matched the Vite module
+  `/src/api/inventory.jsx`), and `phase12-inventory-workflow.spec.js` takes the
+  audit DB name from `E2E_AUDIT_DATABASE` (still refuses non-`*audit*` names).
+  Coverage: `InventoryRoleAuthorizationTest` (11) + `StockAdjustmentEndpointsTest`
+  (8) + scoped suite 133/592 assertions; e2e inventory-dashboard 8/8, batch5
+  all, responsive 3/3, phase12 3/3, cashier-workflow 1/1 on the audit stack.
+  Report: `docs/audit/INVENTORY_ROLE_AUDIT.md`.
+  **Final-completion pass (2026-11-18):** dev-DB data hygiene RESOLVED —
+  `inventory:reconcile-stock --apply` ran on `pawesome` after backup
+  (`backups/pawesome_backup_inventory_hygiene_20261118.sql`, restore-verified)
+  and user approval: 380 additive `RECON-*` batches + expired write-off of
+  batch #838/`01` (stock 10→0); item #275 now stock 10 = batch sum 10;
+  re-run reports "All items already in sync"; 12 actor-less legacy logs are
+  permanent (actors unrecoverable — do not fabricate).
+  E2E mutation guard added: `frontend/e2e/audit-guard.js`
+  (`enforceAuditStack`) requires `E2E_API_URL`+`E2E_AUDIT_DATABASE`, hard-fails
+  dev ports/DB names, and proves the API writes to the audit DB via a
+  write-probe + PDO cross-check. Wired into phase12, cashier-inventory, and
+  the mutating dashboard tests; regression `inventory-e2e-database-safety.spec.js`
+  (9 tests). Docs: `INVENTORY_DATA_HYGIENE_REVIEW.md`,
+  `INVENTORY_E2E_DATABASE_SAFETY.md`.
+  Gotchas learned: never run two `php artisan test` processes in parallel
+  against shared `pawesome_test` (migration race corrupted it — rebuild by
+  dropping/recreating the DB); mutation e2e needs
+  `E2E_API_URL=:8001` + `E2E_AUDIT_DATABASE` + `E2E_BASE_URL=:3001` (audit
+  frontend with `VITE_API_BASE_URL=http://127.0.0.1:8001/api`) and the audit
+  API started with `APP_TIMEZONE` matching the client OS for date validations.
 - **Admin role full-system audit: FIXED/VERIFIED** — full-stack audit on isolated
   `pawesome_e2e_audit` (API :8001) fixed 11 defects: self/last-admin lockout guards
   (`Admin\UserController`), failed-login recording + login/failed-login

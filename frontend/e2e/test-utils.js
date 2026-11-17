@@ -46,7 +46,10 @@ async function loginAs(page, role = 'admin') {
 
   const email = process.env[`E2E_${roleUpper}_EMAIL`] || defaults.email;
   const password = process.env[`E2E_${roleUpper}_PASSWORD`] || defaults.password;
-  const apiBase = process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+  // Prefer E2E_API_URL so the token source matches the API the spec's
+  // request fixture and the pointed frontend actually call — a token minted
+  // on one database fails against another DB's personal_access_tokens.
+  const apiBase = process.env.E2E_API_URL || process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
   const expectedPath = ROLE_DASHBOARDS[role] || '/dashboard';
 
   const cacheKey = `${role}:${email}`;

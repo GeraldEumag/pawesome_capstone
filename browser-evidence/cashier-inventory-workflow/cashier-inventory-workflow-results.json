@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-11-17T14:30:25.495Z",
-  "completedAt": "2026-11-17T14:32:20.514Z",
+  "startedAt": "2026-11-17T20:00:57.907Z",
+  "completedAt": "2026-11-17T20:03:05.981Z",
   "frontendUrl": "http://127.0.0.1:3001",
   "apiUrl": "http://127.0.0.1:8001/api",
   "status": "PASSED",
@@ -50,22 +50,22 @@
     {
       "name": "Verify sellable inventory items load",
       "status": "PASS",
-      "detail": "744 product candidates"
+      "detail": "333 product candidates"
     },
     {
       "name": "Complete POS transaction via API",
       "status": "PASS",
-      "detail": "AMOXICILLIN TRIHYDRATE - EPPITREXIL 250MG/5ML SYRUP transaction #46"
+      "detail": "0000 Phase12 Inventory 42414823 transaction #78"
     },
     {
       "name": "Verify POS transaction receipt/detail",
       "status": "PASS",
-      "detail": "TRX-6AFC6512CD471"
+      "detail": "TRX-6AFCB28F06513"
     },
     {
       "name": "Verify item stock decreased",
       "status": "PASS",
-      "detail": "AMOXICILLIN TRIHYDRATE - EPPITREXIL 250MG/5ML SYRUP: 10 -> 9"
+      "detail": "0000 Phase12 Inventory 42414823: 10 -> 9"
     },
     {
       "name": "Login as inventory",
@@ -75,7 +75,7 @@
     {
       "name": "Verify inventory stock log for POS sale",
       "status": "PASS",
-      "detail": "log #1228 pos_sale"
+      "detail": "log #543 pos_sale"
     },
     {
       "name": "Login as manager",
@@ -96,13 +96,13 @@
     "browser-evidence/cashier-inventory-workflow/05-manager-reports-after-pos.png"
   ],
   "records": {
-    "productId": 874,
-    "productName": "AMOXICILLIN TRIHYDRATE - EPPITREXIL 250MG/5ML SYRUP",
+    "productId": 844,
+    "productName": "0000 Phase12 Inventory 42414823",
     "stockBefore": 10,
-    "transactionId": 46,
-    "transactionNumber": "TRX-6AFC6512CD471",
+    "transactionId": 78,
+    "transactionNumber": "TRX-6AFCB28F06513",
     "stockAfter": 9,
-    "inventoryLogId": 1228,
+    "inventoryLogId": 543,
     "inventoryLogMovement": "pos_sale"
   },
   "console": [],
@@ -110,8 +110,110 @@
   "navigationAborts": [
     {
       "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/pos/services",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
       "url": "http://127.0.0.1:8001/api/settings/public",
-      "page": "http://127.0.0.1:3001/manager",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/customers",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/settings/public",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/payment-requests",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/inventory/sellable",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/payment-requests",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/customers",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/pos/services",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/cashier/inventory/sellable",
+      "page": "http://127.0.0.1:3001/cashier",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications?role=inventory",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/settings/public",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/settings/public",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/chatbot/welcome",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications?role=inventory",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/inventory/dashboard",
+      "page": "http://127.0.0.1:3001/inventory",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/inventory/dashboard",
+      "page": "http://127.0.0.1:3001/inventory",
       "failure": "net::ERR_ABORTED"
     },
     {
@@ -128,7 +230,61 @@
     },
     {
       "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/history",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/settings/public",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications?role=manager",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
       "url": "http://127.0.0.1:8001/api/manager/reports/services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/history",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
       "page": "http://127.0.0.1:3001/manager",
       "failure": "net::ERR_ABORTED"
     },
@@ -140,48 +296,6 @@
     },
     {
       "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/settings/public",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/services",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/history",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
       "url": "http://127.0.0.1:8001/api/notifications?role=manager",
       "page": "http://127.0.0.1:3001/manager",
       "failure": "net::ERR_ABORTED"
@@ -189,60 +303,6 @@
     {
       "method": "GET",
       "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/services",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/services",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/notifications?role=manager",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
       "page": "http://127.0.0.1:3001/manager",
       "failure": "net::ERR_ABORTED"
     },
@@ -260,19 +320,7 @@
     },
     {
       "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/history",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/settings/public",
-      "page": "http://127.0.0.1:3001/manager",
-      "failure": "net::ERR_ABORTED"
-    },
-    {
-      "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/dashboard",
+      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
       "page": "http://127.0.0.1:3001/manager",
       "failure": "net::ERR_ABORTED"
     },
@@ -284,13 +332,13 @@
     },
     {
       "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "url": "http://127.0.0.1:8001/api/manager/reports/services",
       "page": "http://127.0.0.1:3001/manager",
       "failure": "net::ERR_ABORTED"
     },
     {
       "method": "GET",
-      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "url": "http://127.0.0.1:8001/api/notifications?role=manager",
       "page": "http://127.0.0.1:3001/manager",
       "failure": "net::ERR_ABORTED"
     }
