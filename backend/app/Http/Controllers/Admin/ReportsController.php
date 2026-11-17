@@ -16,6 +16,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class ReportsController extends Controller
@@ -23,7 +24,7 @@ class ReportsController extends Controller
     public function sales(Request $request)
     {
         try {
-            $query = $this->dateRange(DB::table('sales'), $request);
+            $query = $this->dateRange(DB::table('sales'), $request, 'sales.created_at');
 
             $this->applyExactFilter($query, $request, 'status', 'sales.status');
 
@@ -83,24 +84,17 @@ class ReportsController extends Controller
                 'message' => $message,
             ]);
         } catch (\Exception $e) {
-            // Return empty results on any error to prevent 500
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'summary' => [
-                        'total_revenue' => 0,
-                        'total_orders' => 0,
-                        'completed_orders' => 0,
-                        'pending_orders' => 0,
-                    ],
-                    'sales' => collect(),
-                    'transactions' => collect(),
-                    'trend' => collect(),
-                    'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])->orderBy('name')->get(['id', 'name', 'role']),
-                    'generated_at' => now()->toIso8601String(),
-                ],
-                'message' => 'No records found for selected date range.',
+            // A failing report must not masquerade as empty data — log and
+            // surface the error so regressions are visible instead of hidden.
+            Log::error('Sales report failed', [
+                'error' => $e->getMessage(),
+                'params' => $request->query(),
             ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to generate the sales report.',
+            ], 500);
         }
     }
 
