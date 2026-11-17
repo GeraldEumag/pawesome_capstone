@@ -22,7 +22,7 @@
 
 /* ── Page Header ───────────────────────────────────────────── */
 
-.veterinary-boarders-page .page-header {
+.veterinary-boarders-page .boarders-page-header {
   position: relative;
   display: flex;
   align-items: center;
@@ -35,7 +35,7 @@
   box-shadow: var(--veterinary-glass-shadow);
 }
 
-.veterinary-boarders-page .page-header::after {
+.veterinary-boarders-page .boarders-page-header::after {
   content: "";
   position: absolute;
   top: -90px;
@@ -47,13 +47,13 @@
   pointer-events: none;
 }
 
-.veterinary-boarders-page .header-content,
+.veterinary-boarders-page .boarders-header-content,
 .veterinary-boarders-page .header-actions {
   position: relative;
   z-index: 1;
 }
 
-.veterinary-boarders-page .header-content h1 {
+.veterinary-boarders-page .boarders-header-content h1 {
   margin: 0 0 6px;
   color: #ffffff;
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
@@ -65,7 +65,7 @@
   line-height: 1.15;
 }
 
-.veterinary-boarders-page .header-content p {
+.veterinary-boarders-page .boarders-header-content p {
   margin: 0;
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.95rem;
@@ -110,7 +110,7 @@
   gap: 16px;
 }
 
-.veterinary-boarders-page .stat-card {
+.veterinary-boarders-page .boarders-stat-card {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -123,12 +123,12 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.veterinary-boarders-page .stat-card:hover {
+.veterinary-boarders-page .boarders-stat-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--veterinary-shadow-md);
 }
 
-.veterinary-boarders-page .stat-icon {
+.veterinary-boarders-page .boarders-stat-icon {
   width: var(--vet-icon-md, 48px);
   height: var(--vet-icon-md, 48px);
   min-width: var(--vet-icon-md, 48px);
@@ -143,7 +143,7 @@
   flex-shrink: 0;
 }
 
-.veterinary-boarders-page .stat-content h3 {
+.veterinary-boarders-page .boarders-stat-content h3 {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 800;
@@ -151,7 +151,7 @@
   line-height: 1;
 }
 
-.veterinary-boarders-page .stat-content p {
+.veterinary-boarders-page .boarders-stat-content p {
   margin: 4px 0 0;
   color: var(--veterinary-text-muted);
   font-size: 0.82rem;
@@ -242,7 +242,7 @@
 
 /* ── Loading State ─────────────────────────────────────────── */
 
-.veterinary-boarders-page .loading-state {
+.veterinary-boarders-page .boarders-loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -258,7 +258,7 @@
   font-weight: 600;
 }
 
-.veterinary-boarders-page .loading-spinner {
+.veterinary-boarders-page .boarders-loading-spinner {
   width: 36px;
   height: 36px;
   border: 3px solid var(--veterinary-glass-border);
@@ -273,7 +273,7 @@
 
 /* ── Empty State ───────────────────────────────────────────── */
 
-.veterinary-boarders-page .empty-state {
+.veterinary-boarders-page .boarders-empty-state {
   display: grid;
   place-items: center;
   align-content: center;
@@ -288,20 +288,20 @@
   color: var(--veterinary-text-muted);
 }
 
-.veterinary-boarders-page .empty-icon {
+.veterinary-boarders-page .boarders-empty-icon {
   font-size: 3.5rem;
   color: var(--veterinary-primary);
   opacity: 0.42;
 }
 
-.veterinary-boarders-page .empty-state h3 {
+.veterinary-boarders-page .boarders-empty-state h3 {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--veterinary-text-primary);
 }
 
-.veterinary-boarders-page .empty-state p {
+.veterinary-boarders-page .boarders-empty-state p {
   margin: 0;
   font-weight: 500;
   max-width: 360px;
@@ -358,14 +358,14 @@
   border-bottom: 1px solid var(--vet-divider);
 }
 
-.veterinary-boarders-page .pet-info {
+.veterinary-boarders-page .boarders-pet-info {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
 }
 
-.veterinary-boarders-page .pet-avatar {
+.veterinary-boarders-page .boarders-pet-avatar {
   width: 48px;
   height: 48px;
   min-width: 48px;
@@ -380,7 +380,7 @@
   flex-shrink: 0;
 }
 
-.veterinary-boarders-page .pet-info h3 {
+.veterinary-boarders-page .boarders-pet-info h3 {
   margin: 0 0 3px;
   color: var(--veterinary-text-primary);
   font-size: 1.05rem;
@@ -390,7 +390,7 @@
   text-overflow: ellipsis;
 }
 
-.veterinary-boarders-page .pet-details {
+.veterinary-boarders-page .boarders-pet-details {
   margin: 0;
   color: var(--veterinary-text-muted);
   font-size: 0.85rem;
@@ -399,7 +399,7 @@
 
 /* ── Status Badges ─────────────────────────────────────────── */
 
-.veterinary-boarders-page .status-badge {
+.veterinary-boarders-page .boarders-status-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -414,25 +414,25 @@
   flex-shrink: 0;
 }
 
-.veterinary-boarders-page .badge-success {
+.veterinary-boarders-page .boarders-badge-success {
   background: var(--vet-badge-completed-bg);
   color: var(--vet-badge-completed-color);
   border-color: var(--vet-badge-completed-border);
 }
 
-.veterinary-boarders-page .badge-info {
+.veterinary-boarders-page .boarders-badge-info {
   background: var(--vet-badge-approved-bg);
   color: var(--vet-badge-approved-color);
   border-color: var(--vet-badge-approved-border);
 }
 
-.veterinary-boarders-page .badge-warning {
+.veterinary-boarders-page .boarders-badge-warning {
   background: var(--vet-badge-pending-bg);
   color: var(--vet-badge-pending-color);
   border-color: var(--vet-badge-pending-border);
 }
 
-.veterinary-boarders-page .badge-secondary {
+.veterinary-boarders-page .boarders-badge-secondary {
   background: rgba(100, 116, 139, 0.1);
   color: #475569;
   border-color: rgba(100, 116, 139, 0.2);
@@ -446,13 +446,13 @@
   gap: 12px;
 }
 
-.veterinary-boarders-page .info-row {
+.veterinary-boarders-page .boarders-info-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.veterinary-boarders-page .info-item {
+.veterinary-boarders-page .boarders-info-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -462,18 +462,18 @@
   border: 1px solid var(--vet-form-border);
 }
 
-.veterinary-boarders-page .info-item svg {
+.veterinary-boarders-page .boarders-info-item svg {
   color: var(--veterinary-primary);
   margin-top: 2px;
   flex-shrink: 0;
   width: 14px;
 }
 
-.veterinary-boarders-page .info-item > div {
+.veterinary-boarders-page .boarders-info-item > div {
   min-width: 0;
 }
 
-.veterinary-boarders-page .info-item strong {
+.veterinary-boarders-page .boarders-info-item strong {
   display: block;
   color: var(--veterinary-text-muted);
   font-size: 0.73rem;
@@ -483,7 +483,7 @@
   margin-bottom: 3px;
 }
 
-.veterinary-boarders-page .info-item p {
+.veterinary-boarders-page .boarders-info-item p {
   margin: 0;
   color: var(--veterinary-text-primary);
   font-size: 0.9rem;
@@ -493,8 +493,8 @@
 
 /* ── Special Requests & Medication Notes ───────────────────── */
 
-.veterinary-boarders-page .special-requests,
-.veterinary-boarders-page .medication-notes {
+.veterinary-boarders-page .boarders-special-requests,
+.veterinary-boarders-page .boarders-medication-notes {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -504,15 +504,15 @@
   border: 1px solid var(--vet-badge-pending-border);
 }
 
-.veterinary-boarders-page .special-requests svg,
-.veterinary-boarders-page .medication-notes svg {
+.veterinary-boarders-page .boarders-special-requests svg,
+.veterinary-boarders-page .boarders-medication-notes svg {
   color: var(--vet-badge-pending-color);
   margin-top: 2px;
   flex-shrink: 0;
 }
 
-.veterinary-boarders-page .special-requests span,
-.veterinary-boarders-page .medication-notes p {
+.veterinary-boarders-page .boarders-special-requests span,
+.veterinary-boarders-page .boarders-medication-notes p {
   color: var(--vet-badge-pending-color);
   font-size: 0.875rem;
   font-weight: 600;
@@ -520,11 +520,11 @@
   line-height: 1.45;
 }
 
-.veterinary-boarders-page .medication-notes > div {
+.veterinary-boarders-page .boarders-medication-notes > div {
   min-width: 0;
 }
 
-.veterinary-boarders-page .medication-notes strong {
+.veterinary-boarders-page .boarders-medication-notes strong {
   display: block;
   margin-bottom: 4px;
   font-size: 0.75rem;
@@ -536,7 +536,7 @@
 
 /* ── Page Footer ───────────────────────────────────────────── */
 
-.veterinary-boarders-page .page-footer {
+.veterinary-boarders-page .boarders-page-footer {
   text-align: center;
   padding: 20px;
   border-top: 1px solid var(--vet-divider);
@@ -547,12 +547,12 @@
 
 /* ── Dark Mode ─────────────────────────────────────────────── */
 
-[data-theme="dark"] .veterinary-boarders-page .page-header {
+[data-theme="dark"] .veterinary-boarders-page .boarders-page-header {
   background: linear-gradient(135deg, #8b2252 0%, #ff5f93 100%);
 }
 
-[data-theme="dark"] .veterinary-boarders-page .special-requests,
-[data-theme="dark"] .veterinary-boarders-page .medication-notes {
+[data-theme="dark"] .veterinary-boarders-page .boarders-special-requests,
+[data-theme="dark"] .veterinary-boarders-page .boarders-medication-notes {
   background: rgba(245, 158, 11, 0.08);
 }
 
@@ -565,7 +565,7 @@
 }
 
 @media (max-width: 900px) {
-  .veterinary-boarders-page .page-header {
+  .veterinary-boarders-page .boarders-page-header {
     flex-direction: column;
     align-items: stretch;
   }
@@ -603,7 +603,7 @@
     grid-template-columns: 1fr;
   }
 
-  .veterinary-boarders-page .info-row {
+  .veterinary-boarders-page .boarders-info-row {
     grid-template-columns: 1fr;
   }
 
@@ -619,7 +619,7 @@
     padding: 14px;
   }
 
-  .veterinary-boarders-page .page-header {
+  .veterinary-boarders-page .boarders-page-header {
     padding: 1.25rem;
   }
 

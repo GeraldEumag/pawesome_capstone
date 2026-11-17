@@ -37,6 +37,9 @@ test('vet tech checks in a patient without clinical controls', async ({ page, re
     if (response.url().includes('/api/') && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`);
   });
   await page.goto('/veterinary/appointments');
+  // The board paginates at 15 rows; a seeded database can push a far-future
+  // scheduled appointment off page 1. Narrow to the Scheduled filter first.
+  await page.getByRole('button', { name: /^Scheduled/ }).click();
   await page.getByRole('button', { name: `Actions for ${appointment.id}`, exact: true }).click();
   await expect(page.getByRole('button', { name: /^Check in$/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^(Start|Consult|Edit|Cancel)$/ })).toHaveCount(0);

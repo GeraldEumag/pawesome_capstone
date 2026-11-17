@@ -24,4 +24,22 @@ class ClinicalAccessLogger
             'metadata' => $metadata,
         ]);
     }
+
+    /**
+     * Record a clinical list/index view. One entry per request — the row
+     * count and active filters go to metadata, never record contents, so the
+     * trail captures the access without duplicating medical data.
+     */
+    public static function recordListView(?User $user, string $listType, array $metadata = []): void
+    {
+        if (!$user) {
+            return;
+        }
+
+        ActivityLog::log($user->id, 'clinical_record_viewed', "Viewed {$listType} list", [
+            'category' => 'clinical_access',
+            'reference_type' => $listType,
+            'metadata' => $metadata,
+        ]);
+    }
 }

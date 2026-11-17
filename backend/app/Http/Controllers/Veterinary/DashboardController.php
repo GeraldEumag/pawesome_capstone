@@ -258,7 +258,7 @@ class DashboardController extends Controller
         if ($statusFilter && $statusFilter !== 'all') {
             $completedQuery->where('status', $statusFilter);
         } else {
-            $completedQuery->whereIn('status', ['completed', 'treated']);
+            $completedQuery->where('status', 'completed');
         }
         
         $completedAppointments = $completedQuery->count();

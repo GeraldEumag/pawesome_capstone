@@ -14,6 +14,7 @@ import {
   faPaw,
   faWallet,
   faArrowLeft,
+  faBedPulse,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
@@ -45,6 +46,7 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         { to: "/veterinary/appointments", label: "Appointments", icon: faCalendarAlt },
         { to: "/veterinary/customer-profiles", label: "Customer Profiles", icon: faUsers },
         { to: "/veterinary/current-boarders", label: "Current Boarders", icon: faHotel },
+        { to: "/veterinary/medical-confinements", label: "Confinements", icon: faBedPulse },
         { to: "/veterinary/services", label: "Services", icon: faStethoscope },
         { to: "/veterinary/history", label: "History", icon: faClockRotateLeft },
         { to: "/veterinary/reports", label: "Reports", icon: faChartBar },

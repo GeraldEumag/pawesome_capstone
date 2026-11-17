@@ -65,12 +65,12 @@ const VeterinaryCurrentBoarders = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'checked_in': { class: 'badge-success', text: 'Checked In' },
-      'confirmed': { class: 'badge-info', text: 'Confirmed' },
-      'pending': { class: 'badge-warning', text: 'Pending' },
-      'checked_out': { class: 'badge-secondary', text: 'Checked Out' },
+      'checked_in': { class: 'boarders-badge-success', text: 'Checked In' },
+      'confirmed': { class: 'boarders-badge-info', text: 'Confirmed' },
+      'pending': { class: 'boarders-badge-warning', text: 'Pending' },
+      'checked_out': { class: 'boarders-badge-secondary', text: 'Checked Out' },
     };
-    return statusConfig[status] || { class: 'badge-secondary', text: status || 'Unknown' };
+    return statusConfig[status] || { class: 'boarders-badge-secondary', text: status || 'Unknown' };
   };
 
   const formatDate = (dateString) => {
@@ -84,8 +84,8 @@ const VeterinaryCurrentBoarders = () => {
 
   return (
     <div className="veterinary-boarders-page">
-      <div className="page-header">
-        <div className="header-content">
+      <div className="boarders-page-header">
+        <div className="boarders-header-content">
           <h1>
             <FontAwesomeIcon icon={faHotel} /> Pet Hotel Boarders
           </h1>
@@ -94,29 +94,29 @@ const VeterinaryCurrentBoarders = () => {
       </div>
 
       <div className="boarders-stats">
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className="boarders-stat-card">
+          <div className="boarders-stat-icon">
             <FontAwesomeIcon icon={faPaw} />
           </div>
-          <div className="stat-content">
+          <div className="boarders-stat-content">
             <h3>{boarders.length}</h3>
             <p>Total Boarders</p>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className="boarders-stat-card">
+          <div className="boarders-stat-icon">
             <FontAwesomeIcon icon={faBed} />
           </div>
-          <div className="stat-content">
+          <div className="boarders-stat-content">
             <h3>{boarders.filter(b => b.status === 'checked_in').length}</h3>
             <p>Currently Checked In</p>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">
+        <div className="boarders-stat-card">
+          <div className="boarders-stat-icon">
             <FontAwesomeIcon icon={faCalendarAlt} />
           </div>
-          <div className="stat-content">
+          <div className="boarders-stat-content">
             <h3>{boarders.filter(b => {
               const today = new Date().toISOString().split('T')[0];
               const checkout = b.check_out_date || b.check_out;
@@ -153,13 +153,13 @@ const VeterinaryCurrentBoarders = () => {
 
       <div className="boarders-list">
         {loading ? (
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
+          <div className="boarders-loading-state">
+            <div className="boarders-loading-spinner"></div>
             <p>Loading boarders...</p>
           </div>
         ) : filteredBoarders.length === 0 ? (
-          <div className="empty-state">
-            <FontAwesomeIcon icon={faHotel} className="empty-icon" />
+          <div className="boarders-empty-state">
+            <FontAwesomeIcon icon={faHotel} className="boarders-empty-icon" />
             <h3>No boarders found</h3>
             <p>
               {searchTerm || filterSpecies !== "all" 
@@ -172,30 +172,30 @@ const VeterinaryCurrentBoarders = () => {
             {filteredBoarders.map((boarder) => (
               <div key={boarder.id} className="boarder-card">
                 <div className="boarder-header">
-                  <div className="pet-info">
-                    <PetAvatar pet={boarder.pet} size={44} className="pet-avatar" />
+                  <div className="boarders-pet-info">
+                    <PetAvatar pet={boarder.pet} size={44} className="boarders-pet-avatar" />
                     <div>
                       <h3>{boarder.pet?.name || "Unknown"}</h3>
-                      <p className="pet-details">
+                      <p className="boarders-pet-details">
                         {boarder.pet?.species || "Unknown"} • {boarder.pet?.breed || "Unknown"}
                       </p>
                     </div>
                   </div>
-                  <span className={`status-badge ${getStatusBadge(boarder.status).class}`}>
+                  <span className={`boarders-status-badge ${getStatusBadge(boarder.status).class}`}>
                     {getStatusBadge(boarder.status).text}
                   </span>
                 </div>
 
                 <div className="boarder-body">
-                  <div className="info-row">
-                    <div className="info-item">
+                  <div className="boarders-info-row">
+                    <div className="boarders-info-item">
                       <FontAwesomeIcon icon={faUser} />
                       <div>
                         <strong>Owner</strong>
                         <p>{boarder.customer?.name || "Unknown"}</p>
                       </div>
                     </div>
-                    <div className="info-item">
+                    <div className="boarders-info-item">
                       <FontAwesomeIcon icon={faPhone} />
                       <div>
                         <strong>Contact</strong>
@@ -204,15 +204,15 @@ const VeterinaryCurrentBoarders = () => {
                     </div>
                   </div>
 
-                  <div className="info-row">
-                    <div className="info-item">
+                  <div className="boarders-info-row">
+                    <div className="boarders-info-item">
                       <FontAwesomeIcon icon={faBed} />
                       <div>
                         <strong>Room</strong>
                         <p>{getRoomName(boarder) === "Unassigned" ? "N/A" : getRoomName(boarder)}</p>
                       </div>
                     </div>
-                    <div className="info-item">
+                    <div className="boarders-info-item">
                       <FontAwesomeIcon icon={faCalendarAlt} />
                       <div>
                         <strong>Check-out</strong>
@@ -222,14 +222,14 @@ const VeterinaryCurrentBoarders = () => {
                   </div>
 
                   {boarder.special_requests && (
-                    <div className="special-requests">
+                    <div className="boarders-special-requests">
                       <FontAwesomeIcon icon={faExclamationTriangle} />
                       <span>{boarder.special_requests}</span>
                     </div>
                   )}
 
                   {boarder.medication_notes && (
-                    <div className="medication-notes">
+                    <div className="boarders-medication-notes">
                       <FontAwesomeIcon icon={faNotesMedical} />
                       <div>
                         <strong>Medication Notes</strong>
@@ -244,7 +244,7 @@ const VeterinaryCurrentBoarders = () => {
         )}
       </div>
 
-      <div className="page-footer">
+      <div className="boarders-page-footer">
         <small>
           Last updated: {lastUpdated.toLocaleTimeString()} • 
           Total: {filteredBoarders.length} boarder{filteredBoarders.length !== 1 ? 's' : ''}

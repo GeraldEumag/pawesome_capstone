@@ -106,7 +106,12 @@ class MedicalRecordController extends Controller
         }
         
         $records = $query->orderBy('visit_date', 'desc')->get();
-        
+
+        ClinicalAccessLogger::recordListView($request->user(), 'medical_record', [
+            'count' => $records->count(),
+            'filters' => array_filter($request->only(['pet_id', 'veterinarian_id', 'status', 'from_date', 'to_date'])),
+        ]);
+
         return response()->json($records);
     }
 
