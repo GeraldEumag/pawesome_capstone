@@ -28,9 +28,6 @@ const AdminSettings = () => {
 
   // General Settings
   const [generalSettings, setGeneralSettings] = useState({
-    systemName: "Pawesome Admin",
-    timezone: "Asia/Manila",
-    dateFormat: "MM/DD/YYYY",
     maintenanceMode: false,
   });
 
@@ -50,8 +47,6 @@ const AdminSettings = () => {
     emailNotifications: true,
     loginAlerts: true,
     failedLoginAlerts: true,
-    dailyReports: false,
-    weeklyReports: true,
   });
 
   // Role Permissions (view-only summary)
@@ -236,47 +231,6 @@ const AdminSettings = () => {
               <FontAwesomeIcon icon={faCog} /> General Settings
             </h3>
             <div className="settings-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>System Name</label>
-                  <input
-                    type="text"
-                    value={generalSettings.systemName}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, systemName: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Timezone</label>
-                  <select
-                    value={generalSettings.timezone}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, timezone: e.target.value })
-                    }
-                  >
-                    <option value="Asia/Manila">Asia/Manila (PHT)</option>
-                    <option value="UTC">UTC</option>
-                    <option value="America/New_York">America/New_York (EST)</option>
-                    <option value="Europe/London">Europe/London (GMT)</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Date Format</label>
-                  <select
-                    value={generalSettings.dateFormat}
-                    onChange={(e) =>
-                      setGeneralSettings({ ...generalSettings, dateFormat: e.target.value })
-                    }
-                  >
-                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  </select>
-                </div>
-              </div>
               <div className="form-group checkbox-group">
                 <label className="checkbox-label">
                   <input
@@ -290,8 +244,13 @@ const AdminSettings = () => {
                     }
                   />
                   <span className="checkmark"></span>
-                  Enable Maintenance Mode (only admins can access)
+                  Enable Maintenance Mode
                 </label>
+                <small>
+                  When enabled, every authenticated non-admin session receives a
+                  503 response. Public pages stay reachable and admins keep
+                  access so maintenance can be turned back off.
+                </small>
               </div>
               <button
                 className="save-btn"
@@ -623,44 +582,6 @@ const AdminSettings = () => {
                     />
                     <span className="checkmark"></span>
                     Alert Admin on Multiple Failed Logins
-                  </label>
-                </div>
-              </div>
-
-              <div className="form-section">
-                <h4>
-                  <FontAwesomeIcon icon={faHistory} /> Reports
-                </h4>
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={notificationSettings.dailyReports}
-                      onChange={(e) =>
-                        setNotificationSettings({
-                          ...notificationSettings,
-                          dailyReports: e.target.checked,
-                        })
-                      }
-                    />
-                    <span className="checkmark"></span>
-                    Daily Summary Reports
-                  </label>
-                </div>
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={notificationSettings.weeklyReports}
-                      onChange={(e) =>
-                        setNotificationSettings({
-                          ...notificationSettings,
-                          weeklyReports: e.target.checked,
-                        })
-                      }
-                    />
-                    <span className="checkmark"></span>
-                    Weekly Summary Reports
                   </label>
                 </div>
               </div>

@@ -264,16 +264,16 @@ class ServiceRequestController extends Controller
         }
 
         if (in_array($availabilityType, ['grooming', 'veterinary'], true)
-            && !BookingAvailabilityService::isServiceTimeAvailable(
+            && ($unavailableReason = BookingAvailabilityService::serviceTimeUnavailableReason(
                 $availabilityType === 'grooming' ? 'grooming' : 'veterinary',
                 $validated['requested_date'],
                 $time,
                 $validated['service_name'] ?? null
-            )) {
+            )) !== null) {
             return response()->json([
                 'success' => false,
                 'message' => 'This time is no longer available. Please choose another slot.',
-                'errors' => ['requested_time' => ['Time slot overlaps an existing booking.']],
+                'errors' => ['requested_time' => [$unavailableReason]],
             ], 422);
         }
 
@@ -399,7 +399,8 @@ class ServiceRequestController extends Controller
             $createData['customer_id'] = Auth::id();
         }
 
-        $serviceRequest = DB::transaction(function () use ($isHotel, $availabilityType, $validated, $time, $createData, $pet) {
+        $unavailableReason = null;
+        $serviceRequest = DB::transaction(function () use ($isHotel, $availabilityType, $validated, $time, $createData, $pet, &$unavailableReason) {
             if ($isHotel && !$this->hasAvailableHotelRoom(
                 $validated['requested_date'],
                 $validated['check_out_date'] ?? null,
@@ -412,12 +413,13 @@ class ServiceRequestController extends Controller
             if (in_array($availabilityType, ['grooming', 'veterinary'], true)) {
                 BookingAvailabilityService::lockServiceSchedule();
                 $serviceType = $availabilityType === 'grooming' ? 'grooming' : 'veterinary';
-                if (!BookingAvailabilityService::isServiceTimeAvailable(
+                $unavailableReason = BookingAvailabilityService::serviceTimeUnavailableReason(
                     $serviceType,
                     $validated['requested_date'],
                     $time,
                     $validated['service_name'] ?? null
-                )) {
+                );
+                if ($unavailableReason !== null) {
                     return null;
                 }
             }
@@ -478,7 +480,7 @@ class ServiceRequestController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'This time is no longer available. Please choose another slot.',
-                'errors' => ['requested_time' => ['Time slot overlaps an existing booking.']],
+                'errors' => ['requested_time' => [$unavailableReason ?? 'Time slot overlaps an existing booking.']],
             ], 422);
         }
 

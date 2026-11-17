@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -16,9 +16,11 @@ import {
   faUserClock,
   faUserGear,
   faUserPlus,
+  faUserSlash,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import { normalizeList } from "../../utils/normalizeList";
 import { showSuccess as showSwalSuccess, showError as showSwalError, showWarning } from "../../utils/alert.jsx";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
@@ -32,6 +34,7 @@ const ROLE_OPTIONS = [
   { value: "receptionist", label: "Receptionist" },
   { value: "super_receptionist", label: "Super Receptionist" },
   { value: "veterinary", label: "Veterinary" },
+  { value: "vet_tech", label: "Veterinary Technician" },
   { value: "cashier", label: "Cashier" },
   { value: "inventory", label: "Inventory" },
   { value: "customer", label: "Customer" },
@@ -55,8 +58,14 @@ const DELETION_REASONS = [
   { value: "other", label: "Other" },
 ];
 
+const PAGE_SIZE = 25;
+
 const ManageUsers = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
+  const [pageMeta, setPageMeta] = useState({ current_page: 1, last_page: 1, per_page: PAGE_SIZE, total: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, adminCount: 0, roleCounts: {} });
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -65,6 +74,7 @@ const ManageUsers = () => {
   const [success, setSuccess] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -139,7 +149,7 @@ const ManageUsers = () => {
     });
   };
 
-  const fetchUsers = async ({ silent = false } = {}) => {
+  const fetchUsers = async ({ silent = false, targetPage = page } = {}) => {
     try {
       if (silent) {
         setRefreshing(true);
@@ -149,8 +159,24 @@ const ManageUsers = () => {
 
       setError("");
 
-      const data = await apiRequest("/admin/users");
+      const params = new URLSearchParams({
+        page: String(targetPage),
+        per_page: String(PAGE_SIZE),
+        sort: sortConfig.key,
+        direction: sortConfig.direction,
+      });
+      if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+      if (filterRole !== "all") params.set("role", filterRole);
+      if (filterStatus !== "all") params.set("status", filterStatus);
+
+      const data = await apiRequest(`/admin/users?${params.toString()}`);
       setUsers(safeNormalizeUsers(data));
+      if (data?.meta) {
+        setPageMeta(data.meta);
+      }
+      if (data?.stats) {
+        setStats(data.stats);
+      }
     } catch (err) {
       console.error("Failed to fetch users:", err);
       showError(err.message || "Failed to fetch users.");
@@ -161,82 +187,21 @@ const ManageUsers = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch((previous) => {
+        const next = searchTerm;
+        if (previous !== next) setPage(1);
+        return next;
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
 
-  const stats = useMemo(() => {
-    const total = users.length;
-    const active = users.filter((user) => isActiveUser(user)).length;
-    const inactive = Math.max(total - active, 0);
-    const adminCount = users.filter((user) => user.role === "admin").length;
+  useEffect(() => {
+    fetchUsers({ targetPage: page });
+  }, [page, debouncedSearch, filterRole, filterStatus, sortConfig]);
 
-    return { total, active, inactive, adminCount };
-  }, [users]);
-
-  const roleCounts = useMemo(() => {
-    return ROLE_OPTIONS.reduce((acc, role) => {
-      acc[role.value] = users.filter((user) => user.role === role.value).length;
-      return acc;
-    }, {});
-  }, [users]);
-
-  const filteredUsers = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase();
-
-    return users.filter((user) => {
-      const searchableText = [
-        user.name,
-        user.email,
-        user.username,
-        user.role,
-        user.id,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      const matchesSearch = !keyword || searchableText.includes(keyword);
-      const matchesRole = filterRole === "all" || user.role === filterRole;
-
-      const active = isActiveUser(user);
-      const matchesStatus =
-        filterStatus === "all" ||
-        (filterStatus === "active" && active) ||
-        (filterStatus === "inactive" && !active);
-
-      return matchesSearch && matchesRole && matchesStatus;
-    });
-  }, [users, searchTerm, filterRole, filterStatus]);
-
-  const sortedUsers = useMemo(() => {
-    const list = [...filteredUsers];
-
-    list.sort((a, b) => {
-      const { key, direction } = sortConfig;
-      const multiplier = direction === "asc" ? 1 : -1;
-
-      let aValue = a?.[key];
-      let bValue = b?.[key];
-
-      if (key === "is_active") {
-        aValue = isActiveUser(a) ? 1 : 0;
-        bValue = isActiveUser(b) ? 1 : 0;
-      }
-
-      if (key === "created_at") {
-        aValue = aValue ? new Date(aValue).getTime() : 0;
-        bValue = bValue ? new Date(bValue).getTime() : 0;
-      }
-
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return (aValue - bValue) * multiplier;
-      }
-
-      return String(aValue || "").localeCompare(String(bValue || "")) * multiplier;
-    });
-
-    return list;
-  }, [filteredUsers, sortConfig]);
+  const roleCounts = stats.roleCounts || {};
 
   const openModal = (type, user = null) => {
     setModalType(type);
@@ -314,11 +279,7 @@ const ManageUsers = () => {
         body: JSON.stringify(updateData),
       });
 
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === selectedUser.id ? { ...user, ...updateData } : user
-        )
-      );
+      fetchUsers({ silent: true });
 
       showSuccess("User updated successfully.");
       closeModal();
@@ -356,7 +317,11 @@ const ManageUsers = () => {
         }),
       });
 
-      setUsers((prev) => prev.filter((user) => user.id !== selectedUser.id));
+      if (users.length === 1 && page > 1) {
+        setPage((current) => current - 1);
+      } else {
+        fetchUsers({ silent: true });
+      }
 
       showSuccess("User deleted successfully.");
       closeModal();
@@ -368,15 +333,46 @@ const ManageUsers = () => {
     }
   };
 
+  const handleToggleStatus = async () => {
+    if (!selectedUser) return;
+
+    const nextActive = !isActiveUser(selectedUser);
+
+    try {
+      setProcessing(true);
+      setError("");
+
+      await apiRequest(`/admin/users/${selectedUser.id}/toggle`, {
+        method: "PATCH",
+      });
+
+      fetchUsers({ silent: true });
+
+      showSuccess(
+        nextActive
+          ? "User account activated successfully."
+          : "User account deactivated. Their sessions have been revoked."
+      );
+      closeModal();
+    } catch (err) {
+      console.error("Failed to toggle user status:", err);
+      showError(err.message || "Failed to update user status.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleConfirm = () => {
     if (modalType === "edit") handleUpdateUser();
     if (modalType === "delete") handleDeleteUser();
+    if (modalType === "toggle") handleToggleStatus();
   };
 
   const clearFilters = () => {
     setSearchTerm("");
     setFilterRole("all");
     setFilterStatus("all");
+    setPage(1);
     showSuccess("Filters cleared.");
   };
 
@@ -390,30 +386,47 @@ const ManageUsers = () => {
     { key: "created_at", label: "Join Date" },
   ];
 
-  const handleExport = (format) => {
+  const handleExport = async (format) => {
     setShowExportDropdown(false);
-    if (sortedUsers.length === 0) {
-      showError("No users available to export.");
-      return;
+
+    try {
+      const params = new URLSearchParams({
+        all: "1",
+        sort: sortConfig.key,
+        direction: sortConfig.direction,
+      });
+      if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+      if (filterRole !== "all") params.set("role", filterRole);
+      if (filterStatus !== "all") params.set("status", filterStatus);
+
+      const data = await apiRequest(`/admin/users?${params.toString()}`);
+      const exportUsers = safeNormalizeUsers(data);
+      if (exportUsers.length === 0) {
+        showError("No users available to export.");
+        return;
+      }
+
+      const rows = exportUsers.map((user) => ({
+        ...user,
+        active: isActiveUser(user) ? "Active" : "Inactive",
+        created_at: formatDate(user.created_at),
+      }));
+
+      const filename = `manage-users-${new Date().toISOString().slice(0, 10)}`;
+
+      if (format === "csv") {
+        exportToCSV(rows, exportColumns, filename);
+      } else if (format === "excel") {
+        exportToExcel(rows, exportColumns, filename);
+      } else if (format === "pdf") {
+        exportToPDF(rows, exportColumns, "Manage Users", filename);
+      }
+
+      showSuccess("User list exported successfully.");
+    } catch (err) {
+      console.error("Failed to export users:", err);
+      showError(err.message || "Failed to export users.");
     }
-
-    const rows = sortedUsers.map((user) => ({
-      ...user,
-      active: isActiveUser(user) ? "Active" : "Inactive",
-      created_at: formatDate(user.created_at),
-    }));
-
-    const filename = `manage-users-${new Date().toISOString().slice(0, 10)}`;
-
-    if (format === "csv") {
-      exportToCSV(rows, exportColumns, filename);
-    } else if (format === "excel") {
-      exportToExcel(rows, exportColumns, filename);
-    } else if (format === "pdf") {
-      exportToPDF(rows, exportColumns, "Manage Users", filename);
-    }
-
-    showSuccess("User list exported successfully.");
   };
 
   return (
@@ -532,7 +545,7 @@ const ManageUsers = () => {
         <div className="filter-box">
           <select
             value={filterRole}
-            onChange={(event) => setFilterRole(event.target.value)}
+            onChange={(event) => { setFilterRole(event.target.value); setPage(1); }}
           >
             <option value="all">All Roles</option>
             {ROLE_OPTIONS.map((role) => (
@@ -546,7 +559,7 @@ const ManageUsers = () => {
         <div className="filter-box">
           <select
             value={filterStatus}
-            onChange={(event) => setFilterStatus(event.target.value)}
+            onChange={(event) => { setFilterStatus(event.target.value); setPage(1); }}
           >
             <option value="all">All Status</option>
             <option value="active">Active ({stats.active})</option>
@@ -565,8 +578,8 @@ const ManageUsers = () => {
           <div>
             <h2>User Directory</h2>
             <p>
-              Showing <strong>{sortedUsers.length}</strong> of{" "}
-              <strong>{users.length}</strong> users.
+              Showing <strong>{users.length}</strong> of{" "}
+              <strong>{pageMeta.total}</strong> users.
             </p>
           </div>
         </div>
@@ -577,7 +590,7 @@ const ManageUsers = () => {
             <h3>Loading users...</h3>
             <p>Please wait while we fetch system accounts.</p>
           </div>
-        ) : sortedUsers.length === 0 ? (
+        ) : users.length === 0 ? (
           <div className="empty-state">
             <FontAwesomeIcon icon={faCircleInfo} />
             <h3>No users found</h3>
@@ -586,11 +599,17 @@ const ManageUsers = () => {
         ) : (
           <StandardTable
             nested
-            data={sortedUsers}
-            pageSize={25}
+            data={users}
+            pageSize={PAGE_SIZE}
             sortKey={sortConfig.key}
             sortDirection={sortConfig.direction}
-            onSort={(key, direction) => setSortConfig({ key, direction })}
+            onSort={(key, direction) => { setSortConfig({ key, direction }); setPage(1); }}
+            serverPagination={{
+              page: pageMeta.current_page,
+              lastPage: pageMeta.last_page,
+              total: pageMeta.total,
+              onPageChange: setPage,
+            }}
             rowClassName={() => "user-row"}
             columns={[
               { key: "id", label: "ID", sortable: true, className: "user-id", render: (value) => `#${value}` },
@@ -654,6 +673,16 @@ const ManageUsers = () => {
                     >
                       <FontAwesomeIcon icon={faEdit} />
                     </button>
+                    {currentUser?.id !== user.id && (
+                      <button
+                        className={`action-btn toggle-btn ${isActiveUser(user) ? "deactivate-btn" : "activate-btn"}`}
+                        type="button"
+                        onClick={() => openModal("toggle", user)}
+                        title={isActiveUser(user) ? "Deactivate User" : "Activate User"}
+                      >
+                        <FontAwesomeIcon icon={isActiveUser(user) ? faUserSlash : faUserCheck} />
+                      </button>
+                    )}
                     <button
                       className="action-btn delete-btn"
                       type="button"
@@ -678,6 +707,10 @@ const ManageUsers = () => {
               ? "Edit User"
               : modalType === "delete"
               ? "Delete User"
+              : modalType === "toggle"
+              ? isActiveUser(selectedUser)
+                ? "Deactivate User"
+                : "Activate User"
               : "User Details"
           }
           subtitle={selectedUser?.name || "Selected User"}
@@ -716,6 +749,8 @@ const ManageUsers = () => {
                     </>
                   ) : modalType === "edit" ? (
                     "Update User"
+                  ) : modalType === "toggle" ? (
+                    isActiveUser(selectedUser) ? "Deactivate" : "Activate"
                   ) : (
                     "Delete User"
                   )}
@@ -876,6 +911,33 @@ const ManageUsers = () => {
                   )}
 
                   <p className="warning-text">This action cannot be undone.</p>
+                </div>
+              )}
+
+              {modalType === "toggle" && selectedUser && (
+                <div className="delete-confirmation">
+                  <FontAwesomeIcon
+                    icon={isActiveUser(selectedUser) ? faUserSlash : faUserCheck}
+                  />
+                  <h4>
+                    {isActiveUser(selectedUser)
+                      ? "Deactivate this user?"
+                      : "Activate this user?"}
+                  </h4>
+                  <p>
+                    {isActiveUser(selectedUser) ? (
+                      <>
+                        <strong>{selectedUser.name}</strong> will be signed out
+                        immediately — all of their API tokens are revoked and
+                        they will not be able to log in again until reactivated.
+                      </>
+                    ) : (
+                      <>
+                        <strong>{selectedUser.name}</strong> will regain the
+                        ability to sign in and use their account.
+                      </>
+                    )}
+                  </p>
                 </div>
               )}
             </div>

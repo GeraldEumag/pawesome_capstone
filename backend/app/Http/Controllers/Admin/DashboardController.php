@@ -32,7 +32,6 @@ class DashboardController extends Controller
                 'total_revenue' => $revenue->total(),
                 'today_revenue' => $revenue->total($today, $today),
                 'low_stock_items' => InventoryItem::whereNull('archived_at')->whereRaw('stock <= reorder_level')->where('stock', '>', 0)->count(),
-                'active_modules' => count(array_filter($this->getActiveModules())),
                 'appointments_by_status' => Appointment::selectRaw('status, COUNT(*) as count')
                     ->groupBy('status')
                     ->get()
@@ -100,18 +99,4 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function getActiveModules()
-    {
-        return [
-            'user_management' => true,
-            'appointment_system' => true,
-            'inventory_management' => true,
-            'payment_processing' => true,
-            'veterinary_services' => true,
-            'hotel_management' => true,
-            'reporting_system' => true,
-            'notification_system' => true,
-            'audit_logging' => true,
-        ];
-    }
 }

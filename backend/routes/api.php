@@ -76,10 +76,12 @@ Route::get('/health', function () {
 });
 
 // Public system settings (no auth — needed before login for theme init)
-Route::get('/settings/public', [SystemSettingController::class, 'getPublicSettings']);
+Route::middleware('throttle:api')
+    ->get('/settings/public', [SystemSettingController::class, 'getPublicSettings']);
 
 // Public landing page content (no auth)
-Route::get('/landing-page', [LandingPageContentController::class, 'showPublic']);
+Route::middleware('throttle:api')
+    ->get('/landing-page', [LandingPageContentController::class, 'showPublic']);
 
 // Public attendance kiosk — unlocked by the shared kiosk PIN
 // (X-Kiosk-Pin header / pin body) or by a valid staff bearer token.

@@ -55,11 +55,13 @@ class SystemSettingController extends Controller
      */
     public function getSettings()
     {
+        // Only settings with a live enforcement consumer are exposed — see
+        // SystemSettingConsumers: ApiTokenAuth (session timeout, maintenance
+        // mode), PasswordPolicy (password rules), the auth rate limiter
+        // (max attempts), EmailDeliveryService (email kill switch),
+        // AuthController (login/failed-login alerts) and KioskPinAuth (PIN).
         return response()->json([
             'general' => [
-                'systemName'      => SystemSetting::get('general_system_name', 'Pawesome Admin'),
-                'timezone'        => SystemSetting::get('general_timezone', 'Asia/Manila'),
-                'dateFormat'      => SystemSetting::get('general_date_format', 'MM/DD/YYYY'),
                 'maintenanceMode' => (bool) SystemSetting::get('general_maintenance_mode', false),
             ],
             'security' => [
@@ -75,8 +77,6 @@ class SystemSettingController extends Controller
                 'emailNotifications' => (bool) SystemSetting::get('notif_email_notifications', true),
                 'loginAlerts'        => (bool) SystemSetting::get('notif_login_alerts', true),
                 'failedLoginAlerts'  => (bool) SystemSetting::get('notif_failed_login_alerts', true),
-                'dailyReports'       => (bool) SystemSetting::get('notif_daily_reports', false),
-                'weeklyReports'      => (bool) SystemSetting::get('notif_weekly_reports', true),
             ],
         ]);
     }
@@ -87,15 +87,9 @@ class SystemSettingController extends Controller
     public function updateGeneral(Request $request)
     {
         $request->validate([
-            'systemName'      => 'required|string|max:100',
-            'timezone'        => 'required|string|max:50',
-            'dateFormat'      => 'required|string|in:MM/DD/YYYY,DD/MM/YYYY,YYYY-MM-DD',
             'maintenanceMode' => 'boolean',
         ]);
 
-        SystemSetting::set('general_system_name', $request->systemName);
-        SystemSetting::set('general_timezone', $request->timezone);
-        SystemSetting::set('general_date_format', $request->dateFormat);
         SystemSetting::set('general_maintenance_mode', $request->boolean('maintenanceMode') ? '1' : '0');
 
         return response()->json(['message' => 'General settings saved successfully.']);
@@ -148,15 +142,11 @@ class SystemSettingController extends Controller
             'emailNotifications' => 'boolean',
             'loginAlerts'        => 'boolean',
             'failedLoginAlerts'  => 'boolean',
-            'dailyReports'       => 'boolean',
-            'weeklyReports'      => 'boolean',
         ]);
 
         SystemSetting::set('notif_email_notifications', $request->boolean('emailNotifications') ? '1' : '0');
         SystemSetting::set('notif_login_alerts', $request->boolean('loginAlerts') ? '1' : '0');
         SystemSetting::set('notif_failed_login_alerts', $request->boolean('failedLoginAlerts') ? '1' : '0');
-        SystemSetting::set('notif_daily_reports', $request->boolean('dailyReports') ? '1' : '0');
-        SystemSetting::set('notif_weekly_reports', $request->boolean('weeklyReports') ? '1' : '0');
 
         return response()->json(['message' => 'Notification settings saved successfully.']);
     }

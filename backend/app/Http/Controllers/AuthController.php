@@ -123,16 +123,23 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            // Record the failed attempt — login history is a security control,
+            // not just a success ledger. user_id stays null for unknown emails.
+            LoginLog::logLogin($user?->id, (string) $login, 'failed', 'invalid_credentials');
+            $this->alertAdminsOnRepeatedFailures((string) $login);
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
         if (!$user->is_active) {
+            LoginLog::logLogin($user->id, $user->email, 'failed', 'account_inactive');
+            $this->alertAdminsOnRepeatedFailures($user->email);
             return response()->json(['message' => 'Account is inactive'], 403);
         }
 
         $token = $user->createToken('pawesome-token')->plainTextToken;
 
         LoginLog::logLogin($user->id, $user->email, 'success');
+        $this->notifyUserOfLogin($user);
 
         return response()->json([
             'message' => 'Login successful',
@@ -141,6 +148,67 @@ class AuthController extends Controller
         ])->cookie('auth_token', $token, 4320, '/', null,
             (bool) config('session.secure', false), true, false,
             config('session.same_site', 'lax'));
+    }
+
+    /**
+     * `notif_login_alerts` ("Send Login Alerts to Users") — notify the account
+     * owner in-app that a login just occurred, so unauthorized access is
+     * visible the next time they open the app.
+     */
+    private function notifyUserOfLogin(User $user): void
+    {
+        try {
+            if (!(bool) \App\Models\SystemSetting::get('notif_login_alerts', true)) {
+                return;
+            }
+
+            \App\Models\Notification::create([
+                'user_id' => $user->id,
+                'title' => 'New sign-in to your account',
+                'message' => 'Your account was signed in from IP ' . request()->ip()
+                    . ' at ' . now()->format('Y-m-d H:i') . '. If this was not you, change your password immediately.',
+                'type' => 'info',
+            ]);
+        } catch (\Throwable $e) {
+            // Alerting must never break authentication.
+            Log::warning('Failed to create user login alert notification', ['exception' => get_class($e)]);
+        }
+    }
+
+    /**
+     * `notif_failed_login_alerts` ("Alert Admin on Multiple Failed Logins") —
+     * push a role-targeted in-app notification to admin dashboards once an
+     * identifier accumulates a burst of rejected attempts. Fires exactly once
+     * per burst (at the 3rd failure inside a 15-minute window) so repeated
+     * brute-force noise does not flood the bell.
+     */
+    private function alertAdminsOnRepeatedFailures(string $identifier): void
+    {
+        try {
+            if (!(bool) \App\Models\SystemSetting::get('notif_failed_login_alerts', true)) {
+                return;
+            }
+
+            $recentFailures = LoginLog::where('email', $identifier)
+                ->where('action', 'login')
+                ->where('status', 'failed')
+                ->where('created_at', '>=', now()->subMinutes(15))
+                ->count();
+
+            if ($recentFailures !== 3) {
+                return;
+            }
+
+            \App\Models\Notification::create([
+                'role' => 'admin',
+                'title' => 'Repeated failed logins detected',
+                'message' => "{$identifier} has {$recentFailures} failed login attempts in the last 15 minutes"
+                    . ' from IP ' . request()->ip() . '.',
+                'type' => 'warning',
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to create admin failed-login alert', ['exception' => get_class($e)]);
+        }
     }
 
     public function me(Request $request)

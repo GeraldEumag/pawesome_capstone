@@ -297,22 +297,58 @@ class BookingAvailabilityService
         bool $allowSameDayCutoff = false,
         bool $allowHoliday = false
     ): bool {
+        return self::serviceTimeUnavailableReason(
+            $serviceType,
+            $date,
+            $time,
+            $serviceName,
+            $veterinarianId,
+            $ignoreAppointmentId,
+            $ignoreServiceRequestId,
+            $allowSameDayCutoff,
+            $allowHoliday
+        ) === null;
+    }
+
+    /**
+     * Same check as isServiceTimeAvailable but returns a customer-facing reason
+     * string instead of a bare boolean. Null means the slot is available.
+     */
+    public static function serviceTimeUnavailableReason(
+        string $serviceType,
+        string $date,
+        string $time,
+        ?string $serviceName = null,
+        ?int $veterinarianId = null,
+        ?int $ignoreAppointmentId = null,
+        ?int $ignoreServiceRequestId = null,
+        bool $allowSameDayCutoff = false,
+        bool $allowHoliday = false
+    ): ?string {
         $normalizedType = $serviceType === 'grooming' ? 'grooming' : 'veterinary';
         $date = Carbon::parse($date, ServiceDurationService::STORE_TIMEZONE)->toDateString();
         if (!$allowSameDayCutoff && ServiceDurationService::isSameDayBookingClosed($date)) {
-            return false;
+            return 'Same-day bookings are closed after 6:00 PM. Please choose a future date.';
         }
         if (!self::isBookableDate($date, $allowHoliday)) {
-            return false;
+            if ($holiday = Holiday::blockedNameOn($date)) {
+                return "This date is a public holiday ({$holiday}); the store is closed.";
+            }
+
+            return 'The store is closed on the selected day. Please choose another date.';
         }
 
         $start = Carbon::parse("{$date} {$time}", ServiceDurationService::STORE_TIMEZONE);
         $end = $start->copy()->addMinutes(self::serviceMinutes($normalizedType, $serviceName));
-        if ($start->lessThanOrEqualTo(Carbon::now(ServiceDurationService::STORE_TIMEZONE))
-            || $start->minute % ServiceDurationService::getTimeSlotInterval() !== 0
-            || $start->format('H:i') < StoreHours::opensAt()
+        if ($start->lessThanOrEqualTo(Carbon::now(ServiceDurationService::STORE_TIMEZONE))) {
+            return 'Selected time is in the past. Please choose a future time slot.';
+        }
+        if ($start->minute % ServiceDurationService::getTimeSlotInterval() !== 0) {
+            return 'Times are available in ' . ServiceDurationService::getTimeSlotInterval() . '-minute intervals.';
+        }
+        if ($start->format('H:i') < StoreHours::opensAt()
             || $end->format('H:i') > StoreHours::closesAt()) {
-            return false;
+            return 'Selected time is outside shop opening hours. Please choose between ' . StoreHours::label() . '.';
         }
 
         foreach (self::blockingServiceBookings(
@@ -323,16 +359,16 @@ class BookingAvailabilityService
             $ignoreServiceRequestId
         ) as $booking) {
             if (empty($booking['time'])) {
-                return false;
+                return 'This schedule is unavailable.';
             }
             $existingStart = Carbon::parse("{$date} {$booking['time']}", ServiceDurationService::STORE_TIMEZONE);
             $existingEnd = $existingStart->copy()->addMinutes(self::serviceMinutes($normalizedType, $booking['service']));
             if ($start->lt($existingEnd) && $end->gt($existingStart)) {
-                return false;
+                return 'Time slot overlaps an existing booking.';
             }
         }
 
-        return true;
+        return null;
     }
 
     /**

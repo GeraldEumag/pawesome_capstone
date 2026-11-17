@@ -477,6 +477,7 @@ const CreateUser = () => {
                     <option value="receptionist">Receptionist</option>
                     <option value="super_receptionist">Super Receptionist</option>
                     <option value="veterinary">Veterinary</option>
+                    <option value="vet_tech">Veterinary Technician</option>
                     <option value="cashier">Cashier</option>
                     <option value="inventory">Inventory</option>
                     <option value="customer">Customer</option>

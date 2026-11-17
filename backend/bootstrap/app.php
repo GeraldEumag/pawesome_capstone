@@ -44,6 +44,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // API routes must answer JSON regardless of the client's Accept
+        // header — a missing header currently produces HTML redirects (302)
+        // or error pages for validation/not-found/throttle exceptions.
+        $exceptions->shouldRenderJsonWhen(fn (Request $request, \Throwable $e) => $request->is('api/*') || $request->expectsJson());
         $exceptions->render(function (AuthenticationException $exception, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json([

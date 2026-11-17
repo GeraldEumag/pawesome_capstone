@@ -289,6 +289,26 @@ comes from labels/badges/navigation, never from separate accent colors.
 
 ## Issue Tracking
 
+- **Admin role full-system audit: FIXED/VERIFIED** — full-stack audit on isolated
+  `pawesome_e2e_audit` (API :8001) fixed 11 defects: self/last-admin lockout guards
+  (`Admin\UserController`), failed-login recording + login/failed-login
+  notifications (`AuthController`, `info`/`warning` enum types), maintenance-mode
+  enforcement (`ApiTokenAuth`), JSON contract for `api/*` without Accept
+  (`bootstrap/app.php`), kiosk-PIN plaintext removal + dead-settings reduction
+  (`SystemSettingController`/`AdminSettings.jsx`), fabricated `active_modules`
+  removal (`Admin\DashboardController`), `vet_tech` role option + activation
+  toggle in `ManageUsers.jsx`/`CreateUser.jsx`, precise booking-unavailability
+  reasons (`BookingAvailabilityService::serviceTimeUnavailableReason()` +
+  `ServiceRequestController`), and server-side user pagination/search/filter/
+  sort (`Admin\UserController::index` + `?all=1` legacy mode; `ManageUsers.jsx`
+  + `StandardTable` `serverPagination` mode).
+  Coverage: `backend/tests/Feature/AdminDeepAuditTest.php` (32 tests); full suite
+  1048 pass; phase13 722-route authorization matrix pass; gates A/B/C/D all pass
+  from canonical scripts (`PAWESOME_API_URL` env; `SHOW TABLES` schema-scoped
+  discovery; `RevenueService` multi-source reconciliation).
+  Reports: `docs/audit/ADMIN_AUDIT_SUMMARY.md` + supporting `ADMIN_*.md`.
+  Open: ADM-11 only — production env config (`APP_DEBUG`/`APP_ENV`/DB creds) is
+  a deployment checklist item, not an application defect.
 - **Profile Photo Fallback: FIXED** — 12/12 browser/API/database checks passed.
   `User::profile_photo` returns a deterministic-color initials `data:` URI when
   no photo is uploaded; `frontend/src/utils/avatar.js` (`resolveAvatarUrl`)

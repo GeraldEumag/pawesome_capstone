@@ -41,14 +41,28 @@ const StandardTable = ({
   cardView = true,
   rowClassName,
   nested = false,
+  serverPagination = null,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.max(1, Math.ceil((data?.length || 0) / pageSize));
+  const isServerPaginated = !!serverPagination;
+  const activePage = isServerPaginated ? serverPagination.page : currentPage;
+  const totalPages = isServerPaginated
+    ? Math.max(1, serverPagination.lastPage)
+    : Math.max(1, Math.ceil((data?.length || 0) / pageSize));
   const paginatedData = useMemo(() => {
+    if (isServerPaginated) return data;
     const start = (currentPage - 1) * pageSize;
     return data.slice(start, start + pageSize);
-  }, [data, currentPage, pageSize]);
+  }, [data, currentPage, pageSize, isServerPaginated]);
+
+  const goToPage = (page) => {
+    if (isServerPaginated) {
+      serverPagination.onPageChange?.(Math.min(Math.max(1, page), totalPages));
+    } else {
+      setCurrentPage((current) => Math.min(Math.max(1, typeof page === "function" ? page(current) : page), totalPages));
+    }
+  };
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -111,7 +125,7 @@ const StandardTable = ({
   const getRowKey = (item, index) => {
     const rowId = item?.id ?? item?.uuid ?? item?.reference_number ?? index;
     const rowSource = item?.source ?? item?.type ?? item?.role ?? "row";
-    return `${rowSource}-${rowId}-${(currentPage - 1) * pageSize + index}`;
+    return `${rowSource}-${rowId}-${(activePage - 1) * pageSize + index}`;
   };
 
   const tableClasses = [
@@ -178,25 +192,32 @@ const StandardTable = ({
           ))}
         </tbody>
       </table>
-      {data.length > pageSize && (
+      {(isServerPaginated ? serverPagination.total > data.length || totalPages > 1 : data.length > pageSize) && (
         <div className="standard-table-pagination">
-          <span>
-            Showing {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, data.length)} of {data.length}
-          </span>
+          {isServerPaginated ? (
+            <span>
+              Showing {data.length === 0 ? 0 : (activePage - 1) * pageSize + 1}-
+              {(activePage - 1) * pageSize + data.length} of {serverPagination.total}
+            </span>
+          ) : (
+            <span>
+              Showing {(currentPage - 1) * pageSize + 1}-
+              {Math.min(currentPage * pageSize, data.length)} of {data.length}
+            </span>
+          )}
           <div className="pagination-actions">
             <button
               type="button"
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              disabled={currentPage === 1}
+              onClick={() => goToPage(activePage - 1)}
+              disabled={activePage === 1}
             >
               Previous
             </button>
-            <strong>{currentPage} / {totalPages}</strong>
+            <strong>{activePage} / {totalPages}</strong>
             <button
               type="button"
-              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-              disabled={currentPage === totalPages}
+              onClick={() => goToPage(activePage + 1)}
+              disabled={activePage === totalPages}
             >
               Next
             </button>

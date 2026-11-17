@@ -64,6 +64,16 @@ class ApiTokenAuth
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        // Admin-controlled maintenance mode: authenticated non-admin sessions
+        // are refused while it is on. Admins keep API access so they can turn
+        // it back off; public routes (login, landing) stay reachable either way.
+        if ((bool) SystemSetting::get('general_maintenance_mode', false)
+            && !in_array($user->role, ['admin', 'super_admin'], true)) {
+            return response()->json([
+                'message' => 'System is under maintenance. Please try again later.',
+            ], 503);
+        }
+
         if (method_exists($user, 'withAccessToken')) {
             $user->withAccessToken($accessToken);
         }
