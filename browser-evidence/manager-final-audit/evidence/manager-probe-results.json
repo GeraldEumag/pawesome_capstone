@@ -1,0 +1,1304 @@
+{
+  "run": "manager-audit-1794930214332",
+  "started_at": "2026-11-17T15:43:34.332Z",
+  "scenarios": [
+    {
+      "name": "S1-manager-read-sweep",
+      "steps": [
+        {
+          "action": "GET /manager/dashboard",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/staff",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/people",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/executive-summary",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/history",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/summary",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/overview",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/live",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/sales",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/revenue-trends",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/payments",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/customers",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/services",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/inventory",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/staff-performance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/boarding",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/medical-confinement",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/room-occupancy",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/veterinary-services",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/attendance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/payroll",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/dtr?user_id=3&start_date=2026-01-01&end_date=2026-01-31",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/reports/remittance?period=2026-01&type=sss",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/attendance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/attendance/corrections",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/attendance/today-status",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/biometric/credentials",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/biometric/today-summary",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/boarding-rooms",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/hotel-rooms",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/hotel-rooms/1",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/company-schedule",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/employees",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/employees/1",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/holidays",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/inventory-audits/pending",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/leave-balances",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/leave-balances/3/user",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/leave-balances/1/employee",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/leaves",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/leaves/calendar?year=2026&month=11",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/payroll",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/payroll/thirteenth-month?year=2026",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/receipt-scanner/settings",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/receipt-scanner/metrics",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/salary-loans",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/services",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/staff/3/attendance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/staff/3/payroll",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/vaccination-recall?lot_number=NONEXISTENT-LOT",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /manager/visit-invoice-adjustments/pending",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance/today",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance/statistics",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance/1",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance-records",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance-records/summary",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /admin/activity-logs",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /admin/activity-logs/statistics",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /admin/activity-logs/filters",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /admin/activity-logs/1",
+          "expected": "2xx",
+          "actual": 404,
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "GET /admin/activity-logs/user/2",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /my-payroll",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /my-leaves",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /my-leaves/balance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /my-attendance",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /my-attendance/corrections",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /my-loans",
+          "expected": "2xx",
+          "actual": 200,
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payroll show/payslip",
+          "expected": "info",
+          "actual": "no payroll rows on fresh seed — covered in S4 after generate",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "salary-loan show",
+          "expected": "info",
+          "actual": "no loans on fresh seed — covered in S4",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "read-sweep summary",
+          "expected": "info",
+          "actual": {
+            "total": 68,
+            "failures": 1,
+            "failed": [
+              "404 /admin/activity-logs/1"
+            ]
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "GET /attendance/export",
+          "expected": "2xx + file content-type",
+          "actual": "200 application/json",
+          "db_check": null,
+          "pass": false
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "name": "S2-denial-matrix",
+      "steps": [
+        {
+          "action": "customer denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "receptionist denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "cashier denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "inventory denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "veterinary denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "vet_tech denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "super_receptionist denied on manager routes",
+          "expected": "15 denials",
+          "actual": "14 denied / leaks: POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": [
+            "POST /manager/attendance/corrections/1/approve -> 404"
+          ],
+          "pass": false
+        },
+        {
+          "action": "anon denied on all manager routes",
+          "expected": "15 x 401",
+          "actual": "14 x 401 / POST /manager/attendance/corrections/1/approve -> 404",
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "forged token -> /manager/dashboard",
+          "expected": 401,
+          "actual": 401,
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "name": "S3-manager-forbidden-writes",
+      "steps": [
+        {
+          "action": "manager -> POS transaction",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> cashier verify payment",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> cashier reject payment",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> inventory stock adjust",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 381->381",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> inventory create item",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 837->837",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> receptionist approve service request",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> receptionist approve boarding",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> receptionist appointment approve",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> boarding pay (cashier gate)",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> vet create appointment",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> vet consultation start",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> admin create user",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 9->9",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> admin salaries write",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 9->9",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> admin login-logs read",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> admin services mount",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> products barcode lookup (POS scope)",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> customers create (cashier scope)",
+          "expected": "403 + no state change",
+          "actual": "status=403 rows 0->0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> billing shared read",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> billing unpaid services",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> receptionist dashboard",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> cashier dashboard",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> inventory dashboard read",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> veterinary dashboard",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> admin dashboard",
+          "expected": "403 + no state change",
+          "actual": "status=403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> updateStaff on admin account",
+          "expected": "403",
+          "actual": "403",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager -> updateStaff on manager account",
+          "expected": "403",
+          "actual": "403",
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S4-manager-authorized-writes",
+      "steps": [
+        {
+          "action": "create holiday",
+          "expected": "2xx + row",
+          "actual": "201 id=38 db=Audit Fixture Holiday",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "update holiday",
+          "expected": "name updated",
+          "actual": "500 db=Audit Fixture Holiday",
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "delete holiday w/o reason",
+          "expected": "422 (reason required)",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "delete holiday with reason",
+          "expected": "row gone + audit log",
+          "actual": "200 count=1 audit=1",
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "generate-recurring sources",
+          "expected": "info",
+          "actual": "recurring templates=10 created run1=+10 run2=+0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "generate-recurring idempotent",
+          "expected": "no duplicates on re-run",
+          "actual": "200/200 +10/+0",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "create employee record",
+          "expected": "2xx + row",
+          "actual": "201 id=5 db=AUDIT",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "update employee",
+          "expected": "position updated",
+          "actual": "200 db=Senior Groomer",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "delete employee",
+          "expected": "soft-delete/deactivate",
+          "actual": "200 db=__SQL_ERR__ Command failed: \"C:/xampp/mysql/bin/mysql.exe\" -u root pawesome_e2e_audit -N -e \"SELECT is_active, deleted_at FROM employees WHERE id=5\"\nERROR 1054 (42S22) at l",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "set day-offs Sun+Sat",
+          "expected": "persisted",
+          "actual": "200 db=0,6",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "staff update allowed fields",
+          "expected": "phone saved",
+          "actual": "200 phone=0917-AUDIT",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "staff update mass-assignment blocked",
+          "expected": "role/email/is_active unchanged",
+          "actual": "before=receptionist|receptionist@example.com|1 after=receptionist|receptionist@example.com|1",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "staff files leave (setup)",
+          "expected": "pending row",
+          "actual": "422 id=undefined",
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "leave create errors",
+          "expected": "info",
+          "actual": {
+            "message": "Insufficient leave balance.",
+            "remaining": 0,
+            "requested": 2,
+            "success": false
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "create salary loan",
+          "expected": "row persisted",
+          "actual": "201 id=1 db=1500.00\tactive",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "update salary loan",
+          "expected": "amount updated",
+          "actual": "200 db=1500.00",
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "cancel salary loan",
+          "expected": "status=cancelled",
+          "actual": "200 db=cancelled",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "file attendance correction (setup)",
+          "expected": "info",
+          "actual": "201 id=1",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "approve attendance correction",
+          "expected": "status=approved",
+          "actual": "200 db=approved",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "reject attendance correction",
+          "expected": "status=rejected",
+          "actual": "200 db=rejected",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "attendance remarks write",
+          "expected": "saved to row",
+          "actual": "200 db=audit remark",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payroll compute",
+          "expected": "2xx + data",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payroll generate",
+          "expected": "info",
+          "actual": "200 ids=12 first=1",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "release before approve (must 422)",
+          "expected": "info",
+          "actual": "422 {\"success\":false,\"message\":\"Payroll must be approved before payment can be released.\"}",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "release un-approved payroll blocked",
+          "expected": "422",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payroll approve",
+          "expected": "status=pending + approver stamped",
+          "actual": "200 db=pending\t2",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payroll release",
+          "expected": "status=paid + payment_date",
+          "actual": "200 db=paid\t2026-11-17",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "double release",
+          "expected": "422",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payslip after release",
+          "expected": "2xx",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "13th-month accrue",
+          "expected": "info",
+          "actual": "200 {\"success\":true,\"message\":\"13th month accrued for 11 employees for 2026-11.\"}",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "13th-month pay",
+          "expected": "status=paid",
+          "actual": "200 db=paid",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "kiosk-pin rotate",
+          "expected": "changed in db",
+          "actual": "200 before=1234 after=987654",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "company-schedule read",
+          "expected": "2xx",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "company-schedule put same values",
+          "expected": "2xx no-op write",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager create service",
+          "expected": "row persisted",
+          "actual": "422 id=undefined db=null",
+          "db_check": null,
+          "pass": false
+        },
+        {
+          "action": "service create errors",
+          "expected": "info",
+          "actual": {
+            "message": "The selected category is invalid.",
+            "errors": {
+              "category": [
+                "The selected category is invalid."
+              ]
+            },
+            "success": false
+          },
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "manager cancel appointment",
+          "expected": "info",
+          "actual": "no appointments in seed — skipped",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "invoice-adjustments pending list",
+          "expected": "2xx",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "inventory-audits pending list",
+          "expected": "2xx",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "vaccination recall lookup",
+          "expected": "2xx",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "approve nonexistent adjustment",
+          "expected": "404/422 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "approve nonexistent audit",
+          "expected": "404/422 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "release nonexistent confinement",
+          "expected": "404/422 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "activity-log growth during authorized writes",
+          "expected": "info",
+          "actual": "0 -> 1",
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "fail"
+    },
+    {
+      "name": "S5-abuse-probes",
+      "steps": [
+        {
+          "action": "payroll unknown id",
+          "expected": "404 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "employee unknown id",
+          "expected": "404 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "salary-loan unknown id",
+          "expected": "404 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "hotel-room unknown id",
+          "expected": "404 not 500",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "holiday malformed",
+          "expected": "422",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "day-offs malformed",
+          "expected": "422",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "salary-loan malformed/negative",
+          "expected": "422",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "day-offs bogus kind",
+          "expected": "4xx",
+          "actual": "404",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "non-semi-monthly compute rejected",
+          "expected": "422",
+          "actual": "422",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "history SQLi search",
+          "expected": "2xx benign",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "sales XSS search",
+          "expected": "2xx benign",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "payments SQLi status",
+          "expected": "2xx benign",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "name": "S6-shared-surfaces",
+      "steps": [
+        {
+          "action": "envelope /manager/reports/sales",
+          "expected": "success/data present",
+          "actual": "success=true",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "envelope /manager/reports/payments",
+          "expected": "success/data present",
+          "actual": "success=true",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "envelope /manager/reports/inventory",
+          "expected": "success/data present",
+          "actual": "success=true",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "envelope /manager/executive-summary",
+          "expected": "success/data present",
+          "actual": "success=true",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "envelope /manager/dashboard",
+          "expected": "success/data present",
+          "actual": "success=true",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "vet shared docs",
+          "expected": "info",
+          "actual": "no appointments in seed — skipped",
+          "db_check": null,
+          "pass": true
+        },
+        {
+          "action": "pets index (shared group)",
+          "expected": "info",
+          "actual": "200",
+          "db_check": null,
+          "pass": true
+        }
+      ],
+      "status": "pass"
+    }
+  ],
+  "finished_at": "2026-11-17T15:48:28.865Z",
+  "summary": [
+    {
+      "name": "S1-manager-read-sweep",
+      "status": "fail",
+      "steps": 72,
+      "fails": 2
+    },
+    {
+      "name": "S2-denial-matrix",
+      "status": "fail",
+      "steps": 9,
+      "fails": 8
+    },
+    {
+      "name": "S3-manager-forbidden-writes",
+      "status": "pass",
+      "steps": 26,
+      "fails": 0
+    },
+    {
+      "name": "S4-manager-authorized-writes",
+      "status": "fail",
+      "steps": 44,
+      "fails": 5
+    },
+    {
+      "name": "S5-abuse-probes",
+      "status": "pass",
+      "steps": 12,
+      "fails": 0
+    },
+    {
+      "name": "S6-shared-surfaces",
+      "status": "pass",
+      "steps": 7,
+      "fails": 0
+    }
+  ]
+}
