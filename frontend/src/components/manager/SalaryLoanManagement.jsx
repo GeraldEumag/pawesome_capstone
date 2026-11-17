@@ -9,6 +9,7 @@ import {
   faScaleBalanced,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import { showConfirm } from "../../utils/alert.jsx";
 import DatePickerInput from "../shared/DatePickerInput";
 import Modal from "../shared/Modal";
@@ -17,7 +18,7 @@ import RowActionPopover from "../shared/RowActionPopover";
 import StandardTable from "../shared/StandardTable";
 import "./SalaryLoanManagement.css";
 
-const fmt = (v) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(v || 0);
+const fmt = formatCurrency;
 
 const EMPTY = {
   user_id: "", employee_id: "",

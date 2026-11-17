@@ -10,6 +10,7 @@ import { getRole, getUserData } from './auth';
 import { exportFormalReportPDF } from './formalReportPdf';
 import { exportToCSV as exportFormalCSV, exportToExcel as exportFormalExcel, formalReportRows } from './reportExport';
 
+import { formatCurrency } from "./currency";
 const columnsFromHeaders = (data, headers) =>
   (headers || Object.keys(data[0] || {})).map((header) => ({ key: header, label: header }));
 
@@ -104,8 +105,7 @@ const executiveNumber = (value) => {
   return Number.isFinite(number) ? number : 0;
 };
 
-const executiveCurrency = (value) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(executiveNumber(value));
+const executiveCurrency = (value) => formatCurrency(executiveNumber(value));
 
 const executiveReportData = (data = {}, period = {}) => {
   const source = data || {};

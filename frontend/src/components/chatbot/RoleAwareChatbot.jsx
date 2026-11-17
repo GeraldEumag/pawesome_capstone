@@ -45,6 +45,7 @@ import {
   customerCloseChat,
 } from "../../services/liveChatService";
 import { apiRequest, normalizeList } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import botIcon from "../../assets/pawesome-icon.png";
 import { useDraggable } from "../../utils/useDraggable";
 import "./RoleAwareChatbot.css";
@@ -660,7 +661,7 @@ const RoleAwareChatbot = ({
   const convSelectService = (service) => {
     setMessages((prev) => [...prev, {
       sender: "user",
-      text: `${service.name} (₱${Number(service.price || 0).toFixed(2)})`,
+      text: `${service.name} (${formatCurrency(Number(service.price || 0))})`,
       timestamp: new Date().toISOString(),
     }]);
     setMessages((prev) => [...prev, {
@@ -751,7 +752,7 @@ const RoleAwareChatbot = ({
   };
 
   const convSelectRoom = (room) => {
-    const label = room ? `${room.room_number} — ${room.type} (₱${room.daily_rate}/night)` : "Auto-Assign";
+    const label = room ? `${room.room_number} — ${room.type} (${formatCurrency(room.daily_rate)}/night)` : "Auto-Assign";
     setMessages((prev) => [...prev, {
       sender: "user",
       text: `🏠 ${label}`,
@@ -1045,7 +1046,7 @@ const RoleAwareChatbot = ({
             {convFlow.options.services.map((svc) => (
               <button key={svc.id} className="rbac-booking-chip" onClick={() => convSelectService(svc)}>
                 {svc.name}
-                <span className="rbac-chip-sub">₱{Number(svc.price || 0).toFixed(2)}</span>
+                <span className="rbac-chip-sub">{formatCurrency(Number(svc.price || 0))}</span>
               </button>
             ))}
           </div>
@@ -1098,7 +1099,7 @@ const RoleAwareChatbot = ({
             {convFlow.options.rooms?.map((room) => (
               <button key={room.id} className="rbac-booking-chip" onClick={() => convSelectRoom(room)}>
                 Room {room.room_number}
-                <span className="rbac-chip-sub">{room.type} · ₱{room.daily_rate}/night</span>
+                <span className="rbac-chip-sub">{room.type} · {formatCurrency(room.daily_rate)}/night</span>
               </button>
             ))}
           </div>
@@ -1136,7 +1137,7 @@ const RoleAwareChatbot = ({
               <>
                 <div className="rbac-booking-confirm-row"><span>Pet</span><strong>{convFlow.data.pet_name}</strong></div>
                 <div className="rbac-booking-confirm-row"><span>Service</span><strong>{convFlow.data.service_name}</strong></div>
-                <div className="rbac-booking-confirm-row"><span>Price</span><strong>₱{Number(convFlow.data.service_price || 0).toFixed(2)}</strong></div>
+                <div className="rbac-booking-confirm-row"><span>Price</span><strong>{formatCurrency(Number(convFlow.data.service_price || 0))}</strong></div>
                 <div className="rbac-booking-confirm-row"><span>Date & Time</span><strong>{new Date(convFlow.data.scheduled_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</strong></div>
                 {convFlow.data.notes && <div className="rbac-booking-confirm-row"><span>Notes</span><strong>{convFlow.data.notes}</strong></div>}
               </>
@@ -1429,7 +1430,7 @@ const RoleAwareChatbot = ({
                 <label>Service
                   <select value={workflowState.form.service_id} onChange={(e) => updateWorkflowForm("service_id", e.target.value)}>
                     {normalizeList(workflowState.options.services).map((svc) => (
-                      <option key={svc.id} value={svc.id}>{svc.name} (₱{Number(svc.price || 0).toFixed(2)})</option>
+                      <option key={svc.id} value={svc.id}>{svc.name} ({formatCurrency(Number(svc.price || 0))})</option>
                     ))}
                   </select>
                 </label>
@@ -1495,7 +1496,7 @@ const RoleAwareChatbot = ({
                   <select value={workflowState.form.hotel_room_id} onChange={(e) => updateWorkflowForm("hotel_room_id", e.target.value)}>
                     <option value="">Auto-assign available room</option>
                     {normalizeList(workflowState.options.rooms).map((room) => (
-                      <option key={room.id} value={room.id}>{room.name || room.room_number} - {String(room.type || "").replace(/_/g, " ")} (₱{room.daily_rate}/night)</option>
+                      <option key={room.id} value={room.id}>{room.name || room.room_number} - {String(room.type || "").replace(/_/g, " ")} ({formatCurrency(room.daily_rate)}/night)</option>
                     ))}
                   </select>
                 </label>
@@ -1523,7 +1524,7 @@ const RoleAwareChatbot = ({
                       <>
                         <strong>#{item.id || item.transaction_id}</strong>
                         <span>{item.customer || "Guest"} | {item.payment_type}</span>
-                        <span>Amount: ₱{Number(item.amount || 0).toFixed(2)}</span>
+                        <span>Amount: {formatCurrency(Number(item.amount || 0))}</span>
                         <span>{item.date || item.created_at}</span>
                       </>
                     ) : (
@@ -1531,7 +1532,7 @@ const RoleAwareChatbot = ({
                         <strong>{item.name}</strong>
                         <span>SKU: {item.sku}</span>
                         <span>Stock: {item.stock}</span>
-                        <span>Price: ₱{Number(item.price || 0).toFixed(2)}</span>
+                        <span>Price: {formatCurrency(Number(item.price || 0))}</span>
                       </>
                     )}
                   </div>

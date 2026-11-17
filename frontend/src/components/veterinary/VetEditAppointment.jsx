@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
 import "./theme.css";
 import "./VetEditAppointment.css";
@@ -73,11 +74,6 @@ const VetEditAppointment = () => {
 
   const getServiceDuration = (service) =>
     service?.duration_minutes || service?.duration || "";
-
-  const formatCurrency = (value) => {
-    const number = Number(value || 0);
-    return `₱${number.toFixed(2)}`;
-  };
 
   const getCustomerName = (customer) =>
     customer?.name || customer?.customer_name || "Unknown Customer";

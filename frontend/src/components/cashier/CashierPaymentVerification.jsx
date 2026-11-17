@@ -11,6 +11,7 @@ import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateRight, faInbox, faXmark, faFilePdf, faFileInvoice } from "@fortawesome/free-solid-svg-icons";
 import Modal from "../shared/Modal";
+import { formatCurrency } from "../../utils/currency";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "N/A";
@@ -148,7 +149,7 @@ const CashierPaymentVerification = () => {
 
   const verifyPayment = async (payment) => {
     const confirmed = await showConfirm(
-      `Verify payment of ₱${Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH")} from ${payment.customer_name || payment.customer?.name || "Customer"}?`,
+      `Verify payment of ${formatCurrency(payment.amount || payment.total_amount)} from ${payment.customer_name || payment.customer?.name || "Customer"}?`,
       "Confirm Verification"
     );
     if (!confirmed) return;
@@ -344,7 +345,7 @@ const CashierPaymentVerification = () => {
                 <div className="stat-label">Pending</div>
               </div>
               <div className="stat-card">
-                <div className="stat-value">₱{stats.totalAmount.toLocaleString("en-PH")}</div>
+                <div className="stat-value">{formatCurrency(stats.totalAmount)}</div>
                 <div className="stat-label">Total Amount</div>
               </div>
               <div className="stat-card">
@@ -420,7 +421,7 @@ const CashierPaymentVerification = () => {
                             <td>{item.request_type || item.type || "Request"}</td>
                             <td>{item.service_name || item.service?.name || item.order_name || "N/A"}</td>
                             <td>{formatDate(item.request_date || item.date || item.created_at)}</td>
-                            <td className="amount-cell">₱{Number(item.amount || item.total_amount || 0).toLocaleString("en-PH")}</td>
+                            <td className="amount-cell">{formatCurrency(item.amount || item.total_amount)}</td>
                             <td>
                               {item.proof_url ? (
                                 <button type="button" className="proof-link" onClick={() => openProof(item.proof_url)}>View Proof</button>
@@ -462,7 +463,7 @@ const CashierPaymentVerification = () => {
                         <div className="card-row"><span className="card-label">Type</span><span className="card-value">{item.request_type || item.type || "Request"}</span></div>
                         <div className="card-row"><span className="card-label">Service</span><span className="card-value">{item.service_name || item.service?.name || item.order_name || "N/A"}</span></div>
                         <div className="card-row"><span className="card-label">Date</span><span className="card-value">{formatDate(item.request_date || item.date || item.created_at)}</span></div>
-                        <div className="card-row"><span className="card-label">Amount</span><span className="card-value">₱{Number(item.amount || item.total_amount || 0).toLocaleString("en-PH")}</span></div>
+                        <div className="card-row"><span className="card-label">Amount</span><span className="card-value">{formatCurrency(item.amount || item.total_amount)}</span></div>
                         <div className="card-row">
                           <span className="card-label">Proof</span>
                           <span className="card-value">

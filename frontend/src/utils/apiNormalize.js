@@ -176,12 +176,9 @@ export const isOutOfStock = (item) => getAvailableStock(item) <= 0;
 
 /* ── Currency helpers ───────────────────────────────────────── */
 
-export const formatCurrency = (value, options = {}) => {
-  const amount = Number(value || 0);
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2, ...options,
-  }).format(amount);
-};
+// Single canonical peso formatter lives in utils/currency.js — re-exported
+// here so existing POS/import sites keep working with one implementation.
+export { formatCurrency } from "./currency";
 
 /* ── Product normalization (POS-specific) ─────────────────────── */
 

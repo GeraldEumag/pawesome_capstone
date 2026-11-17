@@ -20,11 +20,11 @@ import StandardTable from "../shared/StandardTable";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
 import { showWarning } from "../../utils/alert.jsx";
+import { formatCurrency } from "../../utils/currency";
 import "./BarcodeGenerator.css";
 
 /* ── Formats currency in Philippine Peso ── */
-const formatPrice = (v) =>
-  v != null ? `₱ ${Number(v).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` : "—";
+const formatPrice = (v) => (v != null ? formatCurrency(v) : "—");
 
 /* ── Single barcode SVG rendered via jsbarcode ── */
 const BarcodeSvg = ({ value }) => {

@@ -12,9 +12,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import "./ServiceBillingPanel.css";
 
-const toMoney = (value) => Number(value || 0).toFixed(2);
 
 const ServiceBillingPanel = ({ serviceType, serviceId, petId, onBillingUpdate }) => {
   const [billingItems, setBillingItems] = useState([]);
@@ -188,16 +188,16 @@ const ServiceBillingPanel = ({ serviceType, serviceId, petId, onBillingUpdate })
         <div className="billing-summary">
           <div className="summary-item">
             <span className="label">Total Bill:</span>
-            <span className="amount total">₱{toMoney(billingSummary.total_bill)}</span>
+            <span className="amount total">{formatCurrency(billingSummary.total_bill)}</span>
           </div>
           <div className="summary-item">
             <span className="label">Amount Paid:</span>
-            <span className="amount paid">₱{toMoney(billingSummary.total_paid)}</span>
+            <span className="amount paid">{formatCurrency(billingSummary.total_paid)}</span>
           </div>
           <div className="summary-item">
             <span className="label">Balance Due:</span>
             <span className={`amount balance ${billingSummary.balance_due > 0 ? 'unpaid' : 'paid'}`}>
-              ₱{toMoney(billingSummary.balance_due)}
+              {formatCurrency(billingSummary.balance_due)}
             </span>
           </div>
         </div>
@@ -238,7 +238,7 @@ const ServiceBillingPanel = ({ serviceType, serviceId, petId, onBillingUpdate })
                   <div className="item-description">{item.description}</div>
                   <div className="item-meta">
                     <span className="quantity">{item.quantity} {item.unit}</span>
-                    <span className="unit-price">₱{toMoney(item.unit_price)} each</span>
+                    <span className="unit-price">{formatCurrency(item.unit_price)} each</span>
                     {item.inventory_item && (
                       <span className="inventory-tag">Inventory</span>
                     )}
@@ -248,13 +248,13 @@ const ServiceBillingPanel = ({ serviceType, serviceId, petId, onBillingUpdate })
                   )}
                 </div>
                 <div className="item-total">
-                  ₱{toMoney(item.total_price)}
+                  {formatCurrency(item.total_price)}
                 </div>
               </div>
             ))}
             <div className="items-total">
               <span>Total</span>
-              <span>₱{toMoney(billingSummary.total_bill)}</span>
+              <span>{formatCurrency(billingSummary.total_bill)}</span>
             </div>
           </div>
         )}
@@ -327,7 +327,7 @@ const ServiceBillingPanel = ({ serviceType, serviceId, petId, onBillingUpdate })
               <div className="form-group">
                 <label>Total</label>
                 <div className="total-display">
-                  ₱{(formData.quantity * formData.unit_price).toFixed(2)}
+                  {formatCurrency(formData.quantity * formData.unit_price)}
                 </div>
               </div>
             </div>

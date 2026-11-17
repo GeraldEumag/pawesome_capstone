@@ -21,15 +21,11 @@ import {
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
 import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import { formatCurrency } from '../../../utils/currency';
 import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const CHART_COLORS = ['#ff5f93', '#94a3b8', '#10b981', '#3b82f6', '#f59e0b'];
-
-const formatCurrency = (amount) => {
-  const num = parseFloat(amount) || 0;
-  return '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-};
 
 const pctChange = (current, previous) => {
   if (!previous) return null;

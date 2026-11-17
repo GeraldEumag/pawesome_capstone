@@ -15,6 +15,7 @@ import {
 } from "../../config/petServiceRules";
 import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
+import { formatCurrency } from "../../utils/currency";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const GROOMING_TIME_SLOTS = Array.from({ length: 8 }, (_, index) => {
@@ -428,7 +429,7 @@ const GroomingForm = () => {
 
             {formData.price !== "" && (
               <div className="grooming-price-summary">
-                <strong>Estimated Price:</strong> ₱{Number(formData.price).toFixed(2)}
+                <strong>Estimated Price:</strong> {formatCurrency(Number(formData.price))}
               </div>
             )}
 
@@ -466,8 +467,8 @@ const GroomingForm = () => {
           { label: "Time", value: formData.request_time },
         ]}
         pricing={formData.price !== "" ? {
-          rows: [{ label: formData.service_name || "Grooming service", value: `₱${Number(formData.price).toFixed(2)}` }],
-          total: `₱${Number(formData.price).toFixed(2)}`,
+          rows: [{ label: formData.service_name || "Grooming service", value: `${formatCurrency(Number(formData.price))}` }],
+          total: `${formatCurrency(Number(formData.price))}`,
         } : null}
         allowPayNow
         notes={formData.notes}

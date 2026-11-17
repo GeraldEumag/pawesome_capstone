@@ -10,6 +10,7 @@ import { sanitizeCsvCell } from "./csvSanitize";
 import { exportFormalReportPDF } from "./formalReportPdf";
 import { getRole, getUserData } from "./auth";
 import { formatDateOnly, parseDateOnly } from "./date";
+import { formatCurrency } from "./currency";
 import { STORE_INFO } from "./storeInfo";
 
 export const getNestedValue = (row, key) => {
@@ -385,10 +386,7 @@ export const exportToExcel = async (data, columns = [], filename = "report", met
  * @param {number} value - Amount to format
  * @returns {string} Formatted currency string
  */
-const formatCurrencyForExport = (value) => {
-  if (value === null || value === undefined || isNaN(value)) return "₱0.00";
-  return `₱${Number(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")}`;
-};
+const formatCurrencyForExport = (value) => formatCurrency(value);
 
 /**
  * Format date for export

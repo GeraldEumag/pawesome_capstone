@@ -32,6 +32,7 @@ import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import RowActionPopover from "../shared/RowActionPopover";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import ServiceManagerModal from "./ServiceManagerModal";
+import { formatCurrency } from "../../utils/currency";
 
 const initialBookingForm = {
   customerId: "",
@@ -83,16 +84,6 @@ const safeArray = (data, key) => {
   if (Array.isArray(data?.records)) return data.records;
   if (Array.isArray(data?.items)) return data.items;
   return [];
-};
-
-const formatCurrency = (value) => {
-  const amount = Number(value || 0);
-
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  }).format(amount);
 };
 
 const formatDate = (value) => {

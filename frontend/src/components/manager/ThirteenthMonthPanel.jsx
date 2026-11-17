@@ -13,10 +13,10 @@ import {
 import { apiRequest } from "../../api/client";
 import { showConfirm } from "../../utils/alert.jsx";
 import RowActionPopover from "../shared/RowActionPopover";
+import { formatCurrency } from "../../utils/currency";
 import "./ThirteenthMonthPanel.css";
 
-const fmt = (v) =>
-  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(v || 0);
+const fmt = formatCurrency;
 
 const MONTHS_SHORT = ["J","F","M","A","M","J","J","A","S","O","N","D"];
 

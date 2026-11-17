@@ -19,6 +19,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import WalkInBookingModal from "./modals/WalkInBookingModal";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import "./ReceptionistWalkIns.css";
 
 const TYPE_META = {
@@ -29,8 +30,7 @@ const TYPE_META = {
 
 const formatStatus = (s) => String(s || "pending").replace(/_/g, " ");
 
-const formatPeso = (v) =>
-  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(Number(v || 0));
+const formatPeso = formatCurrency;
 
 const formatDate = (value) => {
   if (!value) return "—";

@@ -16,6 +16,7 @@ import {
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
 import Modal from "./Modal";
+import { formatCurrency } from "../../utils/currency";
 import "./ServiceBillingCashierPanel.css";
 
 const ServiceBillingCashierPanel = () => {
@@ -244,7 +245,7 @@ const ServiceBillingCashierPanel = () => {
           </div>
           <div className="stat-item">
             <span className="stat-value">
-              ₱{unpaidServices.reduce((total, service) => total + service.billing.balance_due, 0).toFixed(2)}
+              {formatCurrency(unpaidServices.reduce((total, service) => total + service.billing.balance_due, 0))}
             </span>
             <span className="stat-label">Total Unpaid</span>
           </div>
@@ -305,7 +306,7 @@ const ServiceBillingCashierPanel = () => {
                 </div>
                 <div className="service-balance">
                   <div className="balance-amount">
-                    ₱{service.billing.balance_due.toFixed(2)}
+                    {formatCurrency(service.billing.balance_due)}
                   </div>
                   <div className="balance-label">Balance Due</div>
                 </div>
@@ -321,15 +322,15 @@ const ServiceBillingCashierPanel = () => {
               <div className="billing-summary">
                 <div className="summary-row">
                   <span>Total Bill:</span>
-                  <span>₱{service.billing.total_bill.toFixed(2)}</span>
+                  <span>{formatCurrency(service.billing.total_bill)}</span>
                 </div>
                 <div className="summary-row">
                   <span>Amount Paid:</span>
-                  <span>₱{service.billing.total_paid.toFixed(2)}</span>
+                  <span>{formatCurrency(service.billing.total_paid)}</span>
                 </div>
                 <div className="summary-row unpaid">
                   <span>Balance Due:</span>
-                  <span>₱{service.billing.balance_due.toFixed(2)}</span>
+                  <span>{formatCurrency(service.billing.balance_due)}</span>
                 </div>
               </div>
             </div>
@@ -349,7 +350,7 @@ const ServiceBillingCashierPanel = () => {
               <div className="service-details">
                 <span>Pet: {selectedService.service?.pet_name}</span>
                 <span>Customer: {selectedService.service?.customer_name}</span>
-                <span>Balance Due: ₱{selectedService.billing.balance_due.toFixed(2)}</span>
+                <span>Balance Due: {formatCurrency(selectedService.billing.balance_due)}</span>
                 {selectedService.billing.invoice?.invoice_number && (
                   <span>Invoice: {selectedService.billing.invoice.invoice_number}</span>
                 )}
@@ -461,11 +462,11 @@ const ServiceBillingCashierPanel = () => {
                       <div className="item-description">{item.description}</div>
                       <div className="item-meta">
                         <span className="quantity">{item.quantity} {item.unit}</span>
-                        <span className="unit-price">₱{item.unit_price.toFixed(2)} each</span>
+                        <span className="unit-price">{formatCurrency(item.unit_price)} each</span>
                       </div>
                     </div>
                     <div className="item-total">
-                      ₱{item.total_price.toFixed(2)}
+                      {formatCurrency(item.total_price)}
                     </div>
                   </div>
                 ))}
@@ -474,15 +475,15 @@ const ServiceBillingCashierPanel = () => {
               <div className="payment-summary">
                 <div className="summary-row">
                   <span>Selected Items Total:</span>
-                  <span>₱{calculateSelectedTotal().toFixed(2)}</span>
+                  <span>{formatCurrency(calculateSelectedTotal())}</span>
                 </div>
                 <div className="summary-row">
                   <span>Original Balance:</span>
-                  <span>₱{selectedService.billing.balance_due.toFixed(2)}</span>
+                  <span>{formatCurrency(selectedService.billing.balance_due)}</span>
                 </div>
                 <div className="summary-row highlight">
                   <span>Amount to Collect:</span>
-                  <span>₱{calculateSelectedTotal().toFixed(2)}</span>
+                  <span>{formatCurrency(calculateSelectedTotal())}</span>
                 </div>
               </div>
             </div>

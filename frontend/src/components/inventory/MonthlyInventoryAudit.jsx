@@ -7,6 +7,7 @@ import { STORE_INFO } from "../../utils/storeInfo";
 import "./MonthlyInventoryAudit.css";
 import { showAlert, showSuccess, showError } from "../../utils/alert.jsx";
 import StatusDot from "../shared/StatusDot";
+import { formatCurrency } from "../../utils/currency";
 
 const auditExportColumns = [
   { key: "product_name", label: "Product Name" },
@@ -400,7 +401,7 @@ const MonthlyInventoryAudit = () => {
       return;
     }
 
-    const currency = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value || 0);
+    const currency = formatCurrency;
     const unitCost = (row) => Number(row.unit_cost ?? row.item?.cost ?? 0);
     const varianceValue = (row) => calculateVariance(row) * unitCost(row);
     const matched = checkedItems.filter((row) => calculateVariance(row) === 0).length;

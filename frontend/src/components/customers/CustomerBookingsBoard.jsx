@@ -11,6 +11,7 @@ import "./CustomerBookingsBoard.css";
 import BookingStatusTabs from "../shared/BookingStatusTabs";
 import BookingDateFilter from "../shared/BookingDateFilter";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
+import { formatCurrency } from "../../utils/currency";
 import { apiRequest } from "../../api/client";
 import { showError, showReasonPrompt, showSuccess, CUSTOMER_CANCEL_REASONS } from "../../utils/alert.jsx";
 import {
@@ -54,8 +55,6 @@ const formatDay = (ymd) => {
   return new Date(`${ymd}T00:00:00`).toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 };
 
-const formatPeso = (value) =>
-  `₱${Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const whenText = (item) => {
   if (item.kind === "hotel") {
@@ -162,7 +161,7 @@ const CustomerBookingsBoard = ({ serviceFilter = "", embedded = false, renderExt
         <strong>{item.title}</strong>
         <span>{item.pet_name || "Pet"} · Booking #{item.id}</span>
         {item.veterinarian && <small className="cbb-vet-inline">{item.veterinarian}</small>}
-        {item.amount_due > 0 && <small className="cbb-amt-inline">Due {formatPeso(item.amount_due)}</small>}
+        {item.amount_due > 0 && <small className="cbb-amt-inline">Due {formatCurrency(item.amount_due)}</small>}
         <small className="cbb-date-inline">
           {whenText(item)}{item.time ? ` · ${item.time}` : ""}
         </small>
@@ -277,7 +276,7 @@ const CustomerBookingsBoard = ({ serviceFilter = "", embedded = false, renderExt
                         </span>
                       </td>
                       <td data-label="Amount due" className="cbb-cell-amount">
-                        {item.amount_due > 0 ? formatPeso(item.amount_due) : "—"}
+                        {item.amount_due > 0 ? formatCurrency(item.amount_due) : "—"}
                       </td>
                       <td data-label="Status">
                         {renderStatusPills(item)}
@@ -322,7 +321,7 @@ const CustomerBookingsBoard = ({ serviceFilter = "", embedded = false, renderExt
                   </div>
                   <div>
                     <dt>Amount due</dt>
-                    <dd className="cbb-card-amount">{item.amount_due > 0 ? formatPeso(item.amount_due) : "—"}</dd>
+                    <dd className="cbb-card-amount">{item.amount_due > 0 ? formatCurrency(item.amount_due) : "—"}</dd>
                   </div>
                   <div className="cbb-card-facts-full">
                     <dt>Status</dt>

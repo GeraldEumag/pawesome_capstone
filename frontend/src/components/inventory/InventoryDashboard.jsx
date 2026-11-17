@@ -32,6 +32,7 @@ import {
 import InventorySidebar from "./InventorySidebar";
 import DashboardLayout from "../shared/DashboardLayout";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import "./InventoryDashboard.css";
 
 const InventoryDashboard = () => {
@@ -100,7 +101,7 @@ const InventoryDashboard = () => {
     },
     {
       title: "Inventory Value",
-      value: `₱${Number(dashboardData.total_inventory_value || 0).toLocaleString("en-PH", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      value: formatCurrency(dashboardData.total_inventory_value),
       subtitle: "Total stock value",
       icon: faDollarSign,
       accent: "success",

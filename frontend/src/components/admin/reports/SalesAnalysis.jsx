@@ -23,15 +23,11 @@ import {
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
 import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import { formatCurrency } from '../../../utils/currency';
 import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
 const CHART_COLORS = ['#ff5f93', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#94a3b8'];
-
-const formatCurrency = (amount) => {
-  const num = parseFloat(amount) || 0;
-  return '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-};
 
 const SalesAnalysis = () => {
   const [data, setData] = useState(null);

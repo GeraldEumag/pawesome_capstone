@@ -4,6 +4,7 @@ import { apiRequest, API_URL } from "../../api/client";
 import { clearAuth } from "../../utils/auth";
 import { getPaymentProofUrl } from "../../utils/secureFileAccess";
 import { getRoomName } from "../../utils/apiNormalize";
+import { formatCurrency } from "../../utils/currency";
 import { useAuth } from "../../context/AuthContext";
 import "./CustomerPayments.css";
 import { showAlert, showError, showSuccess } from "../../utils/alert.jsx";
@@ -12,12 +13,6 @@ import { downloadReceiptPdf } from "../../utils/receiptPdf";
 import Modal from "../shared/Modal";
 import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
-
-const formatCurrency = (value) =>
-  `₱${Number(value || 0).toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
 
 const getPaymentStatus = (item) =>
   String(item.payment_status || "unpaid").toLowerCase();

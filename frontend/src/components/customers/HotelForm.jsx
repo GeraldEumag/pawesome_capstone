@@ -27,6 +27,7 @@ import CustomerBookingsBoard from "./CustomerBookingsBoard";
 import BackToServices from "./BackToServices";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { getRoomName } from "../../utils/apiNormalize";
+import { formatCurrency } from "../../utils/currency";
 
 
 const CATEGORY_CONFIG = {
@@ -615,7 +616,7 @@ const HotelForm = () => {
                                 )}
                               </div>
                               <div className="room-card-foot">
-                                <span className="room-rate">₱{Number(room.daily_rate).toLocaleString('en-PH')}<small>/day</small></span>
+                                <span className="room-rate">{formatCurrency(room.daily_rate)}<small>/day</small></span>
                                 <span className={`room-status ${room.available ? 'avail' : 'unavail'} ${isSelected ? 'sel' : ''}`}>
                                   {isSelected
                                     ? <><FontAwesomeIcon icon={faCheckCircle} /> Selected</>
@@ -652,7 +653,7 @@ const HotelForm = () => {
                     </div>
                     <div className="pricing-row">
                       <span>Daily Rate:</span>
-                      <span>₱{pricing.dailyRate}</span>
+                      <span>{formatCurrency(pricing.dailyRate)}</span>
                     </div>
                     <div className="pricing-row">
                       <span>Duration:</span>
@@ -660,11 +661,11 @@ const HotelForm = () => {
                     </div>
                     <div className="pricing-row">
                       <span>Room Subtotal:</span>
-                      <span>₱{pricing.roomSubtotal}</span>
+                      <span>{formatCurrency(pricing.roomSubtotal)}</span>
                     </div>
                     <div className="pricing-row total">
                       <span>Total Amount:</span>
-                      <span>₱{pricing.total}</span>
+                      <span>{formatCurrency(pricing.total)}</span>
                     </div>
                   </div>
                 </div>
@@ -756,9 +757,9 @@ const HotelForm = () => {
         ].filter(Boolean)}
         pricing={selectedRoom ? {
           rows: [
-            { label: `${selectedRoom.room_name || "Room"} — ₱${Number(selectedRoom.daily_rate).toLocaleString("en-PH")}/day × ${pricing.days}`, value: `₱${Number(pricing.roomSubtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` },
+            { label: `${selectedRoom.room_name || "Room"} — ${formatCurrency(selectedRoom.daily_rate)}/day × ${pricing.days}`, value: `${formatCurrency(pricing.roomSubtotal)}` },
           ],
-          total: `₱${Number(pricing.total).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+          total: `${formatCurrency(pricing.total)}`,
         } : null}
         allowPayNow
         notes={bookingForm.notes}

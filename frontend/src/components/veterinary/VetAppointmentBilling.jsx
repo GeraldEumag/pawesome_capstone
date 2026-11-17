@@ -18,6 +18,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import PetAvatar from "../shared/PetAvatar";
 import ServiceBillingPanel from "../shared/ServiceBillingPanel";
 import { VET_STARTED_STATUSES, VET_POST_CLINICAL_STATUSES } from "./vetStatus";
@@ -374,19 +375,19 @@ const VetAppointmentBilling = () => {
             <div className="billing-total-item">
               <span className="billing-total-label">Total Bill</span>
               <span className="billing-total-value">
-                PHP {Number(billingSummary.total_bill || 0).toFixed(2)}
+                {formatCurrency(billingSummary.total_bill)}
               </span>
             </div>
             <div className="billing-total-item">
               <span className="billing-total-label">Amount Paid</span>
               <span className="billing-total-value">
-                PHP {Number(billingSummary.total_paid || 0).toFixed(2)}
+                {formatCurrency(billingSummary.total_paid)}
               </span>
             </div>
             <div className="billing-total-item billing-total-item--highlight">
               <span className="billing-total-label">Balance Due</span>
               <span className="billing-total-value billing-total-value--accent">
-                PHP {Number(billingSummary.balance_due || 0).toFixed(2)}
+                {formatCurrency(billingSummary.balance_due)}
               </span>
             </div>
             <div className="billing-total-item">

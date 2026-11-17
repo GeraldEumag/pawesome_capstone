@@ -8,6 +8,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { apiRequest } from '../../../api/client';
 import { showAlert } from '../../../utils/alert';
+import { formatCurrency } from "../../../utils/currency";
 import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
 
@@ -193,7 +194,7 @@ const AutomatedAlerts = () => {
                   <td>{TYPE_LABELS[alert.type] || alert.type}</td>
                   <td>
                     {alert.type === 'revenue_drop'
-                      ? '₱' + Number(alert.threshold).toLocaleString()
+                      ? formatCurrency(alert.threshold)
                       : alert.threshold}
                   </td>
                   <td style={{ textTransform: 'capitalize' }}>{alert.frequency}</td>

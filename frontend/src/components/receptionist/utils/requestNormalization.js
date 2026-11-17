@@ -90,14 +90,7 @@ export const formatTime = (value) => {
   return date.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" });
 };
 
-export const formatCurrency = (value) => {
-  const amount = Number(value || 0);
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
+export { formatCurrency } from "../../../utils/currency";
 
 export const getPetName = (item) =>
   item.pet?.name || item.pet_name || item.petName || item.pet || "Unknown Pet";

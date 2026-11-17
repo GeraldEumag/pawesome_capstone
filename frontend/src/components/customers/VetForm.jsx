@@ -16,6 +16,7 @@ import {
 import { BUSINESS_HOURS, TIME_SLOT_INTERVAL } from "../../config/serviceDurationRules";
 import { showAlert, showSuccess, showError, showConfirm } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
+import { formatCurrency } from "../../utils/currency";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
 
 const VET_TIME_SLOTS = (() => {
@@ -348,7 +349,7 @@ const VetForm = () => {
                   <option key={service.id} value={service.name}>
                     {service.name}
                     {service.category ? ` (${service.category})` : ""}
-                    {service.price ? ` — ₱${Number(service.price).toFixed(2)}` : ""}
+                    {service.price ? ` — ${formatCurrency(Number(service.price))}` : ""}
                   </option>
                 ))}
             </select>
@@ -393,7 +394,7 @@ const VetForm = () => {
 
             {formData.price !== "" && (
               <div className="vet-price-summary">
-                <strong>Estimated Price:</strong> ₱{Number(formData.price).toFixed(2)}
+                <strong>Estimated Price:</strong> {formatCurrency(Number(formData.price))}
               </div>
             )}
 
@@ -431,8 +432,8 @@ const VetForm = () => {
           { label: "Time", value: formData.request_time },
         ]}
         pricing={formData.price !== "" ? {
-          rows: [{ label: formData.service_name || "Veterinary service", value: `₱${Number(formData.price).toFixed(2)}` }],
-          total: `₱${Number(formData.price).toFixed(2)}`,
+          rows: [{ label: formData.service_name || "Veterinary service", value: `${formatCurrency(Number(formData.price))}` }],
+          total: `${formatCurrency(Number(formData.price))}`,
         } : null}
         allowPayNow
         notes={formData.notes}

@@ -20,13 +20,9 @@ import {
 } from 'recharts';
 import { apiRequest } from '../../../api/client';
 import { ChartContainer, getInitialChartDimension } from '../../shared/UnifiedReportEngine';
+import { formatCurrency } from '../../../utils/currency';
 import ReportSkeleton from '../../shared/ReportSkeleton';
 import './AdvancedReports.css';
-
-const formatCurrency = (amount) => {
-  const num = parseFloat(amount) || 0;
-  return '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-};
 
 const InventoryOptimization = () => {
   const [data, setData] = useState(null);

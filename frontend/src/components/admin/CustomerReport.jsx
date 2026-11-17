@@ -9,6 +9,7 @@ import DatePickerInput from "../../components/shared/DatePickerInput";
 import Modal from "../../components/shared/Modal";
 import StandardTable from "../../components/shared/StandardTable";
 import ReportSkeleton from "../../components/shared/ReportSkeleton";
+import { formatCurrency } from "../../utils/currency";
 import {
   faUsers,
   faChartBar,
@@ -155,13 +156,6 @@ const CustomerReport = () => {
       month: "short",
       day: "2-digit",
     });
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount || 0);
   };
 
   const getStatusColor = (status) => {

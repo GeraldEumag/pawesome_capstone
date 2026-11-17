@@ -169,7 +169,7 @@ const getPeriodFactor = (payroll) => {
 
 const normalizePayroll = (record, index) => {
   const grossPay = safeNumber(record.gross_pay || record.total_gross_pay || record.amount || 0);
-  const deductions = safeNumber(record.deductions || record.total_deductions || 0);
+  const deductions = safeNumber(record.total_deductions ?? record.deductions ?? 0);
   const netPay = safeNumber(record.net_pay || record.total_net_pay || grossPay - deductions);
 
   return {
@@ -178,7 +178,9 @@ const normalizePayroll = (record, index) => {
     payrollId: record.payroll_id || record.reference_no || `PAY-${String(index + 1).padStart(4, "0")}`,
     employeeName: getEmployeeName(record),
     employeeId: record.employee_id || record.staff_id || record.user_id || record.employee?.id || "N/A",
-    personType: record.person_type || (record.employee_id && !record.user_id ? "employee" : "account"),
+    personType: record.person_type
+      || (record.is_unlinked || (record.user_id == null && record.employee_id == null) ? "manual"
+        : record.employee_id && !record.user_id ? "employee" : "account"),
     employeeNo: record.employee_no || record.user?.employee_no || record.employee?.employee_no || "",
     department: getDepartment(record),
     role: getRecordRole(record),
@@ -204,6 +206,10 @@ const normalizePayroll = (record, index) => {
     tax: safeNumber(record.tax_deduction || record.tax || 0),
     salaryLoan: safeNumber(record.salary_loan || 0),
     cashAdvance: safeNumber(record.cash_advance || 0),
+    // Raw "other/manual deductions" column — payroll.deductions now carries
+    // the authoritative total from the backend accessor.
+    otherDeductions: safeNumber(record.deductions || 0),
+    isUnlinked: Boolean(record.is_unlinked || (record.user_id == null && record.employee_id == null)),
     grossPay,
     deductions,
     netPay,
@@ -550,7 +556,7 @@ const PayrollManagement = () => {
 
   const handleRelease = async (payroll) => {
     const confirmed = await showConfirm(
-      `Release payroll ${payroll.payrollId} for ${payroll.employeeName}?\n\nNet Pay: ${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(payroll.netPay)}\n\nThis will mark the period as LOCKED and queue a payslip email to the employee.`,
+      `Release payroll ${payroll.payrollId} for ${payroll.employeeName}?\n\nNet Pay: ${formatCurrency(payroll.netPay)}\n\nThis will mark the period as LOCKED and queue a payslip email to the employee.`,
       "Release Payroll",
       "Release",
       "Cancel"
@@ -664,8 +670,10 @@ const PayrollManagement = () => {
     const tax = Number(payroll.tax || payroll.taxDeduction || 0);
     const lateDed = Number(payroll.lateDeductions || 0);
     const absentDed = Number(payroll.absenceDeductions || 0);
-    const otherDed = Number(payroll.deductions || 0);
-    const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
+    const otherDed = Number(payroll.otherDeductions || 0);
+    // Attendance deductions already apply inside gross — total covers
+    // statutory, tax, manual and loan lines only.
+    const totalDed = sss + philhealth + pagibig + tax + otherDed + payroll.salaryLoan + payroll.cashAdvance;
     const netPay = Number(payroll.netPay || 0);
     const employeeName = payroll.employeeName || "Employee";
     const preparer = getUserData().name || "Payroll Department";
@@ -707,9 +715,11 @@ const PayrollManagement = () => {
           { section: "Deductions", description: "PhilHealth Contribution", amount: philhealth },
           { section: "Deductions", description: "Pag-IBIG Contribution", amount: pagibig },
           { section: "Deductions", description: "Withholding Tax", amount: tax },
-          { section: "Deductions", description: "Late Deductions", amount: lateDed },
-          { section: "Deductions", description: "Absence Deductions", amount: absentDed },
+          ...(lateDed > 0 ? [{ section: "Attendance", description: "Late Deduction (in gross)", amount: lateDed }] : []),
+          ...(absentDed > 0 ? [{ section: "Attendance", description: "Absence Deduction (in gross)", amount: absentDed }] : []),
           ...(payroll.paidLeaveDays > 0 ? [{ section: "Attendance", description: "Paid Leave Days (not deducted)", amount: null }] : []),
+          ...(payroll.salaryLoan > 0 ? [{ section: "Deductions", description: "Salary Loan", amount: payroll.salaryLoan }] : []),
+          ...(payroll.cashAdvance > 0 ? [{ section: "Deductions", description: "Cash Advance", amount: payroll.cashAdvance }] : []),
           { section: "Deductions", description: "Other Deductions", amount: otherDed },
           { section: "Deductions", description: "Total Deductions", amount: totalDed },
           { section: "Net Pay", description: "Net Pay", amount: netPay },
@@ -985,6 +995,7 @@ const PayrollManagement = () => {
                 <option value="all">All People</option>
                 <option value="account">With Account</option>
                 <option value="employee">Staff Member (No Account)</option>
+                <option value="manual">Manual / Unlinked</option>
               </select>
             </FilterField>
 
@@ -1095,7 +1106,12 @@ const PayrollManagement = () => {
                       <td>
                         <div className="payroll-employee-cell">
                           <strong>{payroll.employeeName}</strong>
-                          <small>{payroll.role}</small>
+                          <small>
+                            {payroll.role}
+                            {payroll.personType === "manual" && (
+                              <span className="payroll-manual-badge" title="Manual / Unlinked payroll — no employee record; requires approval by a different authorized manager"> · Manual</span>
+                            )}
+                          </small>
                         </div>
                       </td>
 
@@ -1423,8 +1439,8 @@ const PayslipPrint = ({ payroll }) => {
   const tax = Number(payroll.tax || payroll.taxDeduction || 0);
   const lateDed = Number(payroll.lateDeductions || 0);
   const absentDed = Number(payroll.absenceDeductions || 0);
-  const otherDed = Number(payroll.deductions || 0);
-  const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
+  const otherDed = Number(payroll.otherDeductions || 0);
+  const totalDed = sss + philhealth + pagibig + tax + otherDed + payroll.salaryLoan + payroll.cashAdvance;
 
   return (
     <section className="payroll-print-area">
@@ -1491,10 +1507,20 @@ const PayslipPrint = ({ payroll }) => {
           <tr><td>PhilHealth Contribution</td><td>{formatCurrency(philhealth)}</td></tr>
           <tr><td>Pag-IBIG Contribution</td><td>{formatCurrency(pagibig)}</td></tr>
           <tr><td>Withholding Tax</td><td>{formatCurrency(tax)}</td></tr>
-          <tr><td>Late Deductions ({payroll.lateCount} late)</td><td>{formatCurrency(lateDed)}</td></tr>
-          <tr><td>Absence Deductions ({payroll.absentCount} absent)</td><td>{formatCurrency(absentDed)}</td></tr>
+          {lateDed > 0 && (
+            <tr><td>Late Deduction ({payroll.lateCount} late · in gross)</td><td>{formatCurrency(lateDed)}</td></tr>
+          )}
+          {absentDed > 0 && (
+            <tr><td>Absence Deduction ({payroll.absentCount} absent · in gross)</td><td>{formatCurrency(absentDed)}</td></tr>
+          )}
           {payroll.paidLeaveDays > 0 && (
             <tr><td>Paid Leave Days (converted, not deducted)</td><td>{payroll.paidLeaveDays} day(s)</td></tr>
+          )}
+          {payroll.salaryLoan > 0 && (
+            <tr><td>Salary Loan</td><td>{formatCurrency(payroll.salaryLoan)}</td></tr>
+          )}
+          {payroll.cashAdvance > 0 && (
+            <tr><td>Cash Advance</td><td>{formatCurrency(payroll.cashAdvance)}</td></tr>
           )}
           <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
           <tr className="net-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>

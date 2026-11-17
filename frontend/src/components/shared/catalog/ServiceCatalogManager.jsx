@@ -25,6 +25,7 @@ import {
 import Modal from "../Modal";
 import StatusBadge from "../StatusBadge";
 import RowActionPopover from "../RowActionPopover";
+import { formatCurrency } from "../../../utils/currency";
 import "./ServiceCatalogManager.css";
 
 const ALL_TABS = [
@@ -73,7 +74,6 @@ const SPECIES_FOR_ROOM_TYPE = {
   small_pet: "bird, fish, reptile, other",
 };
 
-const formatCurrency = (value) => `₱${Number(value || 0).toFixed(2)}`;
 
 /**
  * Unified service-catalog management for every staff role.

@@ -18,6 +18,7 @@ import DatePickerInput from './DatePickerInput';
 import Modal from './Modal';
 import { formatDateOnly, parseDateOnly } from '../../utils/date';
 import { exportToCSV, exportToPDF, exportToExcel, getDateRangePreset } from '../../utils/reportExport';
+import { formatCurrency } from "../../utils/currency";
 import './UnifiedReportEngine.css';
 
 /**
@@ -664,7 +665,7 @@ const UnifiedReportEngineBase = ({
                 ...col,
                 render: col.render || ((value, record) => {
                   if (col.format === 'currency') {
-                    return `₱${safeNumber(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+                    return formatCurrency(value);
                   }
                   if (col.format === 'date') {
                     const date = new Date(value);

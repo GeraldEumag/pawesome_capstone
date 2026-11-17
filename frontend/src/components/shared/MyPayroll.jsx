@@ -141,8 +141,14 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
     const tax = Number(slip?.deductions?.tax ?? payroll.tax_deduction ?? 0);
     const lateDed = Number(slip?.deductions?.late_deductions ?? payroll.late_deductions ?? payroll.lateDeductions ?? 0);
     const absentDed = Number(slip?.deductions?.absent_deductions ?? payroll.absent_deductions ?? payroll.absenceDeductions ?? 0);
+    const undertimeDed = Number(slip?.deductions?.undertime_deductions ?? payroll.undertime_deductions ?? 0);
+    const salaryLoan = Number(slip?.deductions?.salary_loan ?? payroll.salary_loan ?? 0);
+    const cashAdvance = Number(slip?.deductions?.cash_advance ?? payroll.cash_advance ?? 0);
     const otherDed = Number(slip?.deductions?.other_deductions ?? payroll.deductions ?? 0);
-    const totalDed = sss + philhealth + pagibig + tax + lateDed + absentDed + otherDed;
+    // Attendance deductions are already removed inside gross_pay — total
+    // deductions covers statutory, tax, manual and loan lines only.
+    const totalDed = Number(slip?.deductions?.total_deductions ??
+      (sss + philhealth + pagibig + tax + otherDed + salaryLoan + cashAdvance));
     const paidLeaveDays = paidLeaveDaysOf(payroll, slip);
     const netPay = Number(slip?.net_pay ?? payroll.net_pay ?? payroll.netPay ?? 0);
     const presentDays = slip?.attendance?.present_days ?? payroll.present_days ?? "N/A";
@@ -192,9 +198,12 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
           { section: "Deductions", description: "PhilHealth Contribution", amount: philhealth },
           { section: "Deductions", description: "Pag-IBIG Contribution", amount: pagibig },
           { section: "Deductions", description: "Withholding Tax", amount: tax },
-          { section: "Deductions", description: "Late Deductions", amount: lateDed },
-          { section: "Deductions", description: "Absence Deductions", amount: absentDed },
+          ...(lateDed > 0 ? [{ section: "Attendance", description: "Late Deduction (in gross)", amount: lateDed }] : []),
+          ...(absentDed > 0 ? [{ section: "Attendance", description: "Absence Deduction (in gross)", amount: absentDed }] : []),
+          ...(undertimeDed > 0 ? [{ section: "Attendance", description: "Undertime Deduction (in gross)", amount: undertimeDed }] : []),
           ...(paidLeaveDays > 0 ? [{ section: "Attendance", description: "Paid Leave Days (not deducted)", amount: null }] : []),
+          ...(salaryLoan > 0 ? [{ section: "Deductions", description: "Salary Loan", amount: salaryLoan }] : []),
+          ...(cashAdvance > 0 ? [{ section: "Deductions", description: "Cash Advance", amount: cashAdvance }] : []),
           { section: "Deductions", description: "Other Deductions", amount: otherDed },
           { section: "Deductions", description: "Total Deductions", amount: totalDed },
           { section: "Net Pay", description: "Net Pay", amount: netPay },
@@ -288,7 +297,7 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
               {payrolls.map((p) => {
                 const totalDed = Number(p.sss_contribution || 0) + Number(p.philhealth_contribution || 0) +
                   Number(p.pagibig_contribution || 0) + Number(p.tax_deduction || 0) +
-                  Number(p.late_deductions || 0) + Number(p.absent_deductions || 0) + Number(p.deductions || 0);
+                  Number(p.salary_loan || 0) + Number(p.cash_advance || 0) + Number(p.deductions || 0);
                 const statusIcon = STATUS_ICONS[p.status] || STATUS_ICONS.draft;
                 return (
                   <tr key={p.id || p.payroll_id}>

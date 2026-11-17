@@ -14,6 +14,7 @@ import { apiRequest } from "../../api/client";
 import { exportFormalReportPDF } from "../../utils/formalReportPdf";
 import { getRole, getUserData } from "../../utils/auth";
 import { exportToCSV } from "../../utils/reportExport";
+import { formatCurrency } from "../../utils/currency";
 import "./GovernmentRemittanceReports.css";
 
 const AGENCIES = [
@@ -43,8 +44,7 @@ const AGENCIES = [
   },
 ];
 
-const fmt = (v) =>
-  new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(v || 0);
+const fmt = formatCurrency;
 
 const GovernmentRemittanceReports = () => {
   const [tab, setTab]         = useState("sss");

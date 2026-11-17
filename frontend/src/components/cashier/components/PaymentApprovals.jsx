@@ -32,6 +32,7 @@ import { STORE_INFO } from "../../../utils/storeInfo";
 import brandLogo from "../../../assets/pawesome.jpg";
 import { usePaymentApprovals, paymentKey } from "../hooks/usePaymentApprovals.jsx";
 import Modal from "../../shared/Modal";
+import { formatCurrency } from "../../../utils/currency";
 import { useAuth } from "../../../context/AuthContext";
 import "./PaymentApprovals.css";
 
@@ -110,9 +111,6 @@ const isActionable = (payment) => {
   if (isCounterCollection(payment)) return true;
   return ps === "pending" && !!payment?.payment_proof;
 };
-
-const fmt = (n) =>
-  Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /* ── Receipt scanner labels ── */
 const SCAN_STATUS_LABEL = {
@@ -396,7 +394,7 @@ const PaymentApprovals = () => {
         <div className="pa-stat-card pa-stat-highlight">
           <div className="pa-stat-icon pa-stat-icon--green"><FontAwesomeIcon icon={faMoneyBillWave} /></div>
           <div className="pa-stat-content">
-            <span className="pa-stat-value">₱{stats.totalAmount.toLocaleString("en-PH")}</span>
+            <span className="pa-stat-value">{formatCurrency(stats.totalAmount)}</span>
             <span className="pa-stat-label">Total Amount</span>
           </div>
         </div>
@@ -594,7 +592,7 @@ const PaymentApprovals = () => {
                     </div>
                   </div>
                   <div className="pa-amount-section">
-                    <span className="pa-amount">₱{amount}</span>
+                    <span className="pa-amount">{formatCurrency(amount)}</span>
                     {payment.payment_reference && (
                       <div className="pa-card-reference">
                         Customer ref: <code>{payment.payment_reference}</code>
@@ -702,10 +700,10 @@ const PaymentApprovals = () => {
                   {(proofModal.payment.items || []).map((item, index) => (
                     <div key={`${item.id || item.description}-${index}`} className="pa-modal-sub">
                       <span>{item.is_discount ? `Discount: ${item.description}` : item.description}</span>
-                      <span>₱{fmt(item.is_discount ? -Math.abs(Number(item.total_price || 0)) : item.total_price)}</span>
+                      <span>{formatCurrency(item.is_discount ? -Math.abs(Number(item.total_price || 0)) : item.total_price)}</span>
                     </div>
                   ))}
-                  <strong>Full balance due: ₱{fmt(amountDue)}</strong>
+                  <strong>Full balance due: {formatCurrency(amountDue)}</strong>
                 </div>
               )}
 
@@ -739,24 +737,24 @@ const PaymentApprovals = () => {
                   <div className="pa-cash-readout">
                     <div className="pa-cash-readout-row pa-cash-due-row">
                       <span>Amount Due</span>
-                      <strong className="pa-cash-due-val">₱{fmt(amountDue)}</strong>
+                      <strong className="pa-cash-due-val">{formatCurrency(amountDue)}</strong>
                     </div>
                     <div className={`pa-cash-readout-row pa-cash-recv-row${cashReady ? " pa-cash-recv-row--ok" : ""}`}>
                       <span>Cash Received</span>
                       <strong className="pa-cash-recv-val">
-                        {cashReceived ? `₱${fmt(cashNum)}` : <span className="pa-cash-placeholder">₱0.00</span>}
+                        {cashReceived ? `${formatCurrency(cashNum)}` : <span className="pa-cash-placeholder">₱0.00</span>}
                       </strong>
                     </div>
                     {cashShort > 0 && (
                       <div className="pa-cash-readout-row pa-cash-short-row">
                         <span>Short</span>
-                        <strong className="pa-cash-short-val">−₱{fmt(cashShort)}</strong>
+                        <strong className="pa-cash-short-val">−{formatCurrency(cashShort)}</strong>
                       </div>
                     )}
                     {cashReady && (
                       <div className="pa-cash-readout-row pa-cash-change-row">
                         <span>Change</span>
-                        <strong className="pa-cash-change-val">₱{fmt(changeAmt)}</strong>
+                        <strong className="pa-cash-change-val">{formatCurrency(changeAmt)}</strong>
                       </div>
                     )}
                   </div>
@@ -887,7 +885,7 @@ const PaymentApprovals = () => {
                             <code>{receiptDetail.extraction.reference_normalized || receiptDetail.extraction.reference_raw || "—"}</code>
                           </div>
                           {receiptDetail.extraction.amount != null && (
-                            <div className="pa-scan-row"><span>Amount on receipt</span><span>₱{fmt(receiptDetail.extraction.amount)}</span></div>
+                            <div className="pa-scan-row"><span>Amount on receipt</span><span>{formatCurrency(receiptDetail.extraction.amount)}</span></div>
                           )}
                           {receiptDetail.extraction.paid_at && (
                             <div className="pa-scan-row"><span>Paid at</span><span>{new Date(receiptDetail.extraction.paid_at).toLocaleString("en-PH")}</span></div>
@@ -1033,19 +1031,19 @@ const PaymentApprovals = () => {
               )}
 
               {/* VAT-inclusive breakdown — authoritative values from the backend */}
-              <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>₱{fmt(receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? receiptData.amount)}</span></div>
-              <div className="pa-receipt-row"><span>VAT (12%)</span><span>₱{fmt(receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? 0)}</span></div>
+              <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>{formatCurrency(receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? receiptData.amount)}</span></div>
+              <div className="pa-receipt-row"><span>VAT (12%)</span><span>{formatCurrency(receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? 0)}</span></div>
               <div className="pa-receipt-total">
                 <span>TOTAL</span>
-                <span>₱{fmt(receiptData.amount)}</span>
+                <span>{formatCurrency(receiptData.amount)}</span>
               </div>
 
               {/* Payment details */}
               {receiptData.cash_received != null && (
-                <div className="pa-receipt-row"><span>Cash Received</span><span>₱{fmt(receiptData.cash_received)}</span></div>
+                <div className="pa-receipt-row"><span>Cash Received</span><span>{formatCurrency(receiptData.cash_received)}</span></div>
               )}
               {receiptData.change != null && (
-                <div className="pa-receipt-row"><span>Change</span><span>₱{fmt(receiptData.change)}</span></div>
+                <div className="pa-receipt-row"><span>Change</span><span>{formatCurrency(receiptData.change)}</span></div>
               )}
 
 

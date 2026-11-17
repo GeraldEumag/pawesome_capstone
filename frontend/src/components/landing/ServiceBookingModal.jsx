@@ -15,6 +15,7 @@ import { saveDraft, saveServiceIntent, getDraft, clearDraft } from "../../utils/
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import BookingReviewModal from "../shared/BookingReviewModal";
 import PaymentUploadModal from "../shared/PaymentUploadModal";
+import { formatCurrency } from "../../utils/currency";
 
 const SERVICE_CONFIG = {
   hotel: { title: "Book Pet Hotel", icon: faHotel, accent: "hotel-accent" },
@@ -436,7 +437,7 @@ const ServiceBookingModal = ({ serviceType, onClose }) => {
                   {room.available_rooms != null && <span>{room.available_rooms} slot{room.available_rooms !== 1 ? "s" : ""} left</span>}
                 </span>
                 <span className="svc-room-option-foot">
-                  <strong>₱{Number(room.daily_rate).toLocaleString("en-PH")}<small>/day</small></strong>
+                  <strong>{formatCurrency(room.daily_rate)}<small>/day</small></strong>
                   <span className={`svc-room-option-status${room.available ? " avail" : " unavail"}${isSelected ? " sel" : ""}`}>
                     {isSelected ? <><FontAwesomeIcon icon={faCheckCircle} /> Selected</> : room.available ? "Available" : room.reason || "Unavailable"}
                   </span>

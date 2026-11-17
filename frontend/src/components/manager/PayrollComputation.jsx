@@ -374,10 +374,10 @@ const PayrollComputation = () => {
                             <div><small>PhilHealth</small><span>{formatCurrency(r.philhealth_contribution)}</span></div>
                             <div><small>Pag-IBIG (≤₱100)</small><span>{formatCurrency(r.pagibig_contribution)}</span></div>
                             <div><small>Tax</small><span>{formatCurrency(r.tax_deduction)}</span></div>
-                            <div><small>Late ({r.total_late_minutes || 0} min)</small><span>{formatCurrency(r.late_deductions)}</span></div>
-                            <div><small>Absent ({r.absent_days || 0} day{r.absent_days !== 1 ? "s" : ""})</small><span>{formatCurrency(r.absent_deductions)}</span></div>
+                            <div><small>Late ({r.total_late_minutes || 0} min · in gross)</small><span>{formatCurrency(r.late_deductions)}</span></div>
+                            <div><small>Absent ({r.absent_days || 0} day{r.absent_days !== 1 ? "s" : ""} · in gross)</small><span>{formatCurrency(r.absent_deductions)}</span></div>
                             {Number(r.undertime_deductions) > 0 && (
-                              <div><small>Undertime ({r.total_undertime_minutes || 0} min)</small><span>{formatCurrency(r.undertime_deductions)}</span></div>
+                              <div><small>Undertime ({r.total_undertime_minutes || 0} min · in gross)</small><span>{formatCurrency(r.undertime_deductions)}</span></div>
                             )}
                             {Number(r.salary_loan) > 0 && (
                               <div><small>Salary Loan</small><span>{formatCurrency(r.salary_loan)}</span></div>

@@ -20,6 +20,7 @@ import { apiRequest, getAuthenticatedFileUrl } from "../../api/client";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import "../../styles/bookingModal.css";
 import Modal from "../shared/Modal";
+import { formatCurrency } from "../../utils/currency";
 import "./ReceptionistApprovals.css";
 
 const TYPE_FILTERS = [
@@ -1047,7 +1048,7 @@ const ReceptionistApprovals = () => {
                         <InfoLine
                           icon={<FaMoneyBillWave />}
                           label="Price"
-                          value={`₱${Number(item.price || item.amount || item.total_amount || 0).toFixed(2)}`}
+                          value={`${formatCurrency(Number(item.price || item.amount || item.total_amount || 0))}`}
                         />
                       )}
                     </div>
@@ -1182,7 +1183,7 @@ const ReceptionistApprovals = () => {
                 {(selectedRequest.price || selectedRequest.amount || selectedRequest.total_amount) && (
                   <DetailItem
                     label="Price"
-                    value={`₱${Number(selectedRequest.price || selectedRequest.amount || selectedRequest.total_amount || 0).toFixed(2)}`}
+                    value={`${formatCurrency(Number(selectedRequest.price || selectedRequest.amount || selectedRequest.total_amount || 0))}`}
                   />
                 )}
                 <DetailItem

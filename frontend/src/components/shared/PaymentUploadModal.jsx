@@ -3,6 +3,7 @@ import gcashQr from "../../assets/PAWESOME TEST GCASH.png";
 import { apiRequest } from "../../api/client";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import Modal from "./Modal";
+import { formatCurrency } from "../../utils/currency";
 import "./PaymentUploadModal.css";
 
 const PAYMENT_METHODS = [
@@ -339,7 +340,7 @@ const PaymentUploadModal = ({ open, onClose, onSuccess, endpoint, title, referen
           {amount !== null && Number.isFinite(Number(amount)) && (
             <div className="pum-amount">
               <span>Full booking total</span>
-              <strong>₱{Number(amount).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              <strong>{formatCurrency(amount)}</strong>
             </div>
           )}
           {awaitingBookingApproval && (

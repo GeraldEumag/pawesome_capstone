@@ -19,6 +19,7 @@ import StockAdjustmentModal from "./StockAdjustmentModal";
 import PremiumToast from "../shared/PremiumToast";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
 import QrScanner from "../shared/QrScanner";
+import { formatCurrency } from "../../utils/currency";
 import "./UnifiedInventory.css";
 
 const CATEGORIES = [
@@ -736,8 +737,8 @@ const UnifiedInventory = () => {
                       <span className="min-stock">/ {getMinStock(item)}</span>
                     </td>
                     <td className="numeric price-cell">
-                      <div>₱{(item.price || 0).toLocaleString()}</div>
-                      {item.cost ? <div className="cost-subtext">Cost ₱{Number(item.cost).toLocaleString()}</div> : null}
+                      <div>{formatCurrency(item.price)}</div>
+                      {item.cost ? <div className="cost-subtext">Cost {formatCurrency(item.cost)}</div> : null}
                     </td>
                     <td>
                       {activeTab === "archived" ? (
@@ -818,7 +819,7 @@ const UnifiedInventory = () => {
                                     <td>{batch.expiration_date ? new Date(batch.expiration_date).toLocaleDateString() : "—"}</td>
                                     <td>{batch.quantity}</td>
                                     <td>{batch.remaining_quantity}</td>
-                                    <td>{batch.unit_cost ? `₱${parseFloat(batch.unit_cost).toFixed(2)}` : "—"}</td>
+                                    <td>{batch.unit_cost ? formatCurrency(batch.unit_cost) : "—"}</td>
                                     <td>
                                       {batch.proof_photo ? (
                                         <a href={resolveAvatarUrl(batch.proof_photo_url || batch.proof_photo)} target="_blank" rel="noopener noreferrer">View</a>
@@ -970,13 +971,13 @@ const UnifiedInventory = () => {
                 </div>
                 <div className="ui-info-stat">
                   <span className="ui-info-stat-label">Price</span>
-                  <span className="ui-info-stat-value">₱{(infoItem.price || 0).toLocaleString()}</span>
+                  <span className="ui-info-stat-value">{formatCurrency(infoItem.price)}</span>
                   <span className="ui-info-stat-sub">selling price</span>
                 </div>
                 <div className="ui-info-stat">
                   <span className="ui-info-stat-label">Cost</span>
                   <span className="ui-info-stat-value">
-                    {infoItem.cost ? `₱${Number(infoItem.cost).toLocaleString()}` : "—"}
+                    {infoItem.cost ? formatCurrency(infoItem.cost) : "—"}
                   </span>
                   <span className="ui-info-stat-sub">unit cost</span>
                 </div>

@@ -4,6 +4,7 @@ import { getToken } from "../../../utils/auth";
 import { showSuccess, showError, showReasonPrompt, showConfirm, showAlert, PAYMENT_REJECT_REASONS } from "../../../utils/alert.jsx";
 import { printReceipt as printReceiptUtil } from "../../../utils/receiptPrinter";
 import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../../utils/reportExport";
+import { formatCurrency } from "../../../utils/currency";
 
 // Unique UI key per queue row — the queue unions five tables, so bare
 // numeric ids collide across types (e.g. boarding #3 vs service_request #3).
@@ -239,7 +240,7 @@ export const usePaymentApprovals = (user) => {
   // cashParams = { cashReceived?: number, change?: number }
   const verifyPayment = useCallback(async (payment, referenceNumber = "", cashParams = {}) => {
     const confirmed = await showConfirm(
-      `Verify payment of ₱${Number(payment.amount || payment.total_amount || 0).toLocaleString("en-PH")} from ${payment.customer_name || payment.customer?.name || "Customer"}?`
+      `Verify payment of ${formatCurrency(payment.amount || payment.total_amount)} from ${payment.customer_name || payment.customer?.name || "Customer"}?`
     );
     if (!confirmed) return;
 

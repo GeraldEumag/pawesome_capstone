@@ -6,6 +6,7 @@ import { getRole, getUserData } from "../../utils/auth";
 import { exportToCSV } from "../../utils/reportExport";
 import "./MonthlyInventoryAudit.css";
 import { showAlert } from "../../utils/alert.jsx";
+import { formatCurrency } from "../../utils/currency";
 
 const auditItem = (audit) => audit?.item || audit || {};
 
@@ -102,7 +103,7 @@ const MonthlyAuditReport = () => {
       return;
     }
 
-    const currency = (value) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value || 0);
+    const currency = formatCurrency;
     const costOf = (audit) => Number(audit.unit_cost ?? auditItem(audit).cost ?? 0);
     const valueOf = (audit) => Number(audit.variance || 0) * costOf(audit);
     const discrepancies = audits.filter((audit) => audit.status === "discrepancy");

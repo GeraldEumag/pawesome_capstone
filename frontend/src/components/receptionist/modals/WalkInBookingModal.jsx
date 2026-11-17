@@ -24,6 +24,7 @@ import {
   isManualBreedRequired,
 } from "../../../config/petSpeciesConfig";
 import { showConfirm } from "../../../utils/alert.jsx";
+import { formatCurrency } from "../../../utils/currency";
 import "../../../styles/bookingModal.css";
 import "./WalkInBookingModal.css";
 
@@ -952,7 +953,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
               <option value="">Select a service</option>
               {services.map((service) => (
                 <option key={service.id} value={service.name}>
-                  {service.name} - ₱{service.price}
+                  {service.name} - {formatCurrency(service.price)}
                 </option>
               ))}
             </select>
@@ -1042,7 +1043,7 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
                 <option value="">{bookingForm.request_date ? "Select Room" : "Select a date first"}</option>
                 {hotelRooms.map((room) => (
                   <option key={room.id} value={room.id}>
-                    {room.room_name || room.name} ({String(room.room_type || room.type || "").replace(/_/g, " ")}) - ₱{room.daily_rate}/day
+                    {room.room_name || room.name} ({String(room.room_type || room.type || "").replace(/_/g, " ")}) - {formatCurrency(room.daily_rate)}/day
                   </option>
                 ))}
               </select>
@@ -1298,8 +1299,8 @@ const WalkInBookingModal = ({ serviceType: serviceTypeProp, onClose, onSuccess }
           ].filter((d) => d && d.value);
         })()}
         pricing={serviceType === "hotel" && bookingForm.rate_per_day > 0 ? {
-          rows: [{ label: "Daily rate", value: `₱${Number(bookingForm.rate_per_day).toLocaleString("en-PH", { minimumFractionDigits: 2 })}` }],
-          total: `₱${Number(bookingForm.rate_per_day).toLocaleString("en-PH", { minimumFractionDigits: 2 })}/day`,
+          rows: [{ label: "Daily rate", value: formatCurrency(bookingForm.rate_per_day) }],
+          total: `${formatCurrency(bookingForm.rate_per_day)}/day`,
         } : null}
         notes={bookingForm.notes}
       />
