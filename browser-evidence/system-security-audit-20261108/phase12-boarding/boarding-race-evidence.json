@@ -1,18 +1,18 @@
 {
-  "roomId": 16,
-  "date": "2026-12-09",
+  "roomId": 19,
+  "date": "2026-12-18",
   "statuses": [
     201,
     422
   ],
   "boardingIds": [
-    9
+    21
   ],
   "db": [
     {
-      "id": 9,
-      "room_id": 16,
-      "source_id": 9,
+      "id": 18,
+      "room_id": 19,
+      "source_id": 21,
       "pet_id": 9,
       "status": "pending"
     }

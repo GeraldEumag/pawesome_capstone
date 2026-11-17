@@ -32,17 +32,17 @@
     "advance": "0.00",
     "present_days": "0.0",
     "processed_by": 2,
-    "approved_by": null,
-    "processed_at": "2026-11-08 14:26:09",
-    "approved_at": null
+    "approved_by": 2,
+    "processed_at": "2026-11-17 13:34:13",
+    "approved_at": "2026-11-17 13:34:13"
   },
   "payslip": {
     "own_status": 200,
     "other_status": 403
   },
   "recomputed": {
-    "gross": 14276.92,
-    "net": 8943.05
+    "gross": 6892.31,
+    "net": 5642.31
   },
   "arithmetic": {
     "gross": 8615.38,
@@ -110,6 +110,12 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
       "status": 200
     }
   ],

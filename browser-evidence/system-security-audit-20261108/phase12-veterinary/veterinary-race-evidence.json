@@ -1,26 +1,26 @@
 {
   "result": "PASS",
-  "appointment_id": 47,
+  "appointment_id": 57,
   "responses": [
     {
       "status": 200,
       "body": {
         "message": "Consultation finalized. The visit closes automatically once the cashier verifies payment.",
         "consultation": {
-          "id": 47,
+          "id": 57,
           "service_request_id": null,
           "customer_id": 1,
-          "pet_id": 9,
+          "pet_id": 18,
           "service_id": 2,
           "veterinarian_id": 7,
           "status": "checkout",
-          "scheduled_at": "2026-11-17T12:42:53.000000Z",
+          "scheduled_at": "2026-11-17T15:43:50.000000Z",
           "started_at": null,
           "checked_in_at": null,
           "checked_in_by": null,
-          "clinical_completed_at": "2026-11-17T11:42:54.000000Z",
+          "clinical_completed_at": "2026-11-17T14:43:50.000000Z",
           "clinical_completed_by": 7,
-          "checked_out_at": "2026-11-17T11:42:54.000000Z",
+          "checked_out_at": "2026-11-17T14:43:50.000000Z",
           "checked_out_by": 7,
           "completed_at": null,
           "outcome": null,
@@ -45,14 +45,14 @@
           "cashier_remarks": null,
           "receipt_number": null,
           "reference_number": null,
-          "notes": "P12RACE_15773527",
+          "notes": "P12RACE_26630171",
           "diagnosis": "race dx",
           "treatment_notes": null,
           "prescription": null,
           "vet_remarks": null,
           "cancellation_reason": null,
-          "created_at": "2026-11-17T12:42:53.000000Z",
-          "updated_at": "2026-11-17T11:42:54.000000Z",
+          "created_at": "2026-11-17T15:43:50.000000Z",
+          "updated_at": "2026-11-17T14:43:50.000000Z",
           "reminder_sent_at": null,
           "booking_channel": "walk_in",
           "customer": {
@@ -76,22 +76,22 @@
             "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzdjM2FlZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+QzwvdGV4dD48L3N2Zz4="
           },
           "pet": {
-            "id": 9,
+            "id": 18,
             "customer_id": 1,
-            "name": "PHASE12 Board 39868009",
+            "name": "PHASE12 Pet 26451745",
             "species": "Dog",
-            "breed": "Boarding UI",
+            "breed": "UI Workflow",
             "birthdate": null,
             "age": null,
             "gender": "Female",
             "image": null,
             "birth_date": null,
-            "notes": "PHASE12_BOARDING_PHASE12 Board 39868009",
+            "notes": "PHASE12_NATIVE_UI_26451745",
             "status": "active",
             "archived_at": null,
             "archived_by": null,
-            "created_at": "2026-11-08T12:11:10.000000Z",
-            "updated_at": "2026-11-08T12:11:10.000000Z",
+            "created_at": "2026-11-17T14:40:52.000000Z",
+            "updated_at": "2026-11-17T14:40:52.000000Z",
             "deleted_at": null,
             "image_url": null
           },
@@ -139,7 +139,7 @@
             "original_username": null,
             "email": "vet@example.com",
             "original_email": null,
-            "email_verified_at": "2026-11-17T11:24:24.000000Z",
+            "email_verified_at": "2026-11-17T12:37:55.000000Z",
             "role": "veterinary",
             "base_salary": "32000.00",
             "hourly_rate": "180.00",
@@ -156,7 +156,7 @@
             "telegram_username": null,
             "telegram_linked_at": null,
             "created_at": "2026-11-08T10:34:13.000000Z",
-            "updated_at": "2026-11-17T11:24:24.000000Z",
+            "updated_at": "2026-11-17T12:37:55.000000Z",
             "deleted_at": null
           }
         },
@@ -165,15 +165,15 @@
           "billing": {
             "items": [
               {
-                "id": 49,
+                "id": 55,
                 "service_type": "veterinary",
                 "item_name_snapshot": null,
                 "item_sku_snapshot": null,
                 "pet_name_snapshot": null,
                 "service_name_snapshot": null,
-                "service_id": 47,
+                "service_id": 57,
                 "appointment_id": null,
-                "pet_id": 9,
+                "pet_id": 18,
                 "customer_id": 1,
                 "customer_email": null,
                 "inventory_item_id": null,
@@ -192,8 +192,8 @@
                 "charge_amount": "0.00",
                 "is_billable": true,
                 "is_paid": false,
-                "created_at": "2026-11-17T11:42:54.000000Z",
-                "updated_at": "2026-11-17T11:42:54.000000Z",
+                "created_at": "2026-11-17T14:43:50.000000Z",
+                "updated_at": "2026-11-17T14:43:50.000000Z",
                 "quantity": 1,
                 "inventory_item": null,
                 "user": {
@@ -225,7 +225,7 @@
                   "original_username": null,
                   "email": "vet@example.com",
                   "original_email": null,
-                  "email_verified_at": "2026-11-17T11:24:24.000000Z",
+                  "email_verified_at": "2026-11-17T12:37:55.000000Z",
                   "role": "veterinary",
                   "base_salary": "32000.00",
                   "hourly_rate": "180.00",
@@ -242,7 +242,7 @@
                   "telegram_username": null,
                   "telegram_linked_at": null,
                   "created_at": "2026-11-08T10:34:13.000000Z",
-                  "updated_at": "2026-11-17T11:24:24.000000Z",
+                  "updated_at": "2026-11-17T12:37:55.000000Z",
                   "deleted_at": null
                 }
               }
@@ -257,13 +257,13 @@
             "additional_charges": 0,
             "payment_status": "unpaid",
             "invoice": {
-              "id": 17,
-              "invoice_number": "VINV-2026-00017",
+              "id": 19,
+              "invoice_number": "VINV-2026-00019",
               "status": "open",
               "total": 500,
               "amount_paid": 0,
               "balance_due": 500,
-              "version_hash": "cb016ca3ee5d5003aa960f475e3d80f36b270731"
+              "version_hash": "cc7e570fcd99042311a06f7a6615b164fd2971be"
             }
           },
           "completion_status": {
@@ -286,20 +286,20 @@
   ],
   "after": {
     "appointment": {
-      "id": 47,
+      "id": 57,
       "service_request_id": null,
       "customer_id": 1,
-      "pet_id": 9,
+      "pet_id": 18,
       "service_id": 2,
       "veterinarian_id": 7,
       "status": "checkout",
-      "scheduled_at": "2026-11-17 12:42:53",
+      "scheduled_at": "2026-11-17 15:43:50",
       "started_at": null,
       "checked_in_at": null,
       "checked_in_by": null,
-      "clinical_completed_at": "2026-11-17 11:42:54",
+      "clinical_completed_at": "2026-11-17 14:43:50",
       "clinical_completed_by": 7,
-      "checked_out_at": "2026-11-17 11:42:54",
+      "checked_out_at": "2026-11-17 14:43:50",
       "checked_out_by": 7,
       "completed_at": null,
       "outcome": null,
@@ -311,9 +311,9 @@
     },
     "records": [
       {
-        "id": 23,
-        "pet_id": 9,
-        "appointment_id": 47,
+        "id": 26,
+        "pet_id": 18,
+        "appointment_id": 57,
         "veterinarian_id": 7,
         "status": "finalized",
         "chief_complaint": null,
@@ -321,10 +321,10 @@
         "treatment_plan": "rest",
         "weight_kg": null,
         "is_editable": 0,
-        "finalized_at": "2026-11-17 12:42:53",
+        "finalized_at": "2026-11-17 15:43:50",
         "finalized_by": 7,
-        "created_at": "2026-11-17 12:42:53",
-        "updated_at": "2026-11-17 12:42:53"
+        "created_at": "2026-11-17 15:43:50",
+        "updated_at": "2026-11-17 15:43:50"
       }
     ],
     "prescriptions": []

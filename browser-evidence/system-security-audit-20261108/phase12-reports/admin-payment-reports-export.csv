@@ -6,20 +6,68 @@ pawesomeretreat24@gmail.com | (02) 8XXX-XXXX
 admin payment reports
 admin payment reports — detailed business report
 
-Document Reference,ADMIN-PAYMENT-REPORTS-20261108
+Document Reference,ADMIN-PAYMENT-REPORTS-20261117
 Reporting Period,As of issue date
-Generated,"11/8/2026, 10:14:08 PM"
+Generated,"11/17/2026, 10:42:20 PM"
 Prepared By,ADMINISTRATOR
 Prepared Role,admin
-Records Included,46
+Records Included,94
 
 REPORT SUMMARY
 Metric,Value
-Records Included,46
+Records Included,94
 Report Status,Generated
 
 DETAILED RECORDS
 Payment Ref,Customer,Type,Associated Record,Method,Amount,Status,Date
+PAY-6AFC67C112DBD,Walk-in,sale,TRX-6AFC67C108334,cash,₱50.00,completed,2026-11-17 14:42:09
+PAY-6AFC67A84DC3F,Walk-in,sale,TRX-6AFC67A83D74B,cash,₱50.00,completed,2026-11-17 14:41:44
+SERVICE-38,CUSTOMER,service_request,Basic Bath and Blow Dry Medium Breed,gcash,,paid,2026-11-17 14:41:10
+BOARDING-21,CUSTOMER,boarding,Boarding #21,,₱500.00,unpaid,2026-11-17 14:37:38
+BOARDING-20,CUSTOMER,boarding,Boarding #20,,₱500.00,unpaid,2026-11-17 14:37:32
+BOARDING-19,CUSTOMER,boarding,Boarding #19,gcash,₱500.00,paid,2026-11-17 14:36:30
+SERVICE-37,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-17 14:32:30
+PAY-6AFC6512E1D69,Walk-in,sale,TRX-6AFC6512CD471,cash,₱250.00,completed,2026-11-17 14:30:42
+SERVICE-36,CUSTOMER,service_request,Consultation,,,unpaid,2026-11-17 11:42:05
+SERVICE-35,CUSTOMER,service_request,General Check-up,gcash,,paid,2026-11-16 20:08:40
+SERVICE-34,CUSTOMER,service_request,veterinary,gcash,,pending,2026-11-16 19:44:32
+PAY-6AFB5D1F9D904,Walk-in,sale,TRX-6AFB5D1F8FF74,cash,₱560.00,completed,2026-11-16 19:44:31
+PAY-6AFB5D1E9671C,Walk-in,sale,TRX-6AFB5D1E8CDE5,cash,₱140.00,completed,2026-11-16 19:44:30
+PAY-6AFB5D1CE1698,Walk-in,sale,TRX-6AFB5D1CCD854,cash,₱580.00,completed,2026-11-16 19:44:28
+BOARDING-17,CUSTOMER,boarding,Boarding #17,,₱300.00,unpaid,2026-11-16 19:44:19
+SERVICE-33,Panel Customer,service_request,grooming,gcash,,paid,2026-11-16 19:44:15
+SERVICE-32,CUSTOMER,service_request,veterinary,,,unpaid,2026-11-16 19:43:06
+PAY-6AFB5CC9E44FB,Walk-in,sale,TRX-6AFB5CC9D2D57,cash,"₱1,000.00",completed,2026-11-16 19:43:05
+PAY-6AFB5CC8D4158,Walk-in,sale,TRX-6AFB5CC8C8A26,cash,₱250.00,completed,2026-11-16 19:43:04
+PAY-6AFB5CC72D374,Walk-in,sale,TRX-6AFB5CC719BA5,cash,₱780.00,completed,2026-11-16 19:43:03
+BOARDING-15,CUSTOMER,boarding,Boarding #15,,₱300.00,unpaid,2026-11-16 19:42:56
+SERVICE-31,CUSTOMER,service_request,veterinary,,,unpaid,2026-11-16 19:41:56
+PAY-6AFB5C837F627,Walk-in,sale,TRX-6AFB5C8373F72,cash,₱100.00,completed,2026-11-16 19:41:55
+PAY-6AFB5C824D746,Walk-in,sale,TRX-6AFB5C82435EE,cash,₱25.00,completed,2026-11-16 19:41:54
+PAY-6AFB5C8037CA2,Walk-in,sale,TRX-6AFB5C7FD7585,cash,₱100.00,completed,2026-11-16 19:41:52
+SERVICE-30,Panel Customer,service_request,grooming,gcash,,paid,2026-11-16 19:41:08
+SERVICE-29,CUSTOMER,service_request,veterinary,,,unpaid,2026-11-16 19:39:52
+PAY-6AFB5C073D6F6,Walk-in,sale,TRX-6AFB5C072AB5F,cash,₱100.00,completed,2026-11-16 19:39:51
+PAY-6AFB5C062F266,Walk-in,sale,TRX-6AFB5C061354D,cash,₱25.00,completed,2026-11-16 19:39:50
+PAY-6AFB5C045889E,Walk-in,sale,TRX-6AFB5C0448C6E,cash,₱100.00,completed,2026-11-16 19:39:48
+BOARDING-14,PANEL CUSTOMER,boarding,Boarding #14,,₱500.00,unpaid,2026-11-16 19:39:42
+BOARDING-13,CUSTOMER,boarding,Boarding #13,,₱500.00,unpaid,2026-11-16 19:39:40
+PAY-6AFB5BBA2BD39,Walk-in,sale,TRX-6AFB5BBA1FD62,cash,₱100.00,completed,2026-11-16 19:38:34
+SERVICE-28,CUSTOMER,service_request,veterinary,,,unpaid,2026-11-16 19:38:34
+PAY-6AFB5BB904C41,Walk-in,sale,TRX-6AFB5BB8F01FF,cash,₱25.00,completed,2026-11-16 19:38:33
+PAY-6AFB5BB73D9E9,Walk-in,sale,TRX-6AFB5BB72EAEC,cash,₱100.00,completed,2026-11-16 19:38:31
+SERVICE-27,Panel Customer,service_request,grooming,gcash,,paid,2026-11-16 19:38:18
+PAY-6AFB5B2AB3272,Walk-in,sale,TRX-6AFB5B2AA7B3E,cash,₱100.00,completed,2026-11-16 19:36:10
+PAY-6AFB5B29950CC,Walk-in,sale,TRX-6AFB5B298CB67,cash,₱25.00,completed,2026-11-16 19:36:09
+PAY-6AFB5B27C9639,Walk-in,sale,TRX-6AFB5B27B6F11,cash,₱100.00,completed,2026-11-16 19:36:07
+BOARDING-12,PANEL CUSTOMER,boarding,Boarding #12,,₱500.00,unpaid,2026-11-16 19:36:02
+BOARDING-11,CUSTOMER,boarding,Boarding #11,,₱500.00,unpaid,2026-11-16 19:36:01
+SERVICE-26,CUSTOMER,service_request,veterinary,,,unpaid,2026-11-16 19:32:58
+PAY-6AFB5A69E747B,Walk-in,sale,TRX-6AFB5A69DAA74,cash,₱100.00,completed,2026-11-16 19:32:57
+PAY-6AFB5A6884C19,Walk-in,sale,TRX-6AFB5A687B780,cash,₱25.00,completed,2026-11-16 19:32:56
+PAY-6AFB5A66AE910,Walk-in,sale,TRX-6AFB5A669F4A7,cash,₱100.00,completed,2026-11-16 19:32:54
+SERVICE-25,Panel Customer,service_request,grooming,gcash,,pending,2026-11-16 19:32:43
+PAY-6AF083BF57C1B,Walk-in,sale,TRX-6AF083BF4D0CC,cash,₱50.00,completed,2026-11-08 14:14:23
 PAY-6AF083A9684FD,Walk-in,sale,TRX-6AF083A95D47D,cash,₱50.00,completed,2026-11-08 14:14:01
 PAY-6AF0838F76A61,Walk-in,sale,TRX-6AF0838F6D629,cash,₱50.00,completed,2026-11-08 14:13:35
 PAY-6AF083607ACBF,Walk-in,sale,TRX-6AF0836071076,cash,₱50.00,completed,2026-11-08 14:12:48
@@ -54,7 +102,7 @@ SERVICE-9,CUSTOMER,service_request,Standard Grooming,,,unpaid,2026-11-08 11:30:0
 SERVICE-8,CUSTOMER,service_request,Veterinary Consultation,gcash,,paid,2026-11-08 11:20:31
 PAY-6AF05ADA63A27,Walk-in,sale,TRX-6AF05ADA57B5E,cash,₱250.00,completed,2026-11-08 11:19:54
 SERVICE-7,CUSTOMER,service_request,Standard Grooming,gcash,,paid,2026-11-08 11:18:16
-SERVICE-6,CUSTOMER,service_request,Standard Grooming,gcash,,rejected,2026-11-08 11:16:39
+SERVICE-6,CUSTOMER,service_request,Standard Grooming,gcash,,paid,2026-11-08 11:16:39
 BOARDING-1,CUSTOMER,boarding,Boarding #1,,₱500.00,unpaid,2026-11-08 11:16:24
 SERVICE-5,CUSTOMER,service_request,Standard Grooming,,,unpaid,2026-11-08 11:16:01
 PAY-6AF05729A7720,Walk-in,sale,TRX-6AF057299D2D5,cash,₱100.00,completed,2026-11-08 11:04:09
@@ -68,7 +116,7 @@ SERVICE-2,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-08 10:40:08
 SERVICE-1,CUSTOMER,service_request,General Check-up,,,unpaid,2026-11-08 10:35:36
 
 FINDINGS & RECOMMENDATIONS
-1. Finding: 46 record(s) are included in the detailed schedule for this report.
+1. Finding: 94 record(s) are included in the detailed schedule for this report.
 Review the underlying source records and supporting documentation before
 approval.
 2. Recommendation: Retain this report with its source records and obtain the
@@ -85,5 +133,5 @@ Reviewed by,,Authorized Reviewer
 Approved by,,Approving Officer
 Date Signed: ______________________
 
-ADMIN-PAYMENT-REPORTS-20261108 | Pawesome Retreat Inc. | For authorized business
+ADMIN-PAYMENT-REPORTS-20261117 | Pawesome Retreat Inc. | For authorized business
 use

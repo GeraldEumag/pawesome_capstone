@@ -3,7 +3,7 @@
   "total_routes": 654,
   "route_probes": 654,
   "group_probes": 130,
-  "denied": 767,
+  "denied": 770,
   "violations": [],
   "errors": 0,
   "by_role": {
@@ -55,30 +55,6 @@
       "method": "POST",
       "uri": "api/chatbot/live-chat/{session}/reply",
       "role": "vet_tech",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "PUT",
-      "uri": "api/manager/employees/{employee}",
-      "role": "cashier",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "GET",
-      "uri": "api/manager/employees/{employee}",
-      "role": "receptionist",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "DELETE",
-      "uri": "api/manager/employees/{employee}",
-      "role": "inventory",
       "expected": "401/403",
       "status": 404
     },
