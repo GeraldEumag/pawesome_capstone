@@ -862,7 +862,7 @@ class PaymentVerificationService
             'settleable_id' => $id,
             'customer_id' => $record->customer_id ?? null,
             'amount' => $settledAmount,
-            'payment_method' => $record->payment_method ?? null,
+            'payment_method' => $settled->payment_method ?? $record->payment_method ?? null,
             'reference_number' => $referenceNumber ?? $record->reference_number ?? $record->payment_reference ?? null,
             'receipt_number' => $receiptNumber,
             'verified_by' => Auth::id(),

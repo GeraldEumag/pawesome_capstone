@@ -47,6 +47,7 @@ class DashboardController extends Controller
         $topSellingProducts = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereNotNull('sale_items.product_id')
+            ->where('sales.status', 'completed')
             ->whereMonth('sales.created_at', $today->month)
             ->selectRaw('sale_items.product_id, SUM(sale_items.quantity) as units_sold, SUM(sale_items.total_price) as revenue')
             ->groupBy('sale_items.product_id')
@@ -86,6 +87,7 @@ class DashboardController extends Controller
         $paidServiceRequests = \App\Models\ServiceRequest::where('payment_status', 'paid')->count();
 
         $salesByType = Sale::selectRaw('payment_type, COUNT(*) as count, SUM(amount) as total')
+            ->where('status', 'completed')
             ->whereDate('created_at', $today)
             ->groupBy('payment_type')
             ->get()
@@ -98,12 +100,12 @@ class DashboardController extends Controller
             });
 
         return [
-            'today_sales' => Sale::whereDate('created_at', $today)->sum('amount'),
-            'today_transactions' => Sale::whereDate('created_at', $today)->count(),
-            'monthly_sales' => Sale::whereMonth('created_at', $today->month)->sum('amount'),
-            'monthly_transactions' => Sale::whereMonth('created_at', $today->month)->count(),
+            'today_sales' => Sale::where('status', 'completed')->whereDate('created_at', $today)->sum('amount'),
+            'today_transactions' => Sale::where('status', 'completed')->whereDate('created_at', $today)->count(),
+            'monthly_sales' => Sale::where('status', 'completed')->whereMonth('created_at', $today->month)->sum('amount'),
+            'monthly_transactions' => Sale::where('status', 'completed')->whereMonth('created_at', $today->month)->count(),
             'pending_payments' => Appointment::whereIn('status', [Appointment::STATUS_CLINICAL_COMPLETE, Appointment::STATUS_CHECKOUT])->count(),
-            'completed_payments' => Sale::where('type', 'appointment')->count(),
+            'completed_payments' => Sale::where('type', 'appointment')->where('status', 'completed')->count(),
             'recent_sales' => Sale::latest()->limit(10)->get(),
             'sales_by_type' => $salesByType,
             'low_stock_items' => $lowStockItems,
@@ -199,9 +201,22 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Get veterinary/service payments from service requests
-        $serviceRequests = DB::table('service_requests')
-            ->where('payment_status', 'paid')
+        // Get veterinary/service payments from service requests.
+        // Requests fulfilled through a linked boarding/grooming/appointment
+        // record are rendered by the settlement leg below — skip them here so
+        // one payment is not listed twice (mirrors Admin\ReportsController).
+        $serviceRequestsQuery = DB::table('service_requests')
+            ->where('payment_status', 'paid');
+        foreach (['boardings', 'groomings', 'appointments', 'medical_confinements'] as $linked) {
+            if (Schema::hasTable($linked) && Schema::hasColumn($linked, 'service_request_id')) {
+                $serviceRequestsQuery->whereNotExists(function ($sub) use ($linked) {
+                    $sub->select(DB::raw(1))
+                        ->from($linked)
+                        ->whereColumn("$linked.service_request_id", 'service_requests.id');
+                });
+            }
+        }
+        $serviceRequests = $serviceRequestsQuery
             ->orderBy('paid_at', 'desc')
             ->limit(50)
             ->get()
@@ -376,15 +391,29 @@ class DashboardController extends Controller
             if (!$sale) {
                 return response()->json(['success' => false, 'message' => 'Transaction not found.'], 404);
             }
-            if ($refundAmount <= 0 || $refundAmount - (float) $sale->amount > 0.0001) {
-                return response()->json(['success' => false, 'message' => 'Refund amount must be positive and not exceed the sale total.'], 422);
+            // Only a completed sale can be refunded — a cancelled sale is
+            // already excluded from revenue, so a negative refund row would
+            // double-subtract it.
+            if ($sale->status !== 'completed') {
+                return response()->json(['success' => false, 'message' => 'Only completed transactions can be refunded.'], 422);
+            }
+
+            // Refunds are ledger rows linked to the parent only through the
+            // notes convention below, so cumulative refunds must be bounded by
+            // the remaining refundable amount — not just the sale total.
+            $alreadyRefunded = abs((float) Sale::where('payment_type', 'refund')
+                ->where('notes', 'like', 'Refund for ' . ($sale->transaction_number ?? $sale->id) . ':%')
+                ->sum('amount'));
+            $remaining = (float) $sale->amount - $alreadyRefunded;
+            if ($refundAmount <= 0 || $refundAmount - $remaining > 0.0001) {
+                return response()->json(['success' => false, 'message' => 'Refund amount must be positive and not exceed the remaining refundable amount.'], 422);
             }
 
             // Refunds are recorded as negative-amount rows so that revenue
             // sums (sum('amount')) net correctly instead of being inflated.
             $refund = Sale::create([
                 'amount' => -$refundAmount,
-                'type' => 'refund',
+                'type' => $sale->type ?: 'product',
                 'status' => 'completed',
                 'payment_type' => 'refund',
                 'notes' => 'Refund for ' . ($sale->transaction_number ?? $sale->id) . ': ' . $validated['reason'],
@@ -415,9 +444,13 @@ class DashboardController extends Controller
 
         // Audit-only record: a split-tender log entry is not a new sale, so it
         // must not add to revenue sums (amount stays 0).
+        $linkedSale = isset($validated['transaction_id'])
+            ? Sale::find(preg_replace('/^(SALE-|TRX-|ORDER-|SERVICE-)/i', '', (string) $validated['transaction_id']))
+            : null;
+
         $payment = Sale::create([
             'amount' => 0,
-            'type' => 'multi_payment',
+            'type' => $linkedSale?->type ?: 'product',
             'status' => 'completed',
             'payment_type' => 'multi',
             'cash_amount' => $validated['cash_amount'],
@@ -617,7 +650,7 @@ class DashboardController extends Controller
                     ], 404);
                 }
 
-                if (in_array($sale->status, ['cancelled', 'voided'], true)) {
+                if (in_array($sale->status, ['cancelled', 'refunded', 'voided'], true)) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Transaction is already voided.',
@@ -647,7 +680,7 @@ class DashboardController extends Controller
                     $sale->invoice->cancel();
                 }
 
-                $sale->status = 'voided';
+                $sale->status = 'cancelled';
                 $sale->void_reason = $validated['reason'];
                 $sale->voided_by = $validated['cashier_name'];
                 $sale->voided_at = now();

@@ -85,12 +85,15 @@ class Sale extends Model
                 $sale->type = 'product';
             }
 
-            // Ensure non-negative amounts
+            // Ensure non-negative amounts. Refund ledger rows are the one
+            // intentional exception: they carry a negative amount so revenue
+            // sums net correctly against the original sale.
+            $isRefundRow = ($sale->payment_type ?? null) === 'refund';
             $sale->subtotal = max(0, (float) $sale->subtotal);
             $sale->tax_amount = max(0, (float) $sale->tax_amount);
             $sale->discount_amount = max(0, (float) $sale->discount_amount);
             $sale->total_amount = max(0, (float) $sale->total_amount);
-            $sale->amount = max(0, (float) $sale->amount);
+            $sale->amount = $isRefundRow ? (float) $sale->amount : max(0, (float) $sale->amount);
 
             // Keep amount in sync with total_amount
             if ($sale->total_amount > 0) {
