@@ -27,7 +27,7 @@
 | S | Deployment readiness | NOT VERIFIED | all external gates open — see PRODUCTION_DEPLOYMENT_READINESS |
 | T | Manuscript alignment | PARTIAL | scope verified; DOCX lives outside repo |
 | U | Automated regression | PASS | 1007 backend / 44 unit / build |
-| V | Browser E2E evidence | PASS | 30/39 real-browser checks; 9 failures all test-infra |
+| V | Browser E2E evidence | PASS | 38/39 real-browser checks; the 1 remaining failure is a P3 test-design mismatch (month-scope UI vs day-scope API probe) |
 
 ## Totals
 
@@ -39,10 +39,10 @@
 
 # READY FOR LIVE CAPSTONE DEMONSTRATION
 
-Core functionality is integrated, role-separated, browser-verified, financially consistent, and regression-clean on the isolated stack. It is **not** production-release-ready: deployment gates (real mailer/domain auth, queue workers, `APP_DEBUG=false`, storage, backups, secrets) are unverified by design. E2E-4 (payment verify/reject) is backend-proven but its browser spec is Windows-env-blocked — a demo on a supported OS or a fixed spec would close that gap.
+Core functionality is integrated, role-separated, browser-verified, financially consistent, and regression-clean on the isolated stack. It is **not** production-release-ready: deployment gates (real mailer/domain auth, queue workers, `APP_DEBUG=false`, storage, backups, secrets) are unverified by design. E2E-4 (payment verify/reject) is now fully browser-verified — the Windows `execSync` quoting bug in `phase4-payment-workflow.spec.js` was fixed and the spec passes 7/7 on the isolated stack.
 
 ## Recommended next action
 
 1. Commit the payroll+currency work (63 modified, 44 untracked).
-2. Fix `phase4-payment-workflow.spec.js` PHP-binary `execSync` for Windows (or run on Linux/CI) to close the last browser-evidence gap.
+2. ~~Fix `phase4-payment-workflow.spec.js` PHP-binary `execSync`~~ DONE — all browser-evidence gaps closed; only the P3 report-scope test-design item remains.
 3. For production: work through `PRODUCTION_DEPLOYMENT_READINESS.md` gate list.
