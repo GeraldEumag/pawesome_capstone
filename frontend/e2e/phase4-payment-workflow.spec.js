@@ -3,7 +3,7 @@ const { execSync } = require('node:child_process');
 const path = require('node:path');
 
 const frontendUrl = process.env.E2E_BASE_URL || 'http://localhost:3000';
-const apiUrl = `${process.env.E2E_API_URL || 'http://127.0.0.1:8000'}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || 'http://127.0.0.1:8000').replace(/\/api\/?$/, '')}/api`;
 const backendDir = path.resolve(__dirname, '..', '..', 'backend');
 
 // 1x1 PNG used for payment-proof uploads.
@@ -55,7 +55,9 @@ test.describe('Phase 4 Payment Workflow E2E', () => {
   // a failed attempt can leave payment_status='pending'. Requires the local
   // backend + seeded dev DB.
   test.beforeEach(() => {
-    execSync("${process.env.PHP_BINARY || 'php'} " + (process.env.PAWESOME_SEED_SCRIPT || 'C:/xampp/pawesome-maintenance/pawesome_e2e_payment_fixture_seed.php'), {
+    const phpBinary = process.env.PHP_BINARY || "php";
+    const seedScript = process.env.PAWESOME_SEED_SCRIPT || "C:/xampp/pawesome-maintenance/pawesome_e2e_payment_fixture_seed.php";
+    execSync(`"${phpBinary}" "${seedScript}"`, {
       cwd: backendDir,
       stdio: 'inherit',
     });

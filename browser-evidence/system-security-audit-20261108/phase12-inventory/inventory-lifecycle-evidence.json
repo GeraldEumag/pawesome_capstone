@@ -1,10 +1,10 @@
 {
   "result": "PASS",
-  "item_id": 851,
+  "item_id": 2532,
   "product": {
-    "name": "0000 Phase12 Inventory 43451074",
-    "sku": "P12I43451074",
-    "barcode": "P12BC43451074"
+    "name": "0000 Phase12 Inventory 27525751",
+    "sku": "P12I27525751",
+    "barcode": "P12BC27525751"
   },
   "ui": {
     "product_created": true,
@@ -17,10 +17,10 @@
   },
   "database": {
     "item": {
-      "id": 851,
-      "sku": "P12I43451074",
-      "barcode": "P12BC43451074",
-      "name": "0000 Phase12 Inventory 43451074",
+      "id": 2532,
+      "sku": "P12I27525751",
+      "barcode": "P12BC27525751",
+      "name": "0000 Phase12 Inventory 27525751",
       "category": "Accessories",
       "brand": "Phase12 Audit",
       "supplier": null,
@@ -33,15 +33,15 @@
       "requires_expiry_tracking": 0,
       "issue_method": "FIFO",
       "archived_at": null,
-      "created_at": "2026-11-08 13:12:01",
-      "updated_at": "2026-11-08 13:12:21"
+      "created_at": "2026-11-17 14:58:55",
+      "updated_at": "2026-11-17 14:59:19"
     },
     "batches": [
       {
-        "id": 401,
-        "inventory_item_id": 851,
+        "id": 1179,
+        "inventory_item_id": 2532,
         "batch_no": "Batch-001",
-        "received_date": "2026-11-08",
+        "received_date": "2026-11-17",
         "manufacturing_date": null,
         "expiration_date": null,
         "quantity": 12,
@@ -50,14 +50,14 @@
         "supplier": null,
         "unit_cost": null,
         "notes": "Initial stock batch",
-        "created_at": "2026-11-08 13:12:01",
-        "updated_at": "2026-11-08 13:12:21"
+        "created_at": "2026-11-17 14:58:55",
+        "updated_at": "2026-11-17 14:59:19"
       },
       {
-        "id": 402,
-        "inventory_item_id": 851,
+        "id": 1180,
+        "inventory_item_id": 2532,
         "batch_no": "Batch-002",
-        "received_date": "2026-11-08",
+        "received_date": "2026-11-17",
         "manufacturing_date": null,
         "expiration_date": null,
         "quantity": 5,
@@ -66,14 +66,14 @@
         "supplier": null,
         "unit_cost": null,
         "notes": "New stock received",
-        "created_at": "2026-11-08 13:12:08",
-        "updated_at": "2026-11-08 13:12:08"
+        "created_at": "2026-11-17 14:59:03",
+        "updated_at": "2026-11-17 14:59:03"
       }
     ],
     "logs": [
       {
-        "id": 424,
-        "inventory_item_id": 851,
+        "id": 1248,
+        "inventory_item_id": 2532,
         "delta": 12,
         "quantity": null,
         "type": null,
@@ -89,12 +89,12 @@
         "role": null,
         "user_id": null,
         "details": null,
-        "created_at": "2026-11-08 13:12:01",
-        "updated_at": "2026-11-08 13:12:01"
+        "created_at": "2026-11-17 14:58:55",
+        "updated_at": "2026-11-17 14:58:55"
       },
       {
-        "id": 425,
-        "inventory_item_id": 851,
+        "id": 1249,
+        "inventory_item_id": 2532,
         "delta": 12,
         "quantity": 12,
         "type": "restock",
@@ -109,13 +109,13 @@
         "performed_by": "INVENTORY MANAGER",
         "role": "inventory",
         "user_id": 6,
-        "details": "{\"batch_id\":401,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
-        "created_at": "2026-11-08 13:12:01",
-        "updated_at": "2026-11-08 13:12:01"
+        "details": "{\"batch_id\":1179,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
+        "created_at": "2026-11-17 14:58:55",
+        "updated_at": "2026-11-17 14:58:55"
       },
       {
-        "id": 426,
-        "inventory_item_id": 851,
+        "id": 1250,
+        "inventory_item_id": 2532,
         "delta": 5,
         "quantity": 5,
         "type": "restock",
@@ -130,13 +130,13 @@
         "performed_by": "INVENTORY MANAGER",
         "role": "inventory",
         "user_id": 6,
-        "details": "{\"batch_id\":402,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
-        "created_at": "2026-11-08 13:12:08",
-        "updated_at": "2026-11-08 13:12:08"
+        "details": "{\"batch_id\":1180,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
+        "created_at": "2026-11-17 14:59:03",
+        "updated_at": "2026-11-17 14:59:03"
       },
       {
-        "id": 427,
-        "inventory_item_id": 851,
+        "id": 1251,
+        "inventory_item_id": 2532,
         "delta": -3,
         "quantity": 3,
         "type": "stock_adjustment_decrement",
@@ -152,12 +152,12 @@
         "role": "inventory",
         "user_id": 6,
         "details": "{\"reconciled_batch_id\":null,\"batch_written_off\":3,\"adjustment_type\":\"decrement\"}",
-        "created_at": "2026-11-08 13:12:11",
-        "updated_at": "2026-11-08 13:12:11"
+        "created_at": "2026-11-17 14:59:08",
+        "updated_at": "2026-11-17 14:59:08"
       },
       {
-        "id": 428,
-        "inventory_item_id": 851,
+        "id": 1253,
+        "inventory_item_id": 2532,
         "delta": -1,
         "quantity": 1,
         "type": "monthly_audit",
@@ -173,14 +173,14 @@
         "role": "inventory",
         "user_id": 6,
         "details": "{\"reconciled_batch_id\":null,\"batch_written_off\":1,\"audit_month\":\"2026-11\",\"system_stock\":14,\"actual_stock\":13,\"variance\":-1}",
-        "created_at": "2026-11-08 13:12:21",
-        "updated_at": "2026-11-08 13:12:21"
+        "created_at": "2026-11-17 14:59:19",
+        "updated_at": "2026-11-17 14:59:19"
       }
     ],
     "audits": [
       {
-        "id": 4,
-        "inventory_item_id": 851,
+        "id": 7,
+        "inventory_item_id": 2532,
         "system_stock": 14,
         "actual_stock": 13,
         "variance": -1,
@@ -190,9 +190,9 @@
         "reason": "Counting Error",
         "checked_by": "INVENTORY MANAGER",
         "approved_by": 2,
-        "approved_at": "2026-11-08 13:12:24",
-        "created_at": "2026-11-08 13:12:21",
-        "updated_at": "2026-11-08 13:12:24"
+        "approved_at": "2026-11-17 14:59:23",
+        "created_at": "2026-11-17 14:59:19",
+        "updated_at": "2026-11-17 14:59:23"
       }
     ]
   },
@@ -250,16 +250,16 @@
     },
     {
       "source": "browser",
-      "method": "POST",
-      "path": "/api/inventory/items",
-      "status": 201,
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
       "page": "/inventory/stock"
     },
     {
       "source": "browser",
-      "method": "GET",
-      "path": "/api/settings/public",
-      "status": 200,
+      "method": "POST",
+      "path": "/api/inventory/items",
+      "status": 201,
       "page": "/inventory/stock"
     },
     {
@@ -314,13 +314,6 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/inventory/items/851/batches",
-      "status": 200,
-      "page": "/inventory/stock"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
       "path": "/api/notifications",
       "status": 200,
       "page": "/inventory/stock"
@@ -328,6 +321,13 @@
     {
       "source": "browser",
       "method": "GET",
+      "path": "/api/inventory/items/2532/batches",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
       "path": "/api/inventory/suppliers",
       "status": 200,
       "page": "/inventory/stock"
@@ -335,7 +335,7 @@
     {
       "source": "browser",
       "method": "POST",
-      "path": "/api/inventory/items/851/batches",
+      "path": "/api/inventory/items/2532/batches",
       "status": 200,
       "page": "/inventory/stock"
     },
@@ -363,7 +363,7 @@
     {
       "source": "browser",
       "method": "POST",
-      "path": "/api/inventory/items/851/adjust-stock",
+      "path": "/api/inventory/items/2532/adjust-stock",
       "status": 200,
       "page": "/inventory/stock"
     },
@@ -378,6 +378,13 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
       "status": 200,
       "page": "/inventory/stock"
     },
@@ -392,14 +399,6 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/notifications",
-      "status": "REQUEST_FAILED",
-      "failure": "net::ERR_ABORTED",
-      "page": "/inventory/stock"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
       "status": 200,
       "page": "/inventory/monthly-audit"
     },
@@ -451,6 +450,20 @@
       "path": "/api/inventory/monthly-audit",
       "status": 200,
       "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/reports"
     },
     {
       "source": "browser",
@@ -477,13 +490,6 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/settings/public",
-      "status": 200,
-      "page": "/inventory/reports"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
       "status": 200,
       "page": "/inventory/reports"
     }

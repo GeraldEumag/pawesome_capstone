@@ -213,7 +213,13 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
     page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/api/inventory/monthly-audit" && r.status() === 200),
     page.getByRole("button", { name: /Save Monthly Audit/i }).click(),
   ]);
-  await expect(page.locator(".audit-table tbody tr", { hasText: productName }).first()).toContainText(/discrepancy/i);
+  // The save triggers fetchAuditItems() -> GET /api/inventory/monthly-audit;
+  // wait for that refresh before asserting the rendered status.
+  await page.waitForResponse(
+    (r) => r.request().method() === "GET" && new URL(r.url()).pathname === "/api/inventory/monthly-audit" && r.status() === 200,
+    { timeout: 30000 }
+  ).catch(() => {});
+  await expect(page.locator(".audit-table tbody tr", { hasText: productName }).first()).toContainText(/discrepancy/i, { timeout: 30000 });
 
   let evidence = dbItem(itemId);
   expect(Number(evidence.item.stock)).toBe(13);
