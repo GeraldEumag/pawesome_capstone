@@ -428,10 +428,11 @@ class PayrollController extends Controller
                 'salary_loan' => $payroll->salary_loan ?? 0,
                 'cash_advance' => $payroll->cash_advance ?? 0,
                 'other_deductions' => $payroll->deductions,
+                // Attendance adjustments are already removed inside gross_pay —
+                // total_deductions carries only statutory, tax, manual and
+                // loan deductions so net = gross − total stays consistent.
                 'total_deductions' => $payroll->sss_contribution + $payroll->philhealth_contribution +
                                      $payroll->pagibig_contribution + $payroll->tax_deduction +
-                                     $payroll->late_deductions + $payroll->absent_deductions +
-                                     ($payroll->undertime_deductions ?? 0) +
                                      ($payroll->salary_loan ?? 0) + ($payroll->cash_advance ?? 0) +
                                      $payroll->deductions,
             ],

@@ -584,8 +584,11 @@ class PayrollComputationService
         $loanDeduction         = max($loanDeduction, (float) ($extras['salary_loan'] ?? 0));
         $cashAdvanceDeduction  = max($cashAdvanceDeduction, (float) ($extras['cash_advance'] ?? 0));
 
+        // Attendance deductions (late/absent/undertime) are already removed
+        // inside grossPay — including them here would charge the employee
+        // twice. total_deductions covers only statutory, tax, manual and
+        // loan deductions applied to reach net pay.
         $totalDeductions = $sss + $philhealth + $pagibig + $tax
-            + $lateDeductions + $absentDeductions + $undertimeDeductions
             + $otherDeductions
             + $loanDeduction + $cashAdvanceDeduction;
 

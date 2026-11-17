@@ -609,7 +609,7 @@ class ReportsController extends Controller
         $totalDeductions = round($allRows->sum(fn ($r) =>
             ($r['deductions'] ?? 0) + ($r['sss_contribution'] ?? 0) + ($r['philhealth_contribution'] ?? 0)
             + ($r['pagibig_contribution'] ?? 0) + ($r['tax_deduction'] ?? 0)
-            + ($r['late_deductions'] ?? 0) + ($r['absent_deductions'] ?? 0)
+            + ($r['salary_loan'] ?? 0) + ($r['cash_advance'] ?? 0)
         ), 2);
 
         // Previous-period growth on saved records only.
@@ -669,7 +669,9 @@ class ReportsController extends Controller
             'user_id' => $r->user_id,
             'employee_record_id' => $r->employee_id,
             'employee_id' => $r->user_id ?? $r->employee_id,
-            'person_type' => $r->employee_id ? 'employee' : 'account',
+            'person_type' => ($r->user_id === null && $r->employee_id === null)
+                ? 'manual'
+                : ($r->employee_id ? 'employee' : 'account'),
             'employee_no' => $r->employee?->employee_no ?? $r->user?->employee_no,
             'employee_name' => $r->user?->name ?? $r->employee?->name ?? $r->employee_name ?? 'Unknown',
             'department' => $r->department ?? $r->user?->department ?? $r->employee?->department ?? 'Unassigned',
@@ -698,7 +700,7 @@ class ReportsController extends Controller
             'tax_deduction' => (float) ($r->tax_deduction ?? 0),
             'late_deductions' => (float) ($r->late_deductions ?? 0),
             'absent_deductions' => (float) ($r->absent_deductions ?? 0),
-            'total_deductions' => (float) (($r->deductions ?? 0) + ($r->sss_contribution ?? 0) + ($r->philhealth_contribution ?? 0) + ($r->pagibig_contribution ?? 0) + ($r->tax_deduction ?? 0) + ($r->late_deductions ?? 0) + ($r->absent_deductions ?? 0)),
+            'total_deductions' => (float) (($r->deductions ?? 0) + ($r->sss_contribution ?? 0) + ($r->philhealth_contribution ?? 0) + ($r->pagibig_contribution ?? 0) + ($r->tax_deduction ?? 0) + ($r->salary_loan ?? 0) + ($r->cash_advance ?? 0)),
             'net_pay' => (float) $r->net_pay,
             'status' => $r->status,
             'payment_date' => $r->payment_date?->toDateString(),

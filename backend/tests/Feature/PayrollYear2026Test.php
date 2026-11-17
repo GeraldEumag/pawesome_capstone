@@ -235,8 +235,9 @@ class PayrollYear2026Test extends TestCase
         $this->assertEqualsWithDelta(1000.0, $row['regular_holiday_pay'], 0.01);
         // gross = 13,000 + 1,000 holiday − 11,000 absent − 93.75 late
         $this->assertEqualsWithDelta(2906.25, $row['gross_pay'], 0.01);
-        // Statutory + attendance deductions exceed the small gross → net floors at 0.
-        $this->assertEquals(0, $row['net_pay']);
+        // Attendance deductions apply once (inside gross); net = 2906.25 −
+        // (650 SSS + 325 PhilHealth + 50 Pag-IBIG) = 1881.25.
+        $this->assertEqualsWithDelta(1881.25, $row['net_pay'], 0.01);
     }
 
     /**

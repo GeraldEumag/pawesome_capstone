@@ -118,6 +118,42 @@ class Payroll extends Model
         'manual_attendance' => 'array',
     ];
 
+    protected $appends = [
+        'total_deductions',
+        'is_unlinked',
+    ];
+
+    /**
+     * Sum of the actual employee deduction components — statutory, tax,
+     * manual and loan lines. Attendance adjustments are already reflected
+     * inside gross_pay, never here. NOT derived from gross−net: when
+     * deductions exceed gross, net floors at 0 and gross−net would
+     * overstate the deduction total.
+     */
+    public function getTotalDeductionsAttribute(): float
+    {
+        return round(
+            (float) $this->sss_contribution
+            + (float) $this->philhealth_contribution
+            + (float) $this->pagibig_contribution
+            + (float) $this->tax_deduction
+            + (float) $this->deductions
+            + (float) $this->salary_loan
+            + (float) $this->cash_advance,
+            2
+        );
+    }
+
+    /**
+     * Free-text manual payroll — no linked user account or employee record,
+     * so entered totals cannot be recomputed server-side. These rows carry
+     * the maker-checker approval gate (creator cannot approve).
+     */
+    public function getIsUnlinkedAttribute(): bool
+    {
+        return $this->user_id === null && $this->employee_id === null;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -144,7 +180,15 @@ class Payroll extends Model
 
         static::creating(function ($payroll) {
             if (empty($payroll->payroll_id)) {
-                $payroll->payroll_id = 'PAY-' . date('Y') . '-' . str_pad(static::count() + 1, 4, '0', STR_PAD_LEFT);
+                // Max existing sequence INCLUDING soft-deleted rows — the
+                // unique index still holds trashed payroll_ids, so counting
+                // live rows would reuse them and the insert would 500.
+                $year = date('Y');
+                $seq = (int) (static::withTrashed()
+                    ->where('payroll_id', 'like', "PAY-{$year}-%")
+                    ->selectRaw("MAX(CAST(SUBSTRING(payroll_id, -4) AS UNSIGNED)) AS seq")
+                    ->value('seq') ?? 0);
+                $payroll->payroll_id = 'PAY-' . $year . '-' . str_pad($seq + 1, 4, '0', STR_PAD_LEFT);
             }
         });
     }

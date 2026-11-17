@@ -435,9 +435,11 @@ class PayrollIndustryTest extends TestCase
         );
 
         $ded = $p['deductions'];
+        // Attendance deductions are already removed inside gross_pay — the
+        // deduction total covers statutory, tax, loan and manual lines only,
+        // so net = gross − total stays a single charge.
         $dedTotal = (float) $ded['sss'] + (float) $ded['philhealth'] + (float) $ded['pagibig']
-            + (float) $ded['tax'] + (float) $ded['late_deductions'] + (float) $ded['absent_deductions']
-            + (float) $ded['undertime_deductions'] + (float) $ded['salary_loan']
+            + (float) $ded['tax'] + (float) $ded['salary_loan']
             + (float) $ded['cash_advance'] + (float) $ded['other_deductions'];
         $this->assertEqualsWithDelta($dedTotal, (float) $ded['total_deductions'], 0.01);
         $this->assertEqualsWithDelta(

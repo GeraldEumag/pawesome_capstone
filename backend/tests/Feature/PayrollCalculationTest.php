@@ -163,12 +163,14 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 35000);
         $payroll->calculatePayroll();
 
+        // Attendance deductions are already inside gross_pay — the deduction
+        // total is statutory + tax + manual + loan lines only.
         $expectedDeductions = (float) $payroll->sss_contribution
             + (float) $payroll->philhealth_contribution
             + (float) $payroll->pagibig_contribution
             + (float) $payroll->tax_deduction
-            + (float) $payroll->late_deductions
-            + (float) $payroll->absent_deductions
+            + (float) $payroll->salary_loan
+            + (float) $payroll->cash_advance
             + (float) $payroll->deductions;
 
         $expectedNet = (float) $payroll->gross_pay - $expectedDeductions;

@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class PayrollController extends Controller
 {
@@ -96,9 +97,9 @@ class PayrollController extends Controller
             'total_gross' => round($payrolls->sum('gross_pay'), 2),
             'total_net' => round($payrolls->sum('net_pay'), 2),
             'total_deductions' => round($payrolls->sum(function ($p) {
-                return $p->sss_contribution + $p->philhealth_contribution + 
-                       $p->pagibig_contribution + $p->tax_deduction + 
-                       $p->deductions + $p->late_deductions + $p->absent_deductions;
+                return $p->sss_contribution + $p->philhealth_contribution +
+                       $p->pagibig_contribution + $p->tax_deduction +
+                       $p->deductions + $p->salary_loan + $p->cash_advance;
             }), 2),
             'total_contributions' => round($payrolls->sum(function ($p) {
                 return $p->sss_contribution + $p->philhealth_contribution + $p->pagibig_contribution;
@@ -220,28 +221,34 @@ class PayrollController extends Controller
                 // type this row belongs to. Only identity + NOT NULL columns
                 // are written here; every computed field is filled by the
                 // service below so generated payrolls match the preview.
-                $payroll = Payroll::updateOrCreate(
-                    array_merge(
-                        $isEmployee
-                            ? ['employee_id' => $employee->id]
-                            : ['user_id' => $employee->id],
+                // Retry the whole updateOrCreate on a payroll_id unique
+                // collision — each attempt re-runs the creating hook and
+                // recomputes MAX(seq)+1, so a concurrent insert that stole
+                // the suffix is recovered instead of dropping the row.
+                $payroll = retry(3, function () use ($isEmployee, $employee, $startDate, $endDate, $computed, $periodLabel) {
+                    return Payroll::updateOrCreate(
+                        array_merge(
+                            $isEmployee
+                                ? ['employee_id' => $employee->id]
+                                : ['user_id' => $employee->id],
+                            [
+                                'pay_period_start' => $startDate,
+                                'pay_period_end' => $endDate,
+                            ]
+                        ),
                         [
-                            'pay_period_start' => $startDate,
-                            'pay_period_end' => $endDate,
+                            'employee_name' => $computed['employee_name'],
+                            'pay_period_label' => $periodLabel,
+                            'department' => $computed['department'],
+                            'position' => $computed['position'],
+                            'base_salary' => $computed['base_salary'],
+                            'hourly_rate' => $computed['hourly_rate'],
+                            'status' => 'draft',
+                            'processed_by' => Auth::id(),
+                            'processed_at' => now(),
                         ]
-                    ),
-                    [
-                        'employee_name' => $computed['employee_name'],
-                        'pay_period_label' => $periodLabel,
-                        'department' => $computed['department'],
-                        'position' => $computed['position'],
-                        'base_salary' => $computed['base_salary'],
-                        'hourly_rate' => $computed['hourly_rate'],
-                        'status' => 'draft',
-                        'processed_by' => Auth::id(),
-                        'processed_at' => now(),
-                    ]
-                );
+                    );
+                }, 100, fn ($e) => $e instanceof UniqueConstraintViolationException);
 
                 // Single source of truth: full attendance-driven recomputation
                 // (premiums, statutory, loans, undertime, auto-absences).
@@ -306,10 +313,24 @@ class PayrollController extends Controller
             ], 422);
         }
 
+        // Maker-checker gate for manual/unlinked rows (no linked person →
+        // entered totals cannot be recomputed): the creator must not approve
+        // their own entry. Evaluated before the update below overwrites
+        // processed_by — until now it still holds the creator's id.
+        if ($payroll->is_unlinked && $payroll->processed_by !== null
+            && (int) $payroll->processed_by === (int) Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Manual/unlinked payroll requires approval by a different authorized manager than the creator.',
+            ], 422);
+        }
+
         $payroll->update([
             'status' => 'pending',
             'processed_by' => Auth::id(),
             'processed_at' => now(),
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
         ]);
 
         $payroll->load(['user', 'employee']);
@@ -360,6 +381,17 @@ class PayrollController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Payroll must be approved before payment can be released.',
+            ], 422);
+        }
+
+        // Manual/unlinked rows must carry a recorded approval. approved_by
+        // is only written by approve() — which enforces maker-checker — so
+        // its presence proves the gate ran. This also blocks reaching
+        // 'pending' via PUT update() and releasing without approval.
+        if ($payroll->is_unlinked && $payroll->approved_by === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Manual/unlinked payroll requires a recorded approval by a different authorized manager before release.',
             ], 422);
         }
 
@@ -548,8 +580,11 @@ class PayrollController extends Controller
             'undertime_deductions' => 'nullable|numeric|min:0',
             'salary_loan' => 'nullable|numeric|min:0',
             'cash_advance' => 'nullable|numeric|min:0',
-            'gross_pay' => 'required|numeric|min:0',
-            'net_pay' => 'required|numeric|min:0',
+            // Totals are mandatory only for free-text rows with no linked
+            // person — linked rows are always recomputed server-side below,
+            // so submitted totals can never override the authoritative math.
+            'gross_pay' => 'required_without_all:user_id,employee_id|numeric|min:0',
+            'net_pay' => 'required_without_all:user_id,employee_id|numeric|min:0',
             'payment_date' => 'nullable|date',
             'payment_method' => 'nullable|string|max:50',
             'payment_reference' => 'nullable|string|max:100',
@@ -580,14 +615,25 @@ class PayrollController extends Controller
             $validated['employee_name'] = $employee->name;
         }
 
-        $payroll = Payroll::create(array_merge($validated, [
+        // Retry the whole create on a payroll_id unique collision — each
+        // attempt regenerates the ID via the creating hook, so a concurrent
+        // insert stealing the suffix no longer surfaces as a 500.
+        $payroll = retry(3, fn () => Payroll::create(array_merge($validated, [
             'pay_period_label' => $periodLabel,
             'department' => $user?->department ?? $employee?->department ?? ($validated['department'] ?? 'Unassigned'),
             'position' => $user ? ($user->position ?? $user->role) : ($employee?->position ?? 'Staff'),
             'status' => 'draft',
             'processed_by' => Auth::id(),
             'processed_at' => now(),
-        ]));
+        ])), 100, fn ($e) => $e instanceof UniqueConstraintViolationException);
+
+        // Person-linked rows are recomputed through the authoritative
+        // service — the same path update() takes — so client-submitted
+        // gross_pay/net_pay can never persist for a real employee.
+        if ($user || $employee) {
+            $payroll->calculatePayroll(true);
+            $payroll->save();
+        }
 
         $payroll->load('user');
 

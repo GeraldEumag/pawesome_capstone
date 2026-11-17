@@ -215,6 +215,12 @@ class Phase4InventoryPayslipTest extends TestCase
 
     public function test_release_without_account_user_sends_no_email(): void
     {
+        // Unlinked (manual) row that has passed the maker-checker approval
+        // gate: creator is $this->manager, approver is a different manager —
+        // approve() writes approved_by, and markAsPaid() requires it for
+        // unlinked rows before releasing payment.
+        $approver = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+
         $payroll = Payroll::create([
             'payroll_id' => 'PAY-P4-NOACCT',
             'user_id' => null,
@@ -228,6 +234,9 @@ class Phase4InventoryPayslipTest extends TestCase
             'status' => 'pending',
             'gross_pay' => 10000,
             'net_pay' => 9500,
+            'processed_by' => $this->manager->id,
+            'approved_by' => $approver->id,
+            'approved_at' => now(),
         ]);
 
         $this->postJson("/api/manager/payroll/{$payroll->id}/release", [
