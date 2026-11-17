@@ -1,0 +1,21 @@
+{
+    "findings": [
+        {
+            "type": "blocker",
+            "gate": "fixture",
+            "message": "No bookable veterinary slot found in the next 60 days \u2014 cannot generate workflow fixture (API: http://127.0.0.1:8001/api)",
+            "at": "2026-11-17T19:19:38+01:00"
+        }
+    ],
+    "summary": {
+        "pass": null,
+        "fail": null,
+        "warn": null,
+        "blockers": 1
+    },
+    "blockers": [
+        "[fixture] No bookable veterinary slot found in the next 60 days \u2014 cannot generate workflow fixture (API: http://127.0.0.1:8001/api)"
+    ],
+    "completed_at": "2026-11-17T19:19:38+01:00",
+    "overall": "FAIL"
+}

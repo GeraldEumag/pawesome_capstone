@@ -1,0 +1,50 @@
+ENDPOINT                                 unauth   admin    manager  recep    cashier  invent   vet      vettech  customer
+admin/dashboard                          401      200      403      403      403      403      403      403      403     
+admin/users                              401      200      403      403      403      403      403      403      403     
+admin/settings                           401      200      403      403      403      403      403      403      403     
+admin/activity-logs                      401      200      200      403      403      403      403      403      403     
+admin/login-logs                         401      200      403      403      403      403      403      403      403     
+admin/reports/summary                    401      200      403      403      403      403      403      403      403     
+admin/reports/sales                      401      200      403      403      403      403      403      403      403     
+admin/reports/cashier                    401      200      403      403      403      403      403      403      403     
+admin/reports/inventory                  401      200      403      403      403      403      403      403      403     
+admin/reports/manager                    401      200      403      403      403      403      403      403      403     
+admin/reports/veterinary                 401      200      403      403      403      403      403      403      403     
+admin/reports/customers                  401      200      403      403      403      403      403      403      403     
+admin/reports/payments                   401      200      403      403      403      403      403      403      403     
+admin/reports/orders                     401      200      403      403      403      403      403      403      403     
+admin/reports/services                   401      200      403      403      403      403      403      403      403     
+admin/reports/logistics                  401      200      403      403      403      403      403      403      403     
+admin/reports/reception                  401      200      403      403      403      403      403      403      403     
+admin/reports/executive                  401      200      403      403      403      403      403      403      403     
+admin/chatbot/logs                       401      200      403      403      403      403      403      403      403     
+admin/chatbot/faqs                       401      200      403      403      403      403      403      403      403     
+admin/customers                          401      200      403      403      403      403      403      403      403     
+admin/inventory                          401      200      403      403      403      403      403      403      403     
+admin/services                           401      200      403      403      403      403      403      403      403     
+admin/suppliers                          401      200      403      403      403      403      403      403      403     
+admin/salaries                           401      200      403      403      403      403      403      403      403     
+admin/boardings                          401      200      403      403      403      403      403      403      403     
+admin/grooming                           401      200      403      403      403      403      403      403      403     
+admin/appointments                       401      200      403      403      403      403      403      403      403     
+admin/landing-page                       401      200      403      403      403      403      403      403      403     
+admin/inventory/summary                  401      200      403      403      403      403      403      403      403     
+admin/login-logs/statistics              401      200      403      403      403      403      403      403      403     
+admin/activity-logs/statistics           401      200      200      403      403      403      403      403      403     
+=== POST /admin/users (create) as non-admin ===
+manager -> 403
+receptionist -> 403
+cashier -> 403
+inventory -> 403
+veterinary -> 403
+vet_tech -> 403
+customer -> 403
+=== POST /admin/settings/general as non-admin ===
+manager -> 403
+customer -> 403
+=== DELETE /admin/users/9 as non-admin ===
+manager -> 403
+receptionist -> 403
+=== POST /admin/chatbot/faqs as non-admin ===
+manager -> 403
+customer -> 403

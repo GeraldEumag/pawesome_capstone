@@ -3,7 +3,7 @@
   "total_routes": 654,
   "route_probes": 654,
   "group_probes": 130,
-  "denied": 770,
+  "denied": 776,
   "violations": [],
   "errors": 0,
   "by_role": {
@@ -60,25 +60,9 @@
     },
     {
       "scope": "route",
-      "method": "POST",
-      "uri": "api/manager/attendance/corrections/{correction}/approve",
-      "role": "veterinary",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "POST",
-      "uri": "api/manager/payroll/thirteenth-month/{accrual}/pay",
+      "method": "PUT",
+      "uri": "api/grooming/{grooming}/status",
       "role": "cashier",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "POST",
-      "uri": "api/manager/attendance/corrections/{correction}/reject",
-      "role": "vet_tech",
       "expected": "401/403",
       "status": 404
     },
@@ -95,38 +79,6 @@
       "method": "PUT",
       "uri": "api/manager/people/{kind}/{id}/day-offs",
       "role": "inventory",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "GET",
-      "uri": "api/manager/salary-loans/{salaryLoan}",
-      "role": "inventory",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "PUT",
-      "uri": "api/manager/leave-balances/{leaveBalance}",
-      "role": "vet_tech",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "PUT",
-      "uri": "api/manager/salary-loans/{salaryLoan}",
-      "role": "veterinary",
-      "expected": "401/403",
-      "status": 404
-    },
-    {
-      "scope": "route",
-      "method": "DELETE",
-      "uri": "api/manager/salary-loans/{salaryLoan}",
-      "role": "vet_tech",
       "expected": "401/403",
       "status": 404
     }
