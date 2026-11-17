@@ -1,0 +1,107 @@
+{
+    "title": "Pawesome Cross-Role E2E Production Readiness Audit (HTTP)",
+    "started_at": "2026-11-16T21:04:52+01:00",
+    "api_base": "http://127.0.0.1:8000/api",
+    "seed": "768172",
+    "overall": "FAIL",
+    "summary": {
+        "pass": 8,
+        "fail": 1,
+        "warn": 0,
+        "blockers": 0
+    },
+    "findings": [
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as customer",
+            "at": "2026-11-16T21:04:54+01:00",
+            "detail": {
+                "email": "customer@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as receptionist",
+            "at": "2026-11-16T21:04:55+01:00",
+            "detail": {
+                "email": "receptionist@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as cashier",
+            "at": "2026-11-16T21:04:56+01:00",
+            "detail": {
+                "email": "cashier@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as inventory",
+            "at": "2026-11-16T21:04:58+01:00",
+            "detail": {
+                "email": "inventory@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as veterinary",
+            "at": "2026-11-16T21:04:59+01:00",
+            "detail": {
+                "email": "vet@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as manager",
+            "at": "2026-11-16T21:05:01+01:00",
+            "detail": {
+                "email": "manager@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "auth",
+            "message": "Login as admin",
+            "at": "2026-11-16T21:05:02+01:00",
+            "detail": {
+                "email": "admin@example.com",
+                "token_len": 52
+            }
+        },
+        {
+            "type": "pass",
+            "gate": "customer",
+            "message": "Buddy pet resolved",
+            "at": "2026-11-16T21:05:05+01:00",
+            "detail": {
+                "pet_id": 1
+            }
+        },
+        {
+            "type": "fail",
+            "gate": "customer",
+            "message": "Customer vet request creation failed",
+            "at": "2026-11-16T21:05:06+01:00",
+            "detail": {
+                "status": 422,
+                "body": "{\"success\":false,\"message\":\"This time is no longer available. Please choose another slot.\",\"errors\":{\"requested_time\":[\"Time slot overlaps an existing booking.\"]}}"
+            }
+        }
+    ],
+    "workflow": [],
+    "blockers": [],
+    "completed_at": "2026-11-16T21:05:06+01:00"
+}
