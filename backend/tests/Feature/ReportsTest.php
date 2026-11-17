@@ -241,6 +241,50 @@ class ReportsTest extends TestCase
         $this->assertStringContainsString("'+63999111222", $body);
     }
 
+    /**
+     * Regression for the P1 audit finding: a date-filtered sales report joined
+     * users (which also has created_at), so the unqualified whereDate threw
+     * SQLSTATE 1052 — then the blanket catch masked it as "200 + empty".
+     * Any date filter must now return the real rows.
+     */
+    public function test_sales_report_with_date_filter_returns_rows(): void
+    {
+        Sale::factory()->count(4)->create([
+            'status' => 'completed',
+            'amount' => 250,
+            'created_at' => now(),
+        ]);
+
+        $today = now()->toDateString();
+
+        foreach (['/api/admin/reports/sales', '/api/manager/reports/sales'] as $url) {
+            $response = $this->getJson(
+                "{$url}?from={$today}&to={$today}",
+                $this->withAdminAuth()
+            );
+
+            $response->assertOk()->assertJsonPath('success', true);
+            $this->assertGreaterThanOrEqual(
+                4,
+                $response->json('data.summary.total_orders'),
+                "{$url} returned no sales under a date filter"
+            );
+            $this->assertNotEmpty($response->json('data.sales'), "{$url} sales list was empty");
+        }
+    }
+
+    /** A genuinely empty range still returns a clean empty report (not an error). */
+    public function test_sales_report_empty_range_is_clean(): void
+    {
+        $response = $this->getJson(
+            '/api/admin/reports/sales?from=2030-01-01&to=2030-01-31',
+            $this->withAdminAuth()
+        );
+
+        $response->assertOk()->assertJsonPath('success', true);
+        $this->assertSame(0, $response->json('data.summary.total_orders'));
+    }
+
     // ============================================
     // HELPER METHOD
     // ============================================

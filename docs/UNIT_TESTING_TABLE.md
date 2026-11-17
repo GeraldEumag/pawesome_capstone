@@ -3,7 +3,7 @@
 Pawesome test results, grouped by module. Each Status comes from an actual
 test run (backend, frontend unit and E2E 2026-11-08), not from assumption.
 
-- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-15): 937 passed, 1 skipped, 0 failed (4,697 assertions), including `LandingPageContentAdminTest` (13 tests) and `Attendance2027SeederTest` (7 tests). The skip is the GD-dependent test (GD is not installed locally).
+- **Backend (PHPUnit):** against MySQL `pawesome_test`. Full run (2026-11-17, post-merge): 986 passed, 1 skipped, 0 failed (4,929 assertions), including `LandingPageContentAdminTest` (13 tests) and `Attendance2027SeederTest` (7 tests); the sales-report date-filter regression tests add 2 more. The skip is the GD-dependent test (GD is not installed locally).
 - **Frontend unit (Vitest + React Testing Library):** 32 passed in 7 files (`client.test.js`, `StatusBadge.test.jsx`, `ProtectedRoute.test.jsx`, `Login.test.jsx`, `Modal.test.jsx`, `DatePickerInput.test.jsx`, `DynamicHero.test.jsx`).
 - **Frontend E2E (Playwright):** against the live dev stack, run serially (one worker). Latest full run (2026-11-08): 583 passed, 1 failed, 1 flaky (passed on retry), 2 skipped, 0 did not run, of 587 (~44 min). The one failure — `booking-channel-gating` walk-in counter-collection — was a test-side slot-probing gap; it is now availability-driven and verified passing. The two skips are intentional (the after-18:00 check-in gate, and booking rules covered by `CustomerBookingRulesTest.php`). Statuses in the table are from individual and grouped runs.
 
@@ -95,6 +95,15 @@ missed punches, Sunday rest-day work, and two worked regular holidays — plus
 2027 PH holidays, idempotent re-runs, and a `compute` row with real
 consequences. The seeder's `run()` no-ops under `testing` so DatabaseSeeder
 registration stays safe.
+
+The final defense-readiness audit (`FINAL_DEFENSE_READINESS_AUDIT.md`, 2026-11-17)
+confirmed one P1 defect, now fixed: `Admin\ReportsController::sales()` applied
+an unqualified `created_at` in `whereDate` while joining `users` (which also
+has `created_at`) → MySQL error 1052 → a blanket `catch` masked it as
+`200` + "No records found". The date column is now qualified
+(`sales.created_at`), the mask is replaced with a logged 500, and
+`ReportsTest` gained two regression tests asserting filtered sales rows
+return on both `/api/admin/reports/sales` and `/api/manager/reports/sales`.
 
 On the landing page, replaced images used to flash for ~1s before the
 admin-configured one appeared: with no fresh cache, `DynamicHero`/`DynamicAbout`
