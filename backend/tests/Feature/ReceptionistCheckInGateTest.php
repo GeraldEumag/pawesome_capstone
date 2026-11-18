@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Pet;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -34,8 +35,8 @@ class ReceptionistCheckInGateTest extends TestCase
         return Boarding::create(array_merge([
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
-            'check_in' => Carbon::today()->toDateString(),
-            'check_out' => Carbon::today()->toDateString(),
+            'check_in' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'status' => 'approved',
             'payment_status' => 'paid',
         ], $overrides));
@@ -61,8 +62,8 @@ class ReceptionistCheckInGateTest extends TestCase
     {
         $receptionist = $this->receptionist();
         $boarding = $this->boarding([
-            'check_in' => Carbon::tomorrow()->toDateString(),
-            'check_out' => Carbon::tomorrow()->toDateString(),
+            'check_in' => Carbon::tomorrow(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => Carbon::tomorrow(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
         ]);
 
         $this->withHeaders($this->authHeaders($receptionist))
@@ -100,7 +101,7 @@ class ReceptionistCheckInGateTest extends TestCase
             'pet_name' => $pet->name,
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
-            'request_date' => Carbon::tomorrow()->toDateString(),
+            'request_date' => Carbon::tomorrow(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'request_time' => '10:00',
             'status' => 'pending',
             'payment_status' => 'unpaid',
@@ -127,7 +128,7 @@ class ReceptionistCheckInGateTest extends TestCase
             'pet_name' => 'Milo',
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
-            'request_date' => Carbon::today()->toDateString(),
+            'request_date' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
             'payment_status' => 'unpaid',
@@ -150,7 +151,7 @@ class ReceptionistCheckInGateTest extends TestCase
             'pet_name' => 'Milo',
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
-            'request_date' => Carbon::tomorrow()->toDateString(),
+            'request_date' => Carbon::tomorrow(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
             'payment_status' => 'paid',
@@ -183,7 +184,7 @@ class ReceptionistCheckInGateTest extends TestCase
             'pet_name' => $pet->name,
             'request_type' => 'grooming',
             'service_name' => 'Bath and Brush',
-            'request_date' => Carbon::today()->toDateString(),
+            'request_date' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
             'payment_status' => 'paid',
@@ -212,7 +213,7 @@ class ReceptionistCheckInGateTest extends TestCase
             'pet_name' => $pet->name,
             'request_type' => 'hotel',
             'service_name' => 'Pet Hotel',
-            'request_date' => Carbon::today()->toDateString(),
+            'request_date' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'status' => 'approved',
             'payment_status' => 'paid',
         ]);
@@ -225,8 +226,8 @@ class ReceptionistCheckInGateTest extends TestCase
             'id' => $serviceRequest->id,
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
-            'check_in' => Carbon::today()->toDateString(),
-            'check_out' => Carbon::today()->toDateString(),
+            'check_in' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'status' => 'approved',
             'payment_status' => 'paid',
         ]);
@@ -236,8 +237,8 @@ class ReceptionistCheckInGateTest extends TestCase
             'service_request_id' => $serviceRequest->id,
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
-            'check_in' => Carbon::today()->toDateString(),
-            'check_out' => Carbon::today()->toDateString(),
+            'check_in' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'status' => 'approved',
             'payment_status' => 'paid',
         ]);
@@ -280,7 +281,7 @@ class ReceptionistCheckInGateTest extends TestCase
             'pet_name' => $pet->name,
             'request_type' => 'hotel',
             'service_name' => 'Pet Hotel',
-            'request_date' => Carbon::today()->toDateString(),
+            'request_date' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'status' => 'approved',
             'payment_status' => 'paid',
         ]);
@@ -289,8 +290,8 @@ class ReceptionistCheckInGateTest extends TestCase
             'service_request_id' => $serviceRequest->id,
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
-            'check_in' => Carbon::today()->toDateString(),
-            'check_out' => Carbon::today()->toDateString(),
+            'check_in' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+            'check_out' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'status' => 'approved',
             'payment_status' => 'paid',
         ]);
@@ -338,8 +339,8 @@ class ReceptionistCheckInGateTest extends TestCase
         $this->withHeaders($this->authHeaders($receptionist))
             ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/schedule", [
                 'room_id' => $room->id,
-                'check_in' => Carbon::today()->toDateString(),
-                'check_out' => Carbon::today()->toDateString(),
+                'check_in' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
+                'check_out' => Carbon::today(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
                 'check_in_time' => '10:00',
                 'check_out_time' => '18:00',
                 'total_amount' => 500,

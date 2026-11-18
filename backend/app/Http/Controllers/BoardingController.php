@@ -97,14 +97,19 @@ class BoardingController extends Controller
             return;
         }
 
-        $query = BoardingRoomReservation::query();
-        if ($boarding->service_request_id) {
-            $query->where('source_type', 'service_request')
-                ->where('source_id', $boarding->service_request_id);
-        } else {
-            $query->whereIn('source_type', ['pet_hotel', 'vet_boarding'])
-                ->where('source_id', $boarding->id);
-        }
+        $query = BoardingRoomReservation::query()->where(function ($query) use ($boarding) {
+            if ($boarding->service_request_id) {
+                $query->where(function ($source) use ($boarding) {
+                    $source->where('source_type', 'service_request')
+                        ->where('source_id', $boarding->service_request_id);
+                });
+            }
+
+            $query->orWhere(function ($source) use ($boarding) {
+                $source->whereIn('source_type', ['pet_hotel', 'vet_boarding'])
+                    ->where('source_id', $boarding->id);
+            });
+        });
 
         $query->whereNotIn('status', ['cancelled', 'checked_out'])->update(['status' => $status]);
     }
@@ -1281,7 +1286,9 @@ class BoardingController extends Controller
             }
 
             $scheduledDate = $boarding->check_in ?? $boarding->check_in_date ?? null;
-            if ($scheduledDate && !Carbon::parse($scheduledDate)->isToday()) {
+            $scheduledDateOnly = $scheduledDate ? Carbon::parse($scheduledDate)->toDateString() : null;
+            $storeToday = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->toDateString();
+            if ($scheduledDateOnly && $scheduledDateOnly !== $storeToday) {
                 throw new HttpResponseException(response()->json(['error' => 'Check-in is only allowed on the scheduled date.'], 422));
             }
 

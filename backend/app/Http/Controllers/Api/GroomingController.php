@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Grooming;
 use App\Models\Pet;
+use App\Models\ServiceRequest;
 use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Services\BookingAvailabilityService;
@@ -106,6 +107,31 @@ class GroomingController extends Controller
         $oldStatus = $grooming->status;
         $newStatus = $validated['status'];
 
+        if ($oldStatus !== $newStatus && !$grooming->canTransitionTo($newStatus)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid grooming status transition.',
+                'current_status' => $oldStatus,
+                'requested_status' => $newStatus,
+            ], 422);
+        }
+
+        $serviceRequest = $grooming->service_request_id
+            ? ServiceRequest::find($grooming->service_request_id)
+            : null;
+        if (
+            $serviceRequest
+            && $serviceRequest->status !== $newStatus
+            && !Grooming::allowsTransition((string) $serviceRequest->status, $newStatus)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid grooming booking status transition.',
+                'current_status' => $serviceRequest->status,
+                'requested_status' => $newStatus,
+            ], 422);
+        }
+
         if (in_array($newStatus, ['approved', 'in_progress'], true)) {
             $this->ensureBaseBillingItem($grooming);
         }
@@ -134,6 +160,13 @@ class GroomingController extends Controller
 
         $grooming->status = $newStatus;
         $grooming->save();
+        if ($serviceRequest && $serviceRequest->status !== $newStatus) {
+            $serviceRequest->status = $newStatus;
+            if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('service_requests', 'completed_at')) {
+                $serviceRequest->completed_at = now();
+            }
+            $serviceRequest->save();
+        }
 
         if ($newStatus === 'completed' && $oldStatus !== 'completed') {
             $this->sendGroomingCompletionNotification($grooming);

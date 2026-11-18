@@ -334,9 +334,38 @@ class ReceptionistRequestController extends Controller
         $serviceRequest = ServiceRequest::findOrFail($id);
         $previousStatus = $serviceRequest->status;
         $hasPendingProof = $serviceRequest->payment_status === 'pending' && (bool) $serviceRequest->payment_proof;
+        $linkedGrooming = $this->requestIsGrooming($serviceRequest)
+            ? Grooming::where('service_request_id', $serviceRequest->id)->first()
+            : null;
         $linkedPaymentStatus = $hasPendingProof
             ? 'pending'
             : (in_array($serviceRequest->payment_status, ['paid', 'partial', 'rejected'], true) ? $serviceRequest->payment_status : 'unpaid');
+
+        if (
+            $this->requestIsGrooming($serviceRequest)
+            && $previousStatus !== $validated['status']
+            && !Grooming::allowsTransition((string) $previousStatus, $validated['status'])
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid grooming booking status transition.',
+                'current_status' => $previousStatus,
+                'requested_status' => $validated['status'],
+            ], 422);
+        }
+
+        if (
+            $linkedGrooming
+            && $linkedGrooming->status !== $validated['status']
+            && !$linkedGrooming->canTransitionTo($validated['status'])
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid grooming status transition.',
+                'current_status' => $linkedGrooming->status,
+                'requested_status' => $validated['status'],
+            ], 422);
+        }
 
         if ($validated['status'] === 'approved'
             && $previousStatus === 'pending'
@@ -380,7 +409,11 @@ class ReceptionistRequestController extends Controller
                         'message' => 'Booking must be paid before check-in.',
                     ], 422);
                 }
-                if ($serviceRequest->request_date && !Carbon::parse($serviceRequest->request_date)->isToday()) {
+                $scheduledDate = $serviceRequest->request_date
+                    ? Carbon::parse($serviceRequest->request_date)->toDateString()
+                    : null;
+                $storeToday = Carbon::now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString();
+                if ($scheduledDate && $scheduledDate !== $storeToday) {
                     return response()->json([
                         'message' => 'Check-in is only allowed on the scheduled date.',
                     ], 422);
@@ -456,6 +489,14 @@ class ReceptionistRequestController extends Controller
             if (Schema::hasColumn('boardings', 'service_request_id')) {
                 Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
+        }
+
+        if ($linkedGrooming && in_array($newStatus, ['in_progress', 'completed'], true)) {
+            $groomingUpdates = ['status' => $newStatus];
+            if ($newStatus === 'completed') {
+                $groomingUpdates['completed_at'] = now();
+            }
+            $linkedGrooming->update($groomingUpdates);
         }
 
         // Safety net: create/update linked records when approving via PATCH

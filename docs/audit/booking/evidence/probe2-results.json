@@ -1,0 +1,146 @@
+[
+    {
+        "id": "V-CREATE",
+        "desc": "vet request created",
+        "http": 201,
+        "verdict": "PASS",
+        "detail": "sr=283",
+        "message": "Booking request submitted successfully."
+    },
+    {
+        "id": "V-APPR",
+        "desc": "approve with veterinarian_id=8",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "appt=71",
+        "message": "Request approved successfully."
+    },
+    {
+        "id": "V-DAPPR",
+        "desc": "double approve",
+        "http": 200,
+        "verdict": "FAIL",
+        "detail": "expect 4xx",
+        "message": "Request is already approved and assigned."
+    },
+    {
+        "id": "V-BAD1",
+        "desc": "scheduled -> completed direct",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect rejected",
+        "message": "Invalid status transition"
+    },
+    {
+        "id": "V-BAD2",
+        "desc": "bogus status value",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Invalid status"
+    },
+    {
+        "id": "V-START",
+        "desc": "vet starts consultation",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "status=in_consultation",
+        "message": "Appointment started successfully"
+    },
+    {
+        "id": "V-MED",
+        "desc": "vet saves medical notes",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Medical information updated successfully"
+    },
+    {
+        "id": "H-CREATE",
+        "desc": "customer boarding with vax card",
+        "http": 201,
+        "verdict": "PASS",
+        "detail": "boarding=64 msg={\"message\":\"Reservation created successfully\",\"boarding\":{\"pet_id\":\"133\",\"pet_name\":\"P9PetB944173\",\"pet_type\":\"Dog\",\"pet",
+        "message": "Reservation created successfully"
+    },
+    {
+        "id": "H-OVERLAP",
+        "desc": "same room+date second booking",
+        "http": 201,
+        "verdict": "CHECK",
+        "detail": "capacity-dependent: expect 4xx when cap=1",
+        "message": "Reservation created successfully"
+    },
+    {
+        "id": "H-APPR-NOVERIFY",
+        "desc": "approve before vax verification",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect gate",
+        "message": "The vaccination card must be verified before approving this online boarding."
+    },
+    {
+        "id": "H-VAXV",
+        "desc": "receptionist verifies vax card",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Vaccination card verified successfully."
+    },
+    {
+        "id": "H-APPR",
+        "desc": "approve after vax verification",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Boarding request approved and inventory deducted"
+    },
+    {
+        "id": "H-DAPPR",
+        "desc": "double boarding approve",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Only pending boarding requests can be confirmed"
+    },
+    {
+        "id": "H-CKIN-NOTTODAY",
+        "desc": "check-in before scheduled day",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect date\/payment gate",
+        "message": "Booking must be paid before check-in."
+    },
+    {
+        "id": "PAY-1",
+        "desc": "customer uploads proof",
+        "http": 422,
+        "verdict": "CHECK",
+        "detail": "payment_status=?",
+        "message": "The payment proof field must be a file. (and 1 more error)"
+    },
+    {
+        "id": "PAY-2",
+        "desc": "approve pending-payment request",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Request approved successfully."
+    },
+    {
+        "id": "PAY-3",
+        "desc": "cashier verifies payment",
+        "http": 422,
+        "verdict": "CHECK",
+        "detail": "status=?",
+        "message": "This booking was made online and cannot be settled with counter cash unless its submitted e-wallet proof was rejected. Verify the customer's payment proof, or reject the proof first."
+    },
+    {
+        "id": "PAY-4",
+        "desc": "double verify",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect 4xx",
+        "message": "This booking was made online and cannot be settled with counter cash unless its submitted e-wallet proof was rejected. Verify the customer's payment proof, or reject the proof first."
+    }
+]

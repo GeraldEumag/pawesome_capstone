@@ -9,6 +9,15 @@ class Grooming extends Model
 {
     use SoftDeletes, \App\Models\Concerns\InheritsBookingChannel;
 
+    public const STATUS_TRANSITIONS = [
+        'pending' => ['approved', 'rejected', 'cancelled'],
+        'approved' => ['in_progress', 'cancelled'],
+        'in_progress' => ['completed', 'cancelled'],
+        'rejected' => [],
+        'cancelled' => [],
+        'completed' => [],
+    ];
+
     protected $fillable = [
         'customer_id',
         'pet_id',
@@ -67,5 +76,15 @@ class Grooming extends Model
     public function pet()
     {
         return $this->belongsTo(Pet::class);
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return self::allowsTransition($this->status, $status);
+    }
+
+    public static function allowsTransition(string $from, string $to): bool
+    {
+        return in_array($to, self::STATUS_TRANSITIONS[$from] ?? [], true);
     }
 }

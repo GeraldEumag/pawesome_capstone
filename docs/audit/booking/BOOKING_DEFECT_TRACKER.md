@@ -1,0 +1,25 @@
+# Booking Defect Tracker
+
+Severity scale: **P0** data loss / unauthorized access / double-booking / corruption · **P1** core workflow blocked or wrong business outcome · **P2** incorrect filtering/status display/sync · **P3** cosmetic or structural note.
+
+Status: OPEN · CONFIRMED · FIXED+REGRESSED · DOCUMENTED (intended behavior) · NOT A DEFECT.
+
+| ID | Sev | Module | Channel | Finding | Evidence | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| DEF-001 | P2 | Grooming | both | Both receptionist status paths accepted terminal-state reopen (`cancelled→approved/in_progress`); the primary request-status endpoint also failed to sync linked `groomings` for `in_progress`/`completed`. Live API returned 200 for invalid transitions. | `Api\GroomingController@updateStatus`, `ReceptionistRequestController@updateStatus`; direct audit-DB probes | **FIXED+REGRESSED** — transition graph in `Grooming`; both routes validate, service-request and child status synchronize; `BookingFinalAuditTest` (5 tests) |
+| DEF-002 | P2 | Hotel | walk-in | `syncRoomReservationStatus()` looked only for `source_type=service_request` whenever a boarding had a linked service request. Walk-in reservations use `source_type=pet_hotel`, `source_id=boarding.id`; check-in/out left the reservation `pending`, so the room stayed unavailable after checkout. Live walk-in #68 completed, reservation #30 remained pending and room #9 stayed unavailable. | `BoardingController::syncRoomReservationStatus`; live checkout + SQL + availability query | **FIXED+REGRESSED** — query matches both source conventions; test added to `BookingFinalAuditTest` |
+| DEF-003 | P2 | Hotel | both | Check-in used app/UTC `isToday()` while booking dates are store-local. A paid, approved walk-in dated 2026-11-19 (store-local today, UTC still 2026-11-18) was rejected. | `BoardingController@checkIn`, `ReceptionistRequestController@updateStatus`; live API repro | **FIXED+REGRESSED** — compare store-local calendar dates; `BookingFinalAuditTest` + `ReceptionistCheckInGateTest` pass |
+| DEF-004 | — | Hotel | online | Initial overlap probe used a room with `total_rooms=5`; two overlapping reservations were accepted correctly within capacity. Controlled room with capacity 1 rejected the second booking with 422. | Audit API + DB room #8 | NOT A DEFECT |
+| DEF-005 | P2 | Grooming | both | Final code review found receptionist status endpoint also needed to reject cancelled grooming service requests when their linked execution row is absent (e.g. cancellation before approval). Parent-request transition guard added; focused regression passes. | `ReceptionistRequestController@updateStatus`; `BookingFinalAuditTest::test_receptionist_cannot_reopen_cancelled_grooming_request_without_execution_row` | **FIXED+REGRESSED** |
+| RES-001 | P2 | Grooming | both | The two rows (`service_requests`, `groomings`) are saved sequentially, not in one DB transaction. A DB failure between writes could leave status drift despite transition guards. No failure injection/repro was run. | `Api\GroomingController@updateStatus`; `ReceptionistRequestController@updateStatus` | OPEN — wrap status mutations in an atomic transaction and add rollback/failure-injection test |
+| DB-001 | P3 | All | both | `service_request_id` link columns (`appointments`, `groomings`, `boardings`), `boardings.room_id`, `boarding_room_reservations.room_id`, `service_requests.boarding_room_id`, actor columns lack FKs. Zero orphans today; integrity held by transactions. | `information_schema.KEY_COLUMN_USAGE` | DOCUMENTED — migration only with approval |
+| DB-002 | P3 | Vet/Groom | both | `appointments.status` varchar(50), `groomings.status` varchar(255) — no DB enum; app-layer validation only. | `information_schema.COLUMNS` | DOCUMENTED |
+| DB-003 | P3 | All | both | `service_requests.status` enum carries `cancelled` + `canceled` and a `paid` status (legacy); `BookingWorkflowStage` normalizes both spellings. | enum dump | DOCUMENTED |
+| DB-004 | P3 | Reports | online | 210 `service_requests` rows have NULL `booking_channel` (pre-migration); preserve as legacy unknown rather than infer a channel. | audit DB clone | DOCUMENTED |
+| SEC-001 | — | All | both | Direct live probes: unauthenticated mutation returned 401; customer/vet/receptionist/cashier cross-role mutations returned 403; customer cannot use receptionist walk-in route. | `probe-results.json` (first pass) | VERIFIED |
+| P1-SALES | P1 | Reports | n/a | Date-filtered sales report issue already fixed in commit `21e480a` (`sales.created_at` qualification; errors no longer masked). | manager/admin filtered API probes each HTTP 200, 48 rows, nonzero revenue | **FIXED+REGRESSED** |
+
+## Defect detail template
+
+Each confirmed defect will be expanded below with reproduction steps, root
+cause, fix, and regression evidence before closure.

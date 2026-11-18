@@ -1,0 +1,218 @@
+[
+    {
+        "id": "SEC-001",
+        "desc": "unauthenticated POST \/customer\/requests",
+        "http": 401,
+        "verdict": "CHECK",
+        "detail": "expect 401",
+        "message": "Unauthenticated."
+    },
+    {
+        "id": "SEC-003",
+        "desc": "customer calls receptionist approve",
+        "http": 403,
+        "verdict": "CHECK",
+        "detail": "expect 403",
+        "message": "Forbidden."
+    },
+    {
+        "id": "SEC-006",
+        "desc": "vet calls receptionist approve",
+        "http": 403,
+        "verdict": "CHECK",
+        "detail": "expect 403",
+        "message": "Forbidden."
+    },
+    {
+        "id": "SEC-004",
+        "desc": "receptionist calls cashier verify",
+        "http": 403,
+        "verdict": "CHECK",
+        "detail": "expect 403",
+        "message": "Forbidden."
+    },
+    {
+        "id": "SEC-005",
+        "desc": "cashier completes vet appointment",
+        "http": 403,
+        "verdict": "CHECK",
+        "detail": "expect 403",
+        "message": "Forbidden."
+    },
+    {
+        "id": "SEC-009",
+        "desc": "customer calls walk-ins endpoint",
+        "http": 403,
+        "verdict": "CHECK",
+        "detail": "expect 403",
+        "message": "Forbidden."
+    },
+    {
+        "id": "SEC-011",
+        "desc": "vet calls cashier verify",
+        "http": 403,
+        "verdict": "CHECK",
+        "detail": "expect 403",
+        "message": "Forbidden."
+    },
+    {
+        "id": "VET-001",
+        "desc": "customer creates vet request",
+        "http": 201,
+        "verdict": "PASS",
+        "detail": "sr=280 stored_price=500",
+        "message": "Booking request submitted successfully."
+    },
+    {
+        "id": "VET-007",
+        "desc": "price spoof (sent 0.01) ignored",
+        "http": 201,
+        "verdict": "PASS",
+        "detail": "stored=500",
+        "message": "Booking request submitted successfully."
+    },
+    {
+        "id": "VET-005",
+        "desc": "immediate duplicate submit",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect 4xx duplicate\/slot guard",
+        "message": "This time is no longer available. Please choose another slot."
+    },
+    {
+        "id": "VET-004a",
+        "desc": "outside-hours slot rejected",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Selected time is outside shop opening hours. Please choose between 10:00 AM \u2013 6:00 PM."
+    },
+    {
+        "id": "VET-002",
+        "desc": "request visible in receptionist pending",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "sr=280",
+        "message": "OK"
+    },
+    {
+        "id": "VET-006",
+        "desc": "receptionist approves",
+        "http": 422,
+        "verdict": "CHECK",
+        "detail": "",
+        "message": "Choose a valid veterinarian before approving this vet request."
+    },
+    {
+        "id": "VET-008",
+        "desc": "double approve",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect 4xx \u2014 not a second appointment",
+        "message": "Choose a valid veterinarian before approving this vet request."
+    },
+    {
+        "id": "VET-009",
+        "desc": "reject without reason",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "The rejection reason field is required."
+    },
+    {
+        "id": "GRM-001",
+        "desc": "customer creates grooming request",
+        "http": 201,
+        "verdict": "PASS",
+        "detail": "sr=281",
+        "message": "Booking request submitted successfully."
+    },
+    {
+        "id": "GRM-008",
+        "desc": "receptionist approves grooming",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Request approved successfully."
+    },
+    {
+        "id": "GRM-009",
+        "desc": "complete while unpaid",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "expect 422 unpaid gate",
+        "message": "Grooming cannot be completed until payment is fully verified."
+    },
+    {
+        "id": "GRM-010",
+        "desc": "cancel grooming",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "Grooming status updated"
+    },
+    {
+        "id": "DEF-001a",
+        "desc": "cancelled -> approved transition",
+        "http": 200,
+        "verdict": "FAIL",
+        "detail": "DEF-001: no transition guard if 200",
+        "message": "Grooming status updated"
+    },
+    {
+        "id": "DEF-001b",
+        "desc": "cancelled -> in_progress transition",
+        "http": 200,
+        "verdict": "FAIL",
+        "detail": "DEF-001",
+        "message": "Grooming status updated"
+    },
+    {
+        "id": "HOT-000",
+        "desc": "hotel fixtures missing (pet\/room)",
+        "http": 0,
+        "verdict": "BLOCKED",
+        "detail": "",
+        "message": ""
+    },
+    {
+        "id": "WI-VET-1",
+        "desc": "walk-in vet booking",
+        "http": 201,
+        "verdict": "CHECK",
+        "detail": "sr=",
+        "message": "Walk-in booking created successfully"
+    },
+    {
+        "id": "WI-VET-2",
+        "desc": "booking_channel=walk_in stamped",
+        "http": 201,
+        "verdict": "CHECK",
+        "detail": "channel=NULL",
+        "message": "Walk-in booking created successfully"
+    },
+    {
+        "id": "WI-GRM-1",
+        "desc": "walk-in grooming outside-hours slot",
+        "http": 422,
+        "verdict": "PASS",
+        "detail": "",
+        "message": "This walk-in time is unavailable. Choose a future time within business hours with no schedule conflict."
+    },
+    {
+        "id": "P1-001",
+        "desc": "sales report with date filter",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "rows=48",
+        "message": "{\"success\":true,\"data\":{\"summary\":{\"total_revenue\":23090,\"total_orders\":48,\"completed_orders\":32,\"pending_orders\":0},\"sales\":[{\"id\":76,\"amount\":\"900.00\",\"cash_a"
+    },
+    {
+        "id": "P1-002",
+        "desc": "admin sales report date filter",
+        "http": 200,
+        "verdict": "PASS",
+        "detail": "rows=48",
+        "message": "{\"success\":true,\"data\":{\"summary\":{\"total_revenue\":23090,\"total_orders\":48,\"completed_orders\":32,\"pending_orders\":0},\"sales\":[{\"id\":76,\"amount\":\"900.00\",\"cash_a"
+    }
+]
