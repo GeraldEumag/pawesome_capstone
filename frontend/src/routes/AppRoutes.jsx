@@ -12,6 +12,7 @@ import KioskGate from "../components/kiosk/KioskGate";
 import Dashboard from "../components/Dashboard";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AuthRedirectListener from "../components/shared/AuthRedirectListener";
+import MyAttendanceCorrection from "../components/shared/MyAttendanceCorrection";
 
 // Module routes
 import AdminRoutes from "./AdminRoutes";
@@ -44,6 +45,14 @@ const AppRoutes = () => (
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/attendance"
+        element={
+          <ProtectedRoute>
+            <MyAttendanceCorrection />
           </ProtectedRoute>
         }
       />

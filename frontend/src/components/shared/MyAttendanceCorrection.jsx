@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/client";
+import { attendanceApi } from "../../api/attendance";
 import "./MyAttendanceCorrection.css";
 
 const STATUS_COLORS = {
@@ -11,17 +12,63 @@ const STATUS_COLORS = {
 const MyAttendanceCorrection = () => {
   const [attendance, setAttendance] = useState([]);
   const [corrections, setCorrections] = useState([]);
+  const [today, setToday] = useState("");
+  const [punchLoading, setPunchLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [selected, setSelected]   = useState(null);
   const [form, setForm]           = useState({ requested_check_in: "", requested_check_out: "", reason: "" });
   const [saving, setSaving]       = useState(false);
   const [msg, setMsg]             = useState({ text: "", type: "" });
 
-  const load = () => {
-    apiRequest("/my-attendance").then((r) => setAttendance(r?.data || r || [])).catch(() => {});
-    apiRequest("/my-attendance/corrections").then((r) => setCorrections(r?.data || r || [])).catch(() => {});
+  const load = async () => {
+    setLoadError("");
+    try {
+      const [attendanceResponse, correctionResponse] = await Promise.all([
+        apiRequest("/my-attendance"),
+        apiRequest("/my-attendance/corrections"),
+      ]);
+      setToday(attendanceResponse?.today || "");
+      setAttendance(Array.isArray(attendanceResponse?.data) ? attendanceResponse.data : []);
+      const correctionData = correctionResponse?.data;
+      setCorrections(
+        Array.isArray(correctionData?.data)
+          ? correctionData.data
+          : Array.isArray(correctionData)
+            ? correctionData
+            : []
+      );
+    } catch (error) {
+      setLoadError(error.message || "Unable to load your attendance records.");
+      setAttendance([]);
+      setCorrections([]);
+    }
   };
 
   useEffect(() => { load(); }, []);
+
+  const todayAttendance = attendance.find(
+    (record) => String(record.date || "").slice(0, 10) === today
+  );
+
+  const recordPunch = async () => {
+    if (punchLoading) return;
+    setPunchLoading(true);
+    setMsg({ text: "", type: "" });
+    try {
+      if (todayAttendance?.check_in && !todayAttendance?.check_out) {
+        await attendanceApi.checkOut();
+        setMsg({ text: "Time-out recorded.", type: "success" });
+      } else if (!todayAttendance?.check_in) {
+        await attendanceApi.checkIn();
+        setMsg({ text: "Time-in recorded.", type: "success" });
+      }
+      await load();
+    } catch (error) {
+      setMsg({ text: error.message || "Unable to record attendance.", type: "error" });
+    } finally {
+      setPunchLoading(false);
+    }
+  };
 
   const fileCorrection = async () => {
     if (!selected) { setMsg({ text: "Select an attendance record to correct.", type: "error" }); return; }
@@ -46,6 +93,32 @@ const MyAttendanceCorrection = () => {
     <div className="mac-container">
       <h2 className="mac-title">My Attendance</h2>
       {msg.text && <p className={`mac-msg ${msg.type}`}>{msg.text}</p>}
+      {loadError && <p className="mac-msg error">{loadError}</p>}
+
+      <section className="mac-section">
+        <h4 className="mac-section-title">Today's Time Record</h4>
+        <div className="mac-form glass-card">
+          <p><strong>{today || "Loading business date..."}</strong></p>
+          <p className="mac-current">
+            In: {todayAttendance?.check_in ? String(todayAttendance.check_in).slice(0, 5) : "—"}
+            {" · "}
+            Out: {todayAttendance?.check_out ? String(todayAttendance.check_out).slice(0, 5) : "—"}
+            {" · "}
+            {todayAttendance?.status || "Not punched"}
+          </p>
+          <button
+            className="mac-btn primary"
+            onClick={recordPunch}
+            disabled={punchLoading || Boolean(todayAttendance?.check_in && todayAttendance?.check_out)}
+          >
+            {punchLoading
+              ? "Recording..."
+              : todayAttendance?.check_in
+                ? todayAttendance?.check_out ? "Day Complete" : "Time Out"
+                : "Time In"}
+          </button>
+        </div>
+      </section>
 
       <div className="mac-columns">
         {/* Attendance list */}

@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Boarding;
 use App\Models\Customer;
 use App\Models\EmailDelivery;
+use App\Models\Grooming;
 use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceRequest;
@@ -148,12 +149,21 @@ class EmailServiceWorkflowTest extends TestCase
         [$user] = $this->verifiedCustomer(['email' => 'customer@example.com']);
         $receptionist = User::factory()->create(['role' => 'receptionist', 'is_active' => true]);
         $serviceRequest = $this->submitGroomingRequest($user);
+        $headers = $this->bearer($receptionist);
+
+        $this->postJson("/api/receptionist/requests/{$serviceRequest->id}/approve", [], $headers)
+            ->assertOk();
+        $this->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
+            'status' => 'in_progress',
+        ], $headers)->assertOk();
+
         // Grooming can only be completed once payment is fully verified.
         $serviceRequest->update(['payment_status' => 'paid']);
+        Grooming::where('service_request_id', $serviceRequest->id)->update(['payment_status' => 'paid']);
 
         $this->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
             'status' => 'completed',
-        ], $this->bearer($receptionist))->assertOk();
+        ], $headers)->assertOk();
 
         $delivery = EmailDelivery::where('event_key', 'booking.completed')->firstOrFail();
         $this->assertSame('service_request', $delivery->source_type);
@@ -165,7 +175,7 @@ class EmailServiceWorkflowTest extends TestCase
 
         $this->patchJson("/api/receptionist/requests/{$serviceRequest->id}/status", [
             'status' => 'completed',
-        ], $this->bearer($receptionist))->assertOk();
+        ], $headers)->assertOk();
         $this->assertSame(1, EmailDelivery::where('event_key', 'booking.completed')->count());
     }
 

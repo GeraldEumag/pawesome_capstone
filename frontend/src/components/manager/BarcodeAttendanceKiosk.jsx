@@ -61,6 +61,7 @@ const BarcodeAttendanceKiosk = () => {
 
   const inputRef = useRef(null);
   const resultTimerRef = useRef(null);
+  const scanInFlightRef = useRef(false);
 
   // ── Live clock ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -110,8 +111,9 @@ const BarcodeAttendanceKiosk = () => {
   // ── Handle scan / submit ────────────────────────────────────────────────
   const handleScan = useCallback(async (barcode) => {
     const trimmed = barcode.trim();
-    if (!trimmed) return;
+    if (!trimmed || scanInFlightRef.current) return;
 
+    scanInFlightRef.current = true;
     setLoading(true);
     setError("");
     setResult(null);
@@ -145,6 +147,7 @@ const BarcodeAttendanceKiosk = () => {
       setError(msg);
       focusInput();
     } finally {
+      scanInFlightRef.current = false;
       setLoading(false);
     }
   }, [loadTodayLog, focusInput]);

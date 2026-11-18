@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\BiometricCredential;
 use App\Models\User;
+use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ class FingerprintController extends Controller
      */
     public function registerChallenge(Request $request): JsonResponse
     {
+        return $this->biometricUnavailable();
+
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
         ]);
@@ -51,6 +54,8 @@ class FingerprintController extends Controller
      */
     public function registerCredential(Request $request): JsonResponse
     {
+        return $this->biometricUnavailable();
+
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'credential_id' => 'required|string',
@@ -92,6 +97,8 @@ class FingerprintController extends Controller
      */
     public function verifyChallenge(Request $request): JsonResponse
     {
+        return $this->biometricUnavailable();
+
         $challenge = Str::random(32);
         $cacheKey = 'webauthn_auth_' . $challenge;
 
@@ -113,6 +120,8 @@ class FingerprintController extends Controller
      */
     public function verifyAndPunch(Request $request): JsonResponse
     {
+        return $this->biometricUnavailable();
+
         $validated = $request->validate([
             'credential_id' => 'required|string',
             'type' => 'nullable|in:check_in,check_out',
@@ -169,8 +178,9 @@ class FingerprintController extends Controller
             $attendance->biometric_id = $credentialId;
             $attendance->terminal_id = $terminalId;
 
-            // Determine if late (after 9:00 AM)
-            $isLate = $now->hour > 9 || ($now->hour === 9 && $now->minute > 0);
+            // Late check: same schedule-aware rule as web/kiosk punches
+            // (shift_start + configured grace period).
+            $isLate = CompanySchedule::lateMinutesForDate($today, $now->format('H:i')) > 0;
             $attendance->is_late = $isLate;
             if ($isLate) {
                 $attendance->status = 'late';
@@ -201,18 +211,27 @@ class FingerprintController extends Controller
             $attendance->check_out = Carbon::parse($now->format('H:i:s'));
             $attendance->source = $terminalId ? 'fingerprint_terminal' : 'biometric';
 
-            // Calculate total hours
+            $checkOutHhmm = $now->format('H:i');
+            $checkInHhmm = $attendance->check_in instanceof Carbon
+                ? $attendance->check_in->format('H:i')
+                : substr((string) $attendance->check_in, 0, 5);
+            $early = CompanySchedule::undertimeMinutesForDate($today, $checkInHhmm, $checkOutHhmm) > 0;
+            $attendance->is_early_leave = $early;
+            if ($early && $attendance->status !== 'on_leave') {
+                $attendance->status = 'early_leave';
+            } elseif (!$attendance->is_late && $attendance->status !== 'on_leave') {
+                $attendance->status = 'present';
+            }
+
+            // Calculate total hours (model saving hook recomputes authoritatively)
             $checkInTime = Carbon::parse($attendance->check_in);
             $totalMinutes = $checkInTime->diffInMinutes($now);
-            $breakMinutes = 60; // 1 hour break
+            $breakMinutes = CompanySchedule::breakMinutes();
             $workMinutes = max(0, $totalMinutes - $breakMinutes);
             $totalHours = round($workMinutes / 60, 2);
 
             $attendance->total_hours = $totalHours;
-
-            // Overtime: more than 8 hours
-            $overtime = max(0, $totalHours - 8);
-            $attendance->overtime_hours = round($overtime, 2);
+            $attendance->overtime_hours = round(max(0, $totalHours - CompanySchedule::overtimeThreshold()), 2);
 
             $message = 'Check-out recorded.';
         }
@@ -242,6 +261,8 @@ class FingerprintController extends Controller
      */
     public function terminalPunch(Request $request): JsonResponse
     {
+        return $this->biometricUnavailable();
+
         $validated = $request->validate([
             'terminal_id' => 'required|string',
             'user_id' => 'required|integer|exists:users,id',
@@ -273,7 +294,7 @@ class FingerprintController extends Controller
             $attendance->source = 'fingerprint_terminal';
             $attendance->terminal_id = $terminalId;
 
-            $isLate = $timestamp->hour > 9 || ($timestamp->hour === 9 && $timestamp->minute > 0);
+            $isLate = CompanySchedule::lateMinutesForDate($today, $timestamp->format('H:i')) > 0;
             $attendance->is_late = $isLate;
             if ($isLate) {
                 $attendance->status = 'late';
@@ -296,12 +317,25 @@ class FingerprintController extends Controller
             $attendance->source = 'fingerprint_terminal';
             $attendance->terminal_id = $terminalId;
 
+            $checkInHhmm = $attendance->check_in instanceof Carbon
+                ? $attendance->check_in->format('H:i')
+                : substr((string) $attendance->check_in, 0, 5);
+            $early = CompanySchedule::undertimeMinutesForDate(
+                $today, $checkInHhmm, $timestamp->format('H:i')
+            ) > 0;
+            $attendance->is_early_leave = $early;
+            if ($early && $attendance->status !== 'on_leave') {
+                $attendance->status = 'early_leave';
+            } elseif (!$attendance->is_late && $attendance->status !== 'on_leave') {
+                $attendance->status = 'present';
+            }
+
             $checkInTime = Carbon::parse($attendance->check_in);
             $totalMinutes = $checkInTime->diffInMinutes($timestamp);
-            $workMinutes = max(0, $totalMinutes - 60);
+            $workMinutes = max(0, $totalMinutes - CompanySchedule::breakMinutes());
             $totalHours = round($workMinutes / 60, 2);
             $attendance->total_hours = $totalHours;
-            $attendance->overtime_hours = round(max(0, $totalHours - 8), 2);
+            $attendance->overtime_hours = round(max(0, $totalHours - CompanySchedule::overtimeThreshold()), 2);
         }
 
         $attendance->save();
@@ -397,5 +431,14 @@ class FingerprintController extends Controller
                 'source' => $a->source,
             ]),
         ]);
+    }
+
+    private function biometricUnavailable(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'code' => 'BIOMETRIC_VERIFICATION_UNAVAILABLE',
+            'message' => 'Biometric attendance is disabled until server-side WebAuthn verification and authenticated terminal credentials are implemented.',
+        ], 503);
     }
 }

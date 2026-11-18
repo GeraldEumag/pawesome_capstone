@@ -25,13 +25,20 @@ class KioskPinAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken() ?: $request->query('token');
+        $token = $request->bearerToken();
 
         if ($token) {
             $accessToken = PersonalAccessToken::findToken($token);
             $user = $accessToken?->tokenable;
 
-            if ($user && (!isset($user->is_active) || $user->is_active)) {
+            $staffRoles = [
+                'admin', 'manager', 'receptionist', 'cashier', 'inventory',
+                'veterinary', 'vet', 'veterinarian', 'vet_tech',
+                'super_receptionist', 'payroll', 'groomer', 'staff',
+            ];
+            if ($user
+                && (!isset($user->is_active) || $user->is_active)
+                && in_array($user->role, $staffRoles, true)) {
                 if (method_exists($user, 'withAccessToken')) {
                     $user->withAccessToken($accessToken);
                 }

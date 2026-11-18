@@ -840,6 +840,13 @@ class BoardingController extends Controller
                 return ['conflict' => true];
             }
 
+            $serviceRequest = $lockedBoarding->service_request_id
+                ? ServiceRequest::whereKey($lockedBoarding->service_request_id)->lockForUpdate()->first()
+                : null;
+            if ($serviceRequest && in_array($serviceRequest->status, ['cancelled', 'rejected', 'completed'], true)) {
+                return ['conflict' => true];
+            }
+
             $vaccinationError = $this->vaccinationVerificationError($lockedBoarding);
             if ($vaccinationError) {
                 return ['response' => $vaccinationError];
@@ -856,6 +863,14 @@ class BoardingController extends Controller
                     : ($lockedBoarding->payment_status ?: 'unpaid'),
             ]);
             $this->syncRoomReservationStatus($lockedBoarding, 'approved');
+            if ($serviceRequest) {
+                $serviceRequest->update([
+                    'status' => 'approved',
+                    'payment_status' => $lockedBoarding->payment_status,
+                    'approved_by' => $request->user()?->id,
+                    'approved_at' => $lockedBoarding->approved_at,
+                ]);
+            }
 
             // Create base service billing item when boarding is approved.
             // The authoritative amount is the persisted booking total
@@ -980,10 +995,11 @@ class BoardingController extends Controller
         }
 
         $wasPending = $boarding->status === 'pending';
+        $storeToday = now(ServiceDurationService::STORE_TIMEZONE)->toDateString();
         $validator = Validator::make($request->all(), [
             'hotel_room_id' => 'nullable|integer|required_without:room_id|exists:hotel_rooms,id',
             'room_id' => 'nullable|integer|required_without:hotel_room_id|exists:boarding_rooms,id',
-            'check_in' => 'nullable|date|after_or_equal:today',
+            'check_in' => ['nullable', 'date', 'after_or_equal:' . $storeToday],
             'check_out' => 'nullable|date|after_or_equal:check_in',
             'check_in_time' => 'nullable|date_format:H:i',
             'check_out_time' => 'nullable|date_format:H:i',

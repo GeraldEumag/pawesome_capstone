@@ -58,6 +58,12 @@ const periodBaseSalary = (payroll, slip) =>
 
 const paidLeaveDaysOf = (payroll, slip) =>
   Number(slip?.attendance?.paid_leave_days ?? payroll?.paid_leave_days ?? 0);
+const leaveCategoryDaysOf = (payroll, slip, type) =>
+  Number(slip?.attendance?.[`${type}_leave_days`] ?? payroll?.[`${type}_leave_days`] ?? 0);
+const otherEarningsOf = (payroll, slip) =>
+  Number(slip?.earnings?.bonus ?? payroll?.bonus ?? 0)
+  + Number(slip?.earnings?.commission ?? payroll?.commission ?? 0)
+  + Number(slip?.earnings?.other_earnings ?? payroll?.other_earnings ?? 0);
 
 const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee" }) => {
   const [payrolls, setPayrolls] = useState([]);
@@ -132,7 +138,7 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
     const payrollId = payroll.payroll_id || payroll.payrollId || "N/A";
     const baseSalary = periodBaseSalary(payroll, slip);
     const overtimePay = Number(slip?.earnings?.overtime_pay ?? payroll.overtime_pay ?? payroll.overtimePay ?? 0);
-    const bonus = Number(slip?.earnings?.bonus ?? payroll.bonus ?? 0);
+    const otherEarnings = otherEarningsOf(payroll, slip);
     const allowances = Number(slip?.earnings?.allowances ?? payroll.allowances ?? payroll.allowance ?? 0);
     const grossPay = Number(slip?.earnings?.gross_pay ?? payroll.gross_pay ?? payroll.grossPay ?? 0);
     const sss = Number(slip?.deductions?.sss ?? payroll.sss_contribution ?? 0);
@@ -191,7 +197,7 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
         rows: [
           { section: "Earnings", description: "Base Salary", amount: baseSalary },
           { section: "Earnings", description: "Overtime Pay", amount: overtimePay },
-          { section: "Earnings", description: "Bonus", amount: bonus },
+          { section: "Earnings", description: "Other earnings", amount: otherEarnings },
           { section: "Earnings", description: "Allowances", amount: allowances },
           { section: "Earnings", description: "Gross Pay", amount: grossPay },
           { section: "Deductions", description: "SSS Contribution", amount: sss },
@@ -202,6 +208,8 @@ const MyPayroll = ({ roleAccent = "var(--color-primary)", roleLabel = "Employee"
           ...(absentDed > 0 ? [{ section: "Attendance", description: "Absence Deduction (in gross)", amount: absentDed }] : []),
           ...(undertimeDed > 0 ? [{ section: "Attendance", description: "Undertime Deduction (in gross)", amount: undertimeDed }] : []),
           ...(paidLeaveDays > 0 ? [{ section: "Attendance", description: "Paid Leave Days (not deducted)", amount: null }] : []),
+          ...(leaveCategoryDaysOf(payroll, slip, "vacation") > 0 ? [{ section: "Attendance", description: "Vacation Leave", amount: null }] : []),
+          ...(leaveCategoryDaysOf(payroll, slip, "sick") > 0 ? [{ section: "Attendance", description: "Sick Leave", amount: null }] : []),
           ...(salaryLoan > 0 ? [{ section: "Deductions", description: "Salary Loan", amount: salaryLoan }] : []),
           ...(cashAdvance > 0 ? [{ section: "Deductions", description: "Cash Advance", amount: cashAdvance }] : []),
           { section: "Deductions", description: "Other Deductions", amount: otherDed },
@@ -411,7 +419,7 @@ const PayslipDetail = ({ payroll, slip, roleAccent }) => {
             <td>{formatCurrency(periodBaseSalary(payroll, slip))}</td>
           </tr>
           <tr><td>Overtime Pay</td><td>{formatCurrency(payroll.overtime_pay)}</td></tr>
-          <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
+          <tr><td>Other earnings</td><td>{formatCurrency(otherEarningsOf(payroll, slip))}</td></tr>
           <tr><td>Allowances</td><td>{formatCurrency(payroll.allowances)}</td></tr>
           <tr className="mp-subtotal-row"><td>Gross Pay</td><td>{formatCurrency(payroll.gross_pay)}</td></tr>
         </tbody>
@@ -430,6 +438,12 @@ const PayslipDetail = ({ payroll, slip, roleAccent }) => {
           <tr><td>Absence Deductions</td><td>{formatCurrency(absentDed)}</td></tr>
           {paidLeaveDaysOf(payroll, slip) > 0 && (
             <tr><td>Paid Leave Days (converted, not deducted)</td><td>{paidLeaveDaysOf(payroll, slip)} day(s)</td></tr>
+          )}
+          {leaveCategoryDaysOf(payroll, slip, "vacation") > 0 && (
+            <tr><td>Vacation Leave</td><td>{leaveCategoryDaysOf(payroll, slip, "vacation")} day(s)</td></tr>
+          )}
+          {leaveCategoryDaysOf(payroll, slip, "sick") > 0 && (
+            <tr><td>Sick Leave</td><td>{leaveCategoryDaysOf(payroll, slip, "sick")} day(s)</td></tr>
           )}
           <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
           <tr className="mp-subtotal-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>
@@ -482,7 +496,7 @@ const PayslipPrintArea = ({ payroll, slip }) => {
             <td>{formatCurrency(periodBaseSalary(payroll, slip))}</td>
           </tr>
           <tr><td>Overtime Pay</td><td>{formatCurrency(payroll.overtime_pay)}</td></tr>
-          <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
+          <tr><td>Other earnings</td><td>{formatCurrency(otherEarningsOf(payroll, slip))}</td></tr>
           <tr><td>Allowances</td><td>{formatCurrency(payroll.allowances)}</td></tr>
           <tr className="net-row"><td>Gross Pay</td><td>{formatCurrency(payroll.gross_pay)}</td></tr>
         </tbody>
@@ -499,6 +513,12 @@ const PayslipPrintArea = ({ payroll, slip }) => {
           <tr><td>Absence Deductions</td><td>{formatCurrency(absentDed)}</td></tr>
           {paidLeaveDaysOf(payroll, slip) > 0 && (
             <tr><td>Paid Leave Days (converted, not deducted)</td><td>{paidLeaveDaysOf(payroll, slip)} day(s)</td></tr>
+          )}
+          {leaveCategoryDaysOf(payroll, slip, "vacation") > 0 && (
+            <tr><td>Vacation Leave</td><td>{leaveCategoryDaysOf(payroll, slip, "vacation")} day(s)</td></tr>
+          )}
+          {leaveCategoryDaysOf(payroll, slip, "sick") > 0 && (
+            <tr><td>Sick Leave</td><td>{leaveCategoryDaysOf(payroll, slip, "sick")} day(s)</td></tr>
           )}
           <tr><td>Other Deductions</td><td>{formatCurrency(otherDed)}</td></tr>
           <tr className="net-row"><td>Total Deductions</td><td>{formatCurrency(totalDed)}</td></tr>

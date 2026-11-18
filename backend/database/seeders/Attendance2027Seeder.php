@@ -161,7 +161,6 @@ class Attendance2027Seeder extends Seeder
             ['2027-12-30', 'Rizal Day', 'regular', true],
             // Special non-working holidays
             ['2027-02-06', 'Chinese New Year', 'special_non_working', false],
-            ['2027-02-25', 'EDSA People Power Revolution Anniversary', 'special_non_working', true],
             ['2027-03-27', 'Black Saturday', 'special_non_working', false],
             ['2027-08-21', 'Ninoy Aquino Day', 'special_non_working', true],
             ['2027-11-01', "All Saints' Day", 'special_non_working', true],
@@ -169,6 +168,8 @@ class Attendance2027Seeder extends Seeder
             ['2027-12-08', 'Feast of the Immaculate Conception', 'special_non_working', true],
             ['2027-12-24', 'Christmas Eve', 'special_non_working', false],
             ['2027-12-31', 'Last Day of the Year', 'special_non_working', false],
+            // EDSA is a special working day in Proclamation No. 1427.
+            ['2027-02-25', 'EDSA People Power Revolution Anniversary', 'special_working', false],
         ];
 
         foreach ($holidays as [$date, $name, $type, $recurring]) {

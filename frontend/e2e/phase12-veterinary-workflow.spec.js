@@ -3,15 +3,21 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { apiLogin } = require("./test-utils");
+const { checkAuditEnv } = require("./audit-guard");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
+const auditDatabase = process.env.E2E_AUDIT_DATABASE || "";
+const approvedAuditDatabases = new Set(["pawesome_e2e_audit", "pawesome_booking_audit"]);
 const evidenceDir = path.resolve(__dirname, "../../browser-evidence/system-security-audit-20261108/phase12-veterinary");
 
 // Cases are independent: a lifecycle failure must not skip the API checks.
 test.beforeEach(() => {
-  test.skip(process.env.E2E_AUDIT_DATABASE !== "pawesome_e2e_audit", "Requires the approved isolated audit database.");
-  expect(apiUrl).toBe("http://127.0.0.1:8001/api");
+  const audit = checkAuditEnv();
+  if (audit.action !== "proceed" || !approvedAuditDatabases.has(auditDatabase)) {
+    throw new Error(`Refusing live mutation with unverified audit configuration: ${audit.reason || audit.action}`);
+  }
+  expect(audit.auditDb).toBe(auditDatabase);
 });
 
 const futureDate = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
@@ -69,8 +75,33 @@ async function shot(page, name) {
 }
 
 function dbQuery(sql) {
-  const code = `$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]); echo json_encode($db->query(${JSON.stringify(sql)})->fetchAll(PDO::FETCH_ASSOC));`;
+  const code = `$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDatabase}","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]); echo json_encode($db->query(${JSON.stringify(sql)})->fetchAll(PDO::FETCH_ASSOC));`;
   return JSON.parse(execFileSync("php", ["-r", code], { cwd: path.resolve(__dirname, "../../backend"), encoding: "utf8" }));
+}
+
+function ensureVetTechFixture() {
+  const code = `
+require "vendor/autoload.php";
+$app = require "bootstrap/app.php";
+$app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap();
+if (!App\\Models\\User::where("email", "vettech@example.com")->exists()) {
+    App\\Models\\User::factory()->create([
+        "name" => "E2E Veterinary Technician",
+        "username" => "vettech",
+        "email" => "vettech@example.com",
+        "password" => "Password123!",
+        "role" => "vet_tech",
+        "department" => "Veterinary",
+        "position" => "Veterinary Technician",
+        "is_active" => true,
+        "email_verified_at" => now(),
+    ]);
+}`;
+  execFileSync("php", ["-r", code], {
+    cwd: path.resolve(__dirname, "../../backend"),
+    env: { ...process.env, DB_CONNECTION: "mysql", DB_DATABASE: auditDatabase, DB_USERNAME: "root", DB_PASSWORD: "" },
+    encoding: "utf8",
+  });
 }
 
 function dbAppointment(id) {
@@ -251,13 +282,14 @@ test("Phase 12.4 veterinary rejects unauthorized roles, tampering, and invalid c
   const veterinary = await apiLogin(request, "veterinary");
   const customer = await apiLogin(request, "customer");
   const receptionist = await apiLogin(request, "receptionist");
+  ensureVetTechFixture();
   const vetTech = await apiLogin(request, "vet_tech");
   const neg = {};
 
   // Fixture: a checked-in appointment owned by an existing customer/pet/vet.
   const base = dbQuery(`SELECT id,pet_id,customer_id,veterinarian_id,service_id FROM appointments ORDER BY id DESC LIMIT 1`)[0];
   const code = `
-$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDatabase}","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $now=date("Y-m-d H:i:s");
 $db->prepare("INSERT INTO appointments (customer_id,pet_id,service_id,veterinarian_id,status,scheduled_at,price,payment_status,notes,booking_channel,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")->execute([$argv[1],$argv[2],$argv[3],$argv[4],"checked_in",$now,500,"unpaid","P12NEG_${unique}","walk_in",$now,$now]);
 echo json_encode(["id"=>(int)$db->lastInsertId()]);`;
@@ -302,7 +334,7 @@ test("Phase 12.4 concurrent consultation completion cannot double-close or overw
   const veterinary = await apiLogin(request, "veterinary");
   const base = dbQuery(`SELECT id,pet_id,customer_id,veterinarian_id,service_id FROM appointments ORDER BY id DESC LIMIT 1`)[0];
   const code = `
-$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDatabase}","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $now=date("Y-m-d H:i:s");
 $db->prepare("INSERT INTO appointments (customer_id,pet_id,service_id,veterinarian_id,status,scheduled_at,price,payment_status,notes,booking_channel,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")->execute([$argv[1],$argv[2],$argv[3],$argv[4],"in_consultation",$now,500,"unpaid","P12RACE_${unique}","walk_in",$now,$now]);
 $aid=(int)$db->lastInsertId();
@@ -329,7 +361,7 @@ echo json_encode(["id"=>$aid]);`;
       clinical_attribution: Number(after.appointment?.clinical_completed_by) === Number(veterinary.user.id),
     },
   };
-  expect(statuses.filter((s) => s === 200).length).toBeLessThanOrEqual(1);
+  expect(statuses).toEqual([200, 422]);
   expect(["clinical_complete", "checkout", "completed"]).toContain(after.appointment?.status);
   expect(Number(after.appointment?.clinical_completed_by)).toBe(Number(veterinary.user.id));
 

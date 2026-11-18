@@ -1,0 +1,159 @@
+{
+  "type": "veterinary",
+  "channel": "walk_in",
+  "serviceRequestId": 309,
+  "bookingId": 87,
+  "petId": 145,
+  "date": "2026-11-21",
+  "time": "10:00",
+  "responseStatus": 201,
+  "approvalStatus": 200,
+  "customerVisible": true,
+  "cashierQueueVisible": true,
+  "database": {
+    "request": {
+      "id": 309,
+      "customer_id": 9,
+      "pet_id": 145,
+      "request_type": "veterinary",
+      "service_name": "Consultation",
+      "request_date": "2026-11-21",
+      "request_time": "10:00",
+      "status": "approved",
+      "payment_status": "unpaid",
+      "booking_channel": "walk_in",
+      "price": "450.00"
+    },
+    "booking": {
+      "id": 87,
+      "service_request_id": 309,
+      "scheduled_at": "2026-11-21 02:00:00",
+      "status": "scheduled",
+      "booking_channel": "walk_in",
+      "veterinarian_id": 8
+    },
+    "reservation": null
+  },
+  "screenshots": [
+    "veterinary-walk-in.png"
+  ],
+  "network": [
+    {
+      "method": "GET",
+      "path": "/api/receptionist/veterinarians/available",
+      "status": "REQUEST_FAILED",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": "REQUEST_FAILED",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/veterinarians/available",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/availability/veterinary",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/walk-ins",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    }
+  ]
+}

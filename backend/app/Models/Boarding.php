@@ -79,8 +79,8 @@ class Boarding extends Model
     ];
 
     protected $casts = [
-        'check_in' => 'datetime',
-        'check_out' => 'datetime',
+        'check_in' => 'date:Y-m-d',
+        'check_out' => 'date:Y-m-d',
         'actual_check_in' => 'datetime',
         'actual_check_out' => 'datetime',
         'checked_in_at' => 'datetime',

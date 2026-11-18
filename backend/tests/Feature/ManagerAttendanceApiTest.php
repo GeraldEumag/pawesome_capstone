@@ -96,4 +96,55 @@ class ManagerAttendanceApiTest extends TestCase
             'remarks' => 'Verified against the paper log.',
         ]);
     }
+
+    public function test_attendance_update_ignores_unvalidated_identity_and_approval_fields(): void
+    {
+        $manager = $this->user('manager');
+        $owner = $this->user('receptionist');
+        $other = $this->user('cashier');
+        $attendance = Attendance::create([
+            'user_id' => $owner->id,
+            'date' => '2026-06-03',
+            'check_in' => '08:00',
+            'status' => 'present',
+        ]);
+
+        $this->withHeaders($this->headers($manager))
+            ->putJson("/api/attendance/{$attendance->id}", [
+                'remarks' => 'Reviewed.',
+                'user_id' => $other->id,
+                'date' => '2026-06-04',
+                'approved_by' => $manager->id,
+                'overtime_hours' => 7,
+                'daily_earnings' => 9000,
+            ])
+            ->assertStatus(422);
+
+        $attendance->refresh();
+        $this->assertSame($owner->id, $attendance->user_id);
+        $this->assertSame('2026-06-03', $attendance->date->toDateString());
+        $this->assertNull($attendance->approved_by);
+        $this->assertEquals(0, (float) $attendance->overtime_hours);
+        $this->assertEquals(0, (float) $attendance->daily_earnings);
+    }
+
+    public function test_attendance_records_cannot_be_deleted_through_the_manager_api(): void
+    {
+        $manager = $this->user('manager');
+        $staff = $this->user('cashier');
+        $attendance = Attendance::create([
+            'user_id' => $staff->id,
+            'date' => '2026-06-03',
+            'status' => 'present',
+        ]);
+
+        $this->withHeaders($this->headers($manager))
+            ->deleteJson("/api/attendance/{$attendance->id}")
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('attendance', [
+            'id' => $attendance->id,
+            'deleted_at' => null,
+        ]);
+    }
 }

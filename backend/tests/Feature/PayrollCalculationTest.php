@@ -45,9 +45,8 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 5000);
         $payroll->calculatePayroll();
 
-        // SSS 2025: salary <= 5,250 → MSC 5,000 → 5% = 250 monthly,
-        // halved for the 1–15 semi-monthly cutoff = 125
-        $this->assertEquals(125, (float) $payroll->sss_contribution);
+        // Jan 2024 SSS: MSC 5,000 × 4.5% = 225 monthly, halved = 112.50.
+        $this->assertEquals(112.5, (float) $payroll->sss_contribution);
     }
 
     public function test_sss_contribution_for_high_salary(): void
@@ -56,8 +55,32 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 50000);
         $payroll->calculatePayroll();
 
-        // SSS 2025 max: 35,000 MSC * 5% = 1,750 monthly, halved = 875
-        $this->assertEquals(875, (float) $payroll->sss_contribution);
+        // Jan 2024 SSS max: 30,000 MSC × 4.5% = 1,350 monthly, halved = 675.
+        $this->assertEquals(675, (float) $payroll->sss_contribution);
+    }
+
+    public function test_sss_effective_schedules_and_ec_thresholds(): void
+    {
+        $service = app(PayrollComputationService::class);
+        $this->assertEquals(225, $service->calculateSss(5000, '2024-12-01'));
+        $this->assertEquals(1125, $service->calculateSss(25000, '2024-12-01'));
+        $this->assertEquals(2405, $service->calculateSssEmployer(25000, '2024-12-01'));
+        $this->assertEquals(250, $service->calculateSss(5000, '2025-01-01'));
+        $this->assertEquals(1460, $service->calculateSssEmployer(14500, '2025-01-01'));
+        $this->assertEquals(1530, $service->calculateSssEmployer(15000, '2025-01-01'));
+        $this->assertEquals(3530, $service->calculateSssEmployer(50000, '2025-01-01'));
+    }
+
+    public function test_pagibig_fund_salary_cap_and_employee_employer_rates_by_effective_date(): void
+    {
+        $service = app(PayrollComputationService::class);
+        $this->assertEquals(100, $service->calculatePagibig(50000, '2024-01-31'));
+        $this->assertEquals(100, $service->calculatePagibigEmployer(50000, '2024-01-31'));
+        $this->assertEquals(200, $service->calculatePagibig(50000, '2024-02-01'));
+        $this->assertEquals(200, $service->calculatePagibigEmployer(50000, '2024-02-01'));
+        $this->assertEquals(15, $service->calculatePagibig(1500, '2024-02-01'));
+        $this->assertEquals(30, $service->calculatePagibigEmployer(1500, '2024-02-01'));
+        $this->assertEquals(30, $service->calculatePagibig(1500.01, '2024-02-01'));
     }
 
     public function test_philhealth_contribution_2025_rates(): void
@@ -97,10 +120,10 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 15000);
         $payroll->calculatePayroll();
 
-        // SSS 2025: 15,000 → MSC 15,000 → 750
+        // Jan 2024 SSS: 15,000 MSC × 4.5% = 675 monthly
         // PhilHealth: 15,000 * 0.05 = 750, employee = 375
-        // Pag-IBIG: 100
-        // Taxable = 15000 - 750 - 375 - 100 = 13,775 (below 20,833 → tax exempt)
+        // Pag-IBIG Jan 2024 MFS cap: 5,000 × 2% = 100 monthly
+        // Taxable monthly = 15,000 - 675 - 375 - 100 = 13,850 (tax exempt)
         $this->assertEquals(0, (float) $payroll->tax_deduction);
     }
 
@@ -110,13 +133,9 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 25000);
         $payroll->calculatePayroll();
 
-        // SSS 2025: 25,000 → MSC 25,000 → 1,250
-        // PhilHealth: 25,000 * 0.05 = 1,250, employee = 625
-        // Pag-IBIG: 100
-        // Taxable = 25000 - 1250 - 625 - 100 = 23,025
-        // Tax = (23,025 - 20,833) * 0.15 = 2,192 * 0.15 = 328.80 monthly,
-        // halved for the semi-monthly cutoff = 164.40
-        $this->assertEqualsWithDelta(164.40, (float) $payroll->tax_deduction, 0.01);
+        // Monthly taxable = 25,000 - 1,125 SSS - 625 PhilHealth - 100 Pag-IBIG
+        // Tax = (23,150 - 20,833) × 15% = 347.55 monthly; cutoff = 173.78.
+        $this->assertEqualsWithDelta(173.78, (float) $payroll->tax_deduction, 0.01);
     }
 
     public function test_withholding_tax_in_20_percent_bracket(): void
@@ -125,12 +144,9 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 45000);
         $payroll->calculatePayroll();
 
-        // SSS 2025: 45,000 → max MSC 35,000 → 1,750
-        // PhilHealth: 45,000 * 0.05 = 2,250, employee = 1,125
-        // Pag-IBIG: 100
-        // Taxable = 45000 - 1750 - 1125 - 100 = 42,025
-        // Tax = 1,875 + (42,025 - 33,333) * 0.20 = 3,613.40 monthly, halved = 1,806.70
-        $this->assertEqualsWithDelta(1806.70, (float) $payroll->tax_deduction, 0.01);
+        // 2024 SSS max MSC 30,000 × 4.5% = 1,350; taxable monthly = 42,425.
+        // Tax = 1,875 + (42,425 - 33,333) × 20% = 3,693.40; cutoff = 1,846.70.
+        $this->assertEqualsWithDelta(1846.70, (float) $payroll->tax_deduction, 0.01);
     }
 
     public function test_withholding_tax_in_25_percent_bracket(): void
@@ -139,12 +155,9 @@ class PayrollCalculationTest extends TestCase
         $payroll = $this->createPayroll($user, 80000);
         $payroll->calculatePayroll();
 
-        // SSS 2025: max 1,750
-        // PhilHealth: 80,000 * 0.05 = 4,000, employee = 2,000
-        // Pag-IBIG: 100
-        // Taxable = 80000 - 1750 - 2000 - 100 = 76,150
-        // Tax = 8,541.80 + (76,150 - 66,667) * 0.25 = 10,912.55 monthly, halved = 5,456.28
-        $this->assertEqualsWithDelta(5456.28, (float) $payroll->tax_deduction, 0.01);
+        // 2024 SSS max 1,350; taxable monthly = 76,550.
+        // Tax = 8,541.80 + (76,550 - 66,667) × 25% = 11,012.55; cutoff = 5,506.28.
+        $this->assertEqualsWithDelta(5506.28, (float) $payroll->tax_deduction, 0.01);
     }
 
     public function test_net_pay_is_positive_after_all_deductions(): void

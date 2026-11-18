@@ -187,26 +187,79 @@ class PayrollFinalizationTest extends TestCase
         $this->assertSame('paid', $payroll->fresh()->status);
     }
 
-    public function test_put_pending_bypass_cannot_release_unlinked_row(): void
+    public function test_put_pending_bypass_is_rejected_for_unlinked_row(): void
     {
         $payroll = $this->createUnlinkedPayroll();
 
-        // Creator bypasses approve() via PUT status=pending — allowed field,
-        // but release must still require the recorded approval.
+        // Approval status can only be set through the approval endpoint.
         $this->putJson("/api/manager/payroll/{$payroll->id}", [
             'status' => 'pending',
-        ], $this->managerAuth())->assertStatus(200);
+        ], $this->managerAuth())->assertStatus(422);
 
         $payroll = $payroll->fresh();
-        $this->assertSame('pending', $payroll->status);
+        $this->assertSame('draft', $payroll->status);
         $this->assertNull($payroll->approved_by);
 
         $this->postJson("/api/manager/payroll/{$payroll->id}/release",
             ['payment_method' => 'Cash'], $this->approverAuth())
             ->assertStatus(422)
             ->assertJsonPath('success', false);
-        $this->assertSame('pending', $payroll->fresh()->status,
+        $this->assertSame('draft', $payroll->fresh()->status,
             'unlinked row must not be paid without recorded approval');
+    }
+
+    public function test_linked_payroll_cannot_bypass_approval_or_release(): void
+    {
+        $user = $this->staffUser();
+        $created = $this->postJson('/api/manager/payroll', [
+            'user_id' => $user->id,
+            'pay_period_start' => self::START,
+            'pay_period_end' => self::END,
+            'base_salary' => 26000,
+        ], $this->managerAuth())->assertStatus(200);
+        $payroll = Payroll::findOrFail($created->json('data.id'));
+
+        $this->putJson("/api/manager/payroll/{$payroll->id}", [
+            'status' => 'pending',
+        ], $this->managerAuth())->assertStatus(422);
+        $this->postJson("/api/manager/payroll/{$payroll->id}/release", [
+            'payment_method' => 'Cash',
+        ], $this->managerAuth())->assertStatus(422);
+
+        $this->assertSame('draft', $payroll->fresh()->status);
+        $this->assertNull($payroll->fresh()->approved_by);
+    }
+
+    public function test_cancelled_payroll_cannot_be_approved_or_released(): void
+    {
+        $payroll = $this->createUnlinkedPayroll();
+        $this->putJson("/api/manager/payroll/{$payroll->id}", [
+            'status' => 'cancelled',
+        ], $this->managerAuth())->assertOk();
+
+        $this->postJson("/api/manager/payroll/{$payroll->id}/approve", [], $this->approverAuth())
+            ->assertStatus(422);
+        $this->postJson("/api/manager/payroll/{$payroll->id}/release", [
+            'payment_method' => 'Cash',
+        ], $this->approverAuth())->assertStatus(422);
+        $this->assertSame('cancelled', $payroll->fresh()->status);
+    }
+
+    public function test_approved_payroll_cannot_be_edited_until_cancelled(): void
+    {
+        $payroll = $this->createUnlinkedPayroll();
+        $this->postJson("/api/manager/payroll/{$payroll->id}/approve", [], $this->approverAuth())
+            ->assertOk();
+        $before = $payroll->fresh();
+
+        $this->putJson("/api/manager/payroll/{$payroll->id}", [
+            'gross_pay' => 999,
+            'net_pay' => 999,
+        ], $this->approverAuth())->assertStatus(422);
+
+        $this->assertSame('pending', $payroll->fresh()->status);
+        $this->assertSame((string) $before->gross_pay, (string) $payroll->fresh()->gross_pay);
+        $this->assertSame($before->approved_by, $payroll->fresh()->approved_by);
     }
 
     public function test_linked_row_creator_can_still_self_approve(): void

@@ -23,10 +23,9 @@ Payment method: {{ $paymentMethod }}
 Paid on: {{ \Illuminate\Support\Carbon::parse($paidAt)->format('M d, Y') }}
 @endif
 
-View your payslip: {{ $payslipUrl }}
+Your complete payslip is attached as a PDF. Open the attachment to view or download it directly.
 
-You can view your full payslip breakdown and previous payslips in the Pawesome HR portal.
-This message contains confidential payroll information — please do not forward it.
+The attached file and this message contain confidential payroll information — please do not forward them.
 
 — Pawesome Payroll
 This is an automated notification. Please do not reply directly to this email.

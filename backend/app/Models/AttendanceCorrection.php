@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AttendanceCorrection extends Model
 {
     protected $fillable = [
-        'user_id', 'attendance_id', 'date',
+        'user_id', 'attendance_id', 'date', 'original_check_in', 'original_check_out',
         'requested_check_in', 'requested_check_out',
         'reason', 'status', 'reviewed_by', 'reviewed_at', 'remarks',
     ];

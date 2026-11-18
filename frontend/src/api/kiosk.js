@@ -4,21 +4,25 @@ import { getToken } from "../utils/auth";
 const UNLOCK_KEY = "pawesome_kiosk_unlocked";
 const PIN_KEY = "pawesome_kiosk_pin";
 
-// localStorage (not sessionStorage) so the unlock survives page refreshes,
-// new tabs, and preview-proxy sessions on a shared kiosk machine.
-export const isKioskUnlocked = () =>
-  localStorage.getItem(UNLOCK_KEY) === "1";
+// Keep the shared kiosk secret scoped to one browser tab/session.
+if (typeof window !== "undefined") {
+  window.localStorage.removeItem(UNLOCK_KEY);
+  window.localStorage.removeItem(PIN_KEY);
+}
 
-export const getKioskPin = () => localStorage.getItem(PIN_KEY) || "";
+export const isKioskUnlocked = () =>
+  sessionStorage.getItem(UNLOCK_KEY) === "1";
+
+export const getKioskPin = () => sessionStorage.getItem(PIN_KEY) || "";
 
 export const unlockKiosk = (pin) => {
-  localStorage.setItem(UNLOCK_KEY, "1");
-  localStorage.setItem(PIN_KEY, pin);
+  sessionStorage.setItem(UNLOCK_KEY, "1");
+  sessionStorage.setItem(PIN_KEY, pin);
 };
 
 export const lockKiosk = () => {
-  localStorage.removeItem(UNLOCK_KEY);
-  localStorage.removeItem(PIN_KEY);
+  sessionStorage.removeItem(UNLOCK_KEY);
+  sessionStorage.removeItem(PIN_KEY);
 };
 
 /**
@@ -26,9 +30,12 @@ export const lockKiosk = () => {
  * or fires the auth-expired redirect — the kiosk page is public and a missing
  * PIN must not bounce a logged-in manager to /login.
  */
-export const kioskRequest = async (endpoint, { method = "GET", body } = {}) => {
+export const kioskRequest = async (endpoint, { method = "GET", body, idempotencyKey } = {}) => {
   const token = getToken();
   const pin = getKioskPin();
+  const punchKey = method.toUpperCase() === "POST" && endpoint.endsWith("/punch")
+    ? (idempotencyKey || window.crypto.randomUUID())
+    : null;
 
   const res = await fetch(`${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`, {
     method,
@@ -38,6 +45,7 @@ export const kioskRequest = async (endpoint, { method = "GET", body } = {}) => {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(pin ? { "X-Kiosk-Pin": pin } : {}),
+      ...(punchKey ? { "Idempotency-Key": punchKey } : {}),
     },
     body: body != null ? JSON.stringify(body) : undefined,
   });

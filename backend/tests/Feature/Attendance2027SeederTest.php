@@ -136,6 +136,7 @@ class Attendance2027SeederTest extends TestCase
         $this->assertDatabaseHas('holidays', ['date' => '2027-12-25', 'type' => 'regular']);
         $this->assertDatabaseHas('holidays', ['date' => '2027-03-26', 'name' => 'Good Friday']);
         $this->assertDatabaseHas('holidays', ['date' => '2027-08-21', 'type' => 'special_non_working']);
+        $this->assertDatabaseHas('holidays', ['date' => '2027-02-25', 'type' => 'special_working']);
     }
 
     public function test_payroll_engine_computes_from_seeded_attendance(): void

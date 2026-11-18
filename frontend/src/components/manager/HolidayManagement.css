@@ -328,6 +328,11 @@
   color: #b45309;
 }
 
+.hm-type-badge.special_working {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
 /* Recurring badge */
 .hm-recurring-badge {
   display: inline-flex;
@@ -448,6 +453,13 @@
   border-radius: 12px;
   background: rgba(255, 95, 147, 0.03);
   cursor: pointer;
+}
+
+.hm-announced-note {
+  margin: 0;
+  color: var(--hm-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 .hm-checkbox-field input[type="checkbox"] {

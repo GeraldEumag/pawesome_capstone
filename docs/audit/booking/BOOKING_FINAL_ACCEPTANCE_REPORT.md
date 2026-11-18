@@ -1,25 +1,35 @@
 # Booking Final Acceptance Report
 
-## Acceptance matrix
+**Final status: NO-GO for final acceptance**
 
-| Area | Result | Evidence / caveat |
+This report supersedes the earlier conditional recommendation below. The hotel walk-in request/boarding status defect is fixed and verified. The final selected browser rerun now reproduces a hotel online queue/check-in failure, the six complete browser workflows remain incomplete, and the full backend suite is not green.
+
+| Gate | Result | Evidence / remaining limit |
 | --- | --- | --- |
-| Architecture and API mapping | PASS | `BOOKING_SYSTEM_ARCHITECTURE_AUDIT.md`, live `route:list` inventory (730 routes) |
-| Shared online/walk-in storage and channel stamping | PASS | `WalkInBookingTest`; live walk-in source; same service entities |
-| Veterinary availability / ownership / server price | PASS | live 201/422/403 probes; targeted PHPUnit tests |
-| Veterinary approval and execution | PASS (backend) | assigned vet approval; direct invalid completion rejected; tests |
-| Hotel capacity/holiday/vaccination gates | PASS | capacity-one second booking 422; holiday 422; card verification gate |
-| Hotel walk-in check-in/care/checkout | PASS (after fixes) | live lifecycle succeeded; regression test for reservation release |
-| Grooming transition integrity | PASS (after fix) | invalid reopen probes reproduced before fix; `BookingFinalAuditTest` rejects |
-| Payment and booking status separation | PASS (backend/API) | proof upload != paid; cashier verify; duplicate verify 422 |
-| RBAC | PASS (probed cases) | unauth 401; cross-role mutations 403 |
-| DB FK/orphan checks | PASS with caveat | zero checked orphans; some app-maintained links lack FKs |
-| Sales date-filter reporting | PASS | manager/admin live queries returned 48 rows |
-| Playwright browser acceptance | FAIL / PARTIAL | 3 failures, 6 skipped, 4 not run; test results document specific blockers |
-| Frontend unit tests | NOT TESTED | not executed |
-| Full backend suite | NOT TESTED | targeted suite only; final subset pending |
-| External provider / production deployment | NOT TESTED | no external calls/deployment |
+| Grooming status atomicity (RES-001) | PASS | Same-connection transaction; both endpoints tested with failures before and after first write; rollback verified for both records |
+| Grooming lifecycle/payment rules | PASS | Linked and unlinked rows, invalid transitions, and payment-gated completion covered in PHPUnit |
+| Veterinary completion concurrency | PASS after remediation | Row lock and in-transaction status/assignment recheck; E2E race test now asserts 200/422 and passes |
+| Original Playwright failures | Resolved/focused-pass | `/api/api` harness error fixed; URL/date and tablet cases pass focused rerun with measured local API latency accounted for |
+| Six formerly skipped Phase 12 tests | Enabled; partial pass | All were run or focused-rerun on an isolated DB. Boarding lifecycle remains failing; vet lifecycle, negative-role fixture, and concurrency pass; boarding negative and room race pass |
+| Customer-board test coverage | Partial pass | URL/date, filter-change, phone, tablet, and receptionist-change tests pass in selected/focused runs; no final all-spec rerun |
+| Six workflow/channel matrix | BLOCKED | Browser evidence exists for all combinations, but receptionist walk-in operational handoffs remain partial |
+| Hotel online queue/check-in | BLOCKED | Final selected Playwright rerun found a paid scheduled booking missing from the Today/ON GOING list; DB row #88 and reservation #48 exist |
+| Authorization/payment/report regressions | PASS (targeted) | 77 targeted tests pass, including payment channel, API role checks, Sales date filtering, and manager reconciliation |
+| Database integrity | PASS with caveat | Zero checked orphans; several app-maintained relations have no FK |
+| Production frontend build | PASS | Vite build passes; existing import and bundle-size warnings remain |
+| Full backend suite | BLOCKED | UTC full run: 1,179 passed, 11 failed, 1 skipped; 10 unresolved failures remain in Payroll, Pharmacy/Confinement and payslip tests. The booking date-fixture failure passed in a focused rerun after correction |
+| Frontend unit suite | PASS | 9 files / 44 tests |
+| Production deployment/external provider | NOT TESTED | No deploy/provider calls made |
+
+## Unresolved acceptance blockers
+
+- The complete browser handoffs for veterinary, hotel and grooming receptionist walk-ins are not yet demonstrated through operational completion, payment and customer tracking in the browser.
+- The final selected browser suite reported 16 passed, 1 failed and 2 did not run; the failed hotel queue handoff is documented under phase12 evidence.
+- Ten backend failures remain in Payroll, Pharmacy/Confinement and payslip modules; these unrelated worktree changes were preserved and require disposition before repo-wide release acceptance.
+- The exact requested `pawesome_e2e_audit` clone has pending migrations, including an unrelated holiday-calendar update. Tests used the verified isolated `pawesome_booking_audit` clone instead; no working-DB mutations occurred in this remediation.
 
 ## Recommendation
 
-**Conditional acceptance for Capstone demonstration.** Core backend operations and reproduced booking defects are fixed with regressions. Residual risk: grooming status updates synchronize two rows sequentially rather than transactionally; see `RES-001`. Do not describe the complete browser workflow as functionally verified until the failed Playwright specs are triaged and the remaining specs/manual six-flow workflow are executed. No database migration is required by this audit.
+**NO-GO.** Do not claim final Capstone acceptance until all six browser workflows are complete, the exact selected Playwright rerun is green, the full backend suite has no unexplained failures, and integrity/security/deployment evidence is consolidated.
+
+See `FINAL_END_TO_END_ACCEPTANCE_REPORT.md`, `FINAL_WORKFLOW_ACCEPTANCE_MATRIX.md` and `FINAL_REGRESSION_TEST_REPORT.md` for current status and remaining gates. `FINAL_REMEDIATION_AND_DEFENSE_ACCEPTANCE.md` retains the earlier audit history.

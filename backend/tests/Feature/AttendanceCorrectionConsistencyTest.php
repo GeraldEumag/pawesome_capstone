@@ -67,6 +67,8 @@ class AttendanceCorrectionConsistencyTest extends TestCase
         $this->assertSame('09:30', $attendance->check_in->format('H:i'));
         $this->assertSame('approved', $correction->fresh()->status);
         $this->assertSame($attendance->id, $correction->fresh()->attendance_id);
+        $this->assertSame('08:00:00', $correction->fresh()->original_check_in);
+        $this->assertSame('17:00:00', $correction->fresh()->original_check_out);
     }
 
     public function test_correction_to_on_time_clears_flag_and_status(): void
@@ -219,7 +221,7 @@ class AttendanceCorrectionConsistencyTest extends TestCase
         $this->assertFalse((bool) $attendance->is_late);
     }
 
-    public function test_early_leave_status_survives_on_time_correction(): void
+    public function test_correcting_checkout_to_shift_end_clears_early_leave_status(): void
     {
         $attendance = Attendance::create([
             'user_id' => $this->employee->id, 'date' => '2026-10-20',
@@ -233,7 +235,8 @@ class AttendanceCorrectionConsistencyTest extends TestCase
             [], $this->auth($this->manager))->assertOk();
 
         $attendance->refresh();
-        $this->assertSame('early_leave', $attendance->status);
+        $this->assertSame('present', $attendance->status);
+        $this->assertFalse((bool) $attendance->is_early_leave);
         $this->assertFalse((bool) $attendance->is_late);
     }
 

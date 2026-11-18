@@ -193,11 +193,13 @@ const normalizePayroll = (record, index) => {
     lateCount: safeNumber(record.late_count || record.late_days || 0),
     absentCount: safeNumber(record.absent_count || record.absent_days || 0),
     paidLeaveDays: safeNumber(record.paid_leave_days || record.leave_days || 0),
+    vacationLeaveDays: safeNumber(record.vacation_leave_days || 0),
+    sickLeaveDays: safeNumber(record.sick_leave_days || 0),
     lateDeductions: safeNumber(record.late_deductions || record.late_deduction || 0),
     absenceDeductions: safeNumber(record.absence_deductions || record.absent_deductions || 0),
     overtimePay: safeNumber(record.overtime_pay || record.overtime_amount || 0),
     bonus: safeNumber(record.bonus || 0),
-    allowance: safeNumber(record.allowance || record.bonus || record.allowances || 0),
+    allowance: safeNumber(record.allowances ?? record.allowance ?? 0),
     commission: safeNumber(record.commission || 0),
     otherEarnings: safeNumber(record.other_earnings || 0),
     sss: safeNumber(record.sss_contribution || record.sss || 0),
@@ -708,7 +710,7 @@ const PayrollManagement = () => {
         rows: [
           { section: "Earnings", description: periodFactor === 0.5 ? "Base Salary (half-month cutoff)" : "Base Salary", amount: periodBase },
           { section: "Earnings", description: "Overtime Pay", amount: overtimePay },
-          { section: "Earnings", description: "Bonus", amount: bonus },
+          { section: "Earnings", description: "Other earnings", amount: bonus + Number(payroll.commission || 0) + Number(payroll.otherEarnings || 0) },
           { section: "Earnings", description: "Allowances", amount: allowance },
           { section: "Earnings", description: "Gross Pay", amount: grossPay },
           { section: "Deductions", description: "SSS Contribution", amount: sss },
@@ -718,6 +720,8 @@ const PayrollManagement = () => {
           ...(lateDed > 0 ? [{ section: "Attendance", description: "Late Deduction (in gross)", amount: lateDed }] : []),
           ...(absentDed > 0 ? [{ section: "Attendance", description: "Absence Deduction (in gross)", amount: absentDed }] : []),
           ...(payroll.paidLeaveDays > 0 ? [{ section: "Attendance", description: "Paid Leave Days (not deducted)", amount: null }] : []),
+          ...(payroll.vacationLeaveDays > 0 ? [{ section: "Attendance", description: "Vacation Leave", amount: null }] : []),
+          ...(payroll.sickLeaveDays > 0 ? [{ section: "Attendance", description: "Sick Leave", amount: null }] : []),
           ...(payroll.salaryLoan > 0 ? [{ section: "Deductions", description: "Salary Loan", amount: payroll.salaryLoan }] : []),
           ...(payroll.cashAdvance > 0 ? [{ section: "Deductions", description: "Cash Advance", amount: payroll.cashAdvance }] : []),
           { section: "Deductions", description: "Other Deductions", amount: otherDed },
@@ -1412,7 +1416,7 @@ const PayrollDetailsModal = ({ payroll, onClose, onPrint, onDownload }) => (
           <DetailItem label="Regular Hours" value={`${payroll.regularHours} hrs`} />
           <DetailItem label="Overtime Hours" value={`${payroll.overtimeHours} hrs`} />
           <DetailItem label="Overtime Pay" value={formatCurrency(payroll.overtimePay)} />
-          <DetailItem label="Allowance / Bonus" value={formatCurrency(payroll.allowance)} />
+          <DetailItem label="Allowances" value={formatCurrency(payroll.allowance)} />
           <DetailItem label="Gross Pay" value={formatCurrency(payroll.grossPay)} />
           <DetailItem label="Late Count" value={payroll.lateCount} />
           <DetailItem label="Absent Count" value={payroll.absentCount} />
@@ -1489,7 +1493,7 @@ const PayslipPrint = ({ payroll }) => {
             <td>{formatCurrency(payroll.baseSalary * getPeriodFactor(payroll))}</td>
           </tr>
           <tr><td>Overtime Pay ({payroll.overtimeHours} hrs)</td><td>{formatCurrency(payroll.overtimePay)}</td></tr>
-          <tr><td>Bonus</td><td>{formatCurrency(payroll.bonus)}</td></tr>
+          <tr><td>Other earnings</td><td>{formatCurrency(payroll.bonus + payroll.commission + payroll.otherEarnings)}</td></tr>
           <tr><td>Allowances</td><td>{formatCurrency(payroll.allowance)}</td></tr>
           <tr className="net-row"><td>Gross Pay</td><td>{formatCurrency(payroll.grossPay)}</td></tr>
         </tbody>
@@ -1515,6 +1519,12 @@ const PayslipPrint = ({ payroll }) => {
           )}
           {payroll.paidLeaveDays > 0 && (
             <tr><td>Paid Leave Days (converted, not deducted)</td><td>{payroll.paidLeaveDays} day(s)</td></tr>
+          )}
+          {payroll.vacationLeaveDays > 0 && (
+            <tr><td>Vacation Leave</td><td>{payroll.vacationLeaveDays} day(s)</td></tr>
+          )}
+          {payroll.sickLeaveDays > 0 && (
+            <tr><td>Sick Leave</td><td>{payroll.sickLeaveDays} day(s)</td></tr>
           )}
           {payroll.salaryLoan > 0 && (
             <tr><td>Salary Loan</td><td>{formatCurrency(payroll.salaryLoan)}</td></tr>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Manager;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Holiday;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,13 +25,17 @@ class HolidayController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'date'         => 'required|date',
-            'name'         => 'required|string|max:255',
-            'type'         => 'required|in:regular,special_non_working',
+            'date' => 'required|date',
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:regular,special_non_working,special_working',
             'is_recurring' => 'boolean',
         ]);
 
-        $date = \Carbon\Carbon::parse($data['date']);
+        if ($data['type'] === 'special_working') {
+            $data['is_recurring'] = false;
+        }
+
+        $date = Carbon::parse($data['date']);
         $data['year'] = $date->year;
         $data['created_by'] = auth()->id();
 
@@ -44,14 +49,18 @@ class HolidayController extends Controller
     public function update(Request $request, Holiday $holiday): JsonResponse
     {
         $data = $request->validate([
-            'date'         => 'sometimes|date',
-            'name'         => 'sometimes|string|max:255',
-            'type'         => 'sometimes|in:regular,special_non_working',
+            'date' => 'sometimes|date',
+            'name' => 'sometimes|string|max:255',
+            'type' => 'sometimes|in:regular,special_non_working,special_working',
             'is_recurring' => 'sometimes|boolean',
         ]);
 
+        if (($data['type'] ?? $holiday->type) === 'special_working') {
+            $data['is_recurring'] = false;
+        }
+
         if (isset($data['date'])) {
-            $data['year'] = \Carbon\Carbon::parse($data['date'])->year;
+            $data['year'] = Carbon::parse($data['date'])->year;
         }
 
         $previousYear = $holiday->year;
@@ -106,18 +115,18 @@ class HolidayController extends Controller
 
         $created = 0;
         foreach ($recurring as $h) {
-            $originalDate = \Carbon\Carbon::parse($h->date);
+            $originalDate = Carbon::parse($h->date);
             $newDate = $originalDate->copy()->setYear($year);
 
             $exists = Holiday::where('year', $year)->where('name', $h->name)->exists();
-            if (!$exists) {
+            if (! $exists) {
                 Holiday::create([
-                    'date'         => $newDate->toDateString(),
-                    'name'         => $h->name,
-                    'type'         => $h->type,
-                    'year'         => $year,
+                    'date' => $newDate->toDateString(),
+                    'name' => $h->name,
+                    'type' => $h->type,
+                    'year' => $year,
                     'is_recurring' => true,
-                    'created_by'   => auth()->id(),
+                    'created_by' => auth()->id(),
                 ]);
                 $created++;
             }
@@ -139,7 +148,7 @@ class HolidayController extends Controller
             'to' => 'required|date|after_or_equal:from',
         ]);
 
-        if (\Carbon\Carbon::parse($data['from'])->diffInDays(\Carbon\Carbon::parse($data['to'])) > 366) {
+        if (Carbon::parse($data['from'])->diffInDays(Carbon::parse($data['to'])) > 366) {
             return response()->json(['success' => false, 'message' => 'Date range cannot exceed one year.'], 422);
         }
 

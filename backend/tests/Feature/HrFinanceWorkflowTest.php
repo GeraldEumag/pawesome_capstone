@@ -270,8 +270,11 @@ class HrFinanceWorkflowTest extends TestCase
             'gross_pay' => 12500,
             'net_pay' => 11000,
             'sss_contribution' => 625,
+            'sss_er_share' => 1265,
             'philhealth_contribution' => 312.5,
+            'philhealth_er_share' => 312.5,
             'pagibig_contribution' => 100,
+            'pagibig_er_share' => 100,
             'pay_period_start' => '2026-10-01',
             'pay_period_end' => '2026-10-15',
             'pay_period_label' => 'Oct 01 - Oct 15, 2026',
@@ -289,9 +292,9 @@ class HrFinanceWorkflowTest extends TestCase
         $res->assertOk()->assertJsonPath('success', true);
         $row = collect($res->json('data'))->first();
         $this->assertEquals(625.0, (float) $row['employee_share']);
-        // employer = ee × 8.5/5, total = ee × 13.5/5 (code's documented formula)
-        $this->assertEquals(round(625 * 1.7, 2), (float) $row['employer_share']);
-        $this->assertEquals(round(625 * 2.7, 2), (float) $row['total']);
+        // Remittance must reconcile to stored payroll shares, not estimate them.
+        $this->assertEquals(1265.0, (float) $row['employer_share']);
+        $this->assertEquals(1890.0, (float) $row['total']);
         $this->assertEquals(625.0, (float) $res->json('totals.employee_total'));
     }
 

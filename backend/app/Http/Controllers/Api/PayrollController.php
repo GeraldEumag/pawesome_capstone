@@ -10,6 +10,7 @@ use App\Models\Payroll;
 use App\Models\Employee;
 use App\Models\User;
 use App\Services\EmailDeliveryService;
+use App\Services\Payroll\PayrollPayslipDataService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\WorkflowNotifier;
 use Carbon\Carbon;
@@ -180,6 +181,7 @@ class PayrollController extends Controller
                 $this->payrollComputation->activeEmployees()
                     ->map(fn ($employee) => ['person' => $employee, 'isEmployee' => true])
             );
+        $this->payrollComputation->assertPayrollEligible($people->pluck('person'));
 
         $attendanceRows = Attendance::whereBetween('date', [$startDate, $endDate])->get();
         $attendanceByUser = $attendanceRows->whereNotNull('user_id')->groupBy('user_id');
@@ -306,32 +308,35 @@ class PayrollController extends Controller
      */
     public function approve(Payroll $payroll): JsonResponse
     {
-        if ($payroll->status === 'paid') {
+        $result = DB::transaction(function () use ($payroll) {
+            $locked = Payroll::lockForUpdate()->findOrFail($payroll->id);
+            if (!in_array($locked->status, ['draft', 'processing'], true)) {
+                return ['error' => 'Only draft or processing payroll can be approved.'];
+            }
+
+            // Free-text payroll has no authoritative person record, so keep
+            // the existing maker-checker control for those rows.
+            if ($locked->is_unlinked && $locked->processed_by !== null
+                && (int) $locked->processed_by === (int) Auth::id()) {
+                return ['error' => 'Manual/unlinked payroll requires approval by a different authorized manager than the creator.'];
+            }
+
+            $locked->update([
+                'status' => 'pending',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
+
+            return ['payroll' => $locked->fresh(['user', 'employee', 'processor'])];
+        });
+
+        if (isset($result['error'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot approve already paid payroll.',
+                'message' => $result['error'],
             ], 422);
         }
-
-        // Maker-checker gate for manual/unlinked rows (no linked person →
-        // entered totals cannot be recomputed): the creator must not approve
-        // their own entry. Evaluated before the update below overwrites
-        // processed_by — until now it still holds the creator's id.
-        if ($payroll->is_unlinked && $payroll->processed_by !== null
-            && (int) $payroll->processed_by === (int) Auth::id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Manual/unlinked payroll requires approval by a different authorized manager than the creator.',
-            ], 422);
-        }
-
-        $payroll->update([
-            'status' => 'pending',
-            'processed_by' => Auth::id(),
-            'processed_at' => now(),
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-        ]);
+        $payroll = $result['payroll'];
 
         $payroll->load(['user', 'employee']);
         $payeeName = $payroll->user?->name ?? $payroll->employee?->name ?? $payroll->employee_name ?? 'employee';
@@ -384,14 +389,10 @@ class PayrollController extends Controller
             ], 422);
         }
 
-        // Manual/unlinked rows must carry a recorded approval. approved_by
-        // is only written by approve() — which enforces maker-checker — so
-        // its presence proves the gate ran. This also blocks reaching
-        // 'pending' via PUT update() and releasing without approval.
-        if ($payroll->is_unlinked && $payroll->approved_by === null) {
+        if ($payroll->approved_by === null || $payroll->approved_at === null) {
             return response()->json([
                 'success' => false,
-                'message' => 'Manual/unlinked payroll requires a recorded approval by a different authorized manager before release.',
+                'message' => 'Payroll requires recorded approval before payment can be released.',
             ], 422);
         }
 
@@ -413,6 +414,12 @@ class PayrollController extends Controller
                     'message' => $payroll->status === 'paid'
                         ? 'Payroll is already marked as paid.'
                         : 'Payroll must be approved before payment can be released.',
+                ], 422);
+            }
+            if ($payroll->approved_by === null || $payroll->approved_at === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payroll requires recorded approval before payment can be released.',
                 ], 422);
             }
 
@@ -469,21 +476,18 @@ class PayrollController extends Controller
                 // payslip email per payroll row, ever.
                 $employeeEmail = $payroll->user?->email;
                 if ($employeeEmail) {
-                    $role = strtolower((string) ($payroll->user->role ?? ''));
-                    $rolePath = ['veterinary' => 'veterinary', 'super_receptionist' => 'receptionist'][$role] ?? $role;
-
                     app(EmailDeliveryService::class)->intent(
                         new PayslipReleasedMail(
                             $payeeName,
                             $payroll->pay_period_label
                                 ?? trim(($payroll->pay_period_start?->toDateString() ?? '') . ' – ' . ($payroll->pay_period_end?->toDateString() ?? ''), ' –'),
                             (float) $payroll->net_pay,
-                            config('app.frontend_url') . '/' . $rolePath . '/payroll',
                             $employeeEmail,
                             $payroll->payroll_id,
                             $payroll->payment_date?->toDateString() ?? $payroll->processed_at?->toDateString(),
                             $payroll->payment_method,
-                            (float) $payroll->gross_pay
+                            (float) $payroll->gross_pay,
+                            app(PayrollPayslipDataService::class)->forPayroll($payroll)
                         ),
                         [
                             'event_key'      => 'payroll.payslip_released',
@@ -521,19 +525,22 @@ class PayrollController extends Controller
      */
     public function destroy(Payroll $payroll): JsonResponse
     {
-        if ($payroll->status === 'paid') {
+        return DB::transaction(function () use ($payroll): JsonResponse {
+            $locked = Payroll::lockForUpdate()->findOrFail($payroll->id);
+            if (!in_array($locked->status, ['draft', 'cancelled'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only draft or cancelled payroll records can be deleted.',
+                ], 422);
+            }
+
+            $locked->delete();
+
             return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete paid payroll records.',
-            ], 422);
-        }
-
-        $payroll->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payroll deleted successfully.',
-        ]);
+                'success' => true,
+                'message' => 'Payroll deleted successfully.',
+            ]);
+        });
     }
 
     /**
@@ -603,6 +610,19 @@ class PayrollController extends Controller
         $employee = !empty($validated['employee_id']) ? Employee::find($validated['employee_id']) : null;
         $periodLabel = Carbon::parse($validated['pay_period_start'])->format('M d') . ' - ' . Carbon::parse($validated['pay_period_end'])->format('M d, Y');
 
+        if ($user && $employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Select either a user account or an employee record, not both.',
+            ], 422);
+        }
+        if ($employee?->user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This employee is linked to a user account; create payroll using the account record only.',
+            ], 422);
+        }
+
         // Require a person reference: user account, employee record, or free-text name
         if (!$user && !$employee && empty($validated['employee_name'])) {
             return response()->json([
@@ -613,6 +633,13 @@ class PayrollController extends Controller
 
         if ($employee) {
             $validated['employee_name'] = $employee->name;
+        }
+
+        if (($user || $employee) && ($validated['rate_type'] ?? 'monthly') !== 'monthly') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Daily and hourly payroll require an approved rate calculation policy and are not supported by this payroll run.',
+            ], 422);
         }
 
         // Retry the whole create on a payroll_id unique collision — each
@@ -658,7 +685,8 @@ class PayrollController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
-        $payroll = Payroll::findOrFail($id);
+        return DB::transaction(function () use ($request, $id): JsonResponse {
+        $payroll = Payroll::lockForUpdate()->findOrFail($id);
 
         if (in_array($payroll->status, ['paid', 'cancelled'], true)) {
             return response()->json([
@@ -711,13 +739,30 @@ class PayrollController extends Controller
             // and payment have dedicated endpoints that perform side-effects
             // (processed_by stamping, loan settlement, notifications). Letting
             // update() set them would bypass all of that.
-            'status' => 'nullable|in:draft,processing,pending,cancelled',
+            'status' => 'nullable|in:draft,processing,cancelled',
             'payment_date' => 'nullable|date',
             'payment_method' => 'nullable|string|max:50',
             'payment_reference' => 'nullable|string|max:100',
             'remarks' => 'nullable|string',
             'manual_attendance' => 'nullable|array',
         ]);
+
+        if ($payroll->status === 'pending') {
+            $changedFields = array_diff(array_keys($validated), ['status', 'remarks']);
+            if (($validated['status'] ?? null) !== 'cancelled' || $changedFields !== []) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Approved payroll cannot be edited. Cancel it and create a corrected draft for a new approval.',
+                ], 422);
+            }
+        }
+
+        if ($payroll->user_id && ($validated['rate_type'] ?? $payroll->rate_type) !== 'monthly') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Daily and hourly payroll require an approved rate calculation policy and are not supported by this payroll run.',
+            ], 422);
+        }
 
         // Recompute period label if dates changed
         if (isset($validated['pay_period_start']) || isset($validated['pay_period_end'])) {
@@ -754,5 +799,6 @@ class PayrollController extends Controller
             'message' => 'Payroll record updated successfully.',
             'data' => $payroll,
         ]);
+        });
     }
 }

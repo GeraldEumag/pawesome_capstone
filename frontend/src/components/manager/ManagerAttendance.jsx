@@ -30,7 +30,6 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
-import { formatCurrency } from "../../utils/currency";
 import { exportToCSV, exportToPDF, exportToExcel } from "../../utils/reportExport";
 import RowActionPopover from "../shared/RowActionPopover";
 import Modal from "../shared/Modal";
@@ -220,7 +219,8 @@ const normalizeAttendanceRecord = (record, fallbackDate) => {
     isEarlyLeave:
       Boolean(record.is_early_leave) ||
       Boolean(record.earlyLeave) ||
-      status === "half_day",
+      status === "half_day" ||
+      status === "early_leave",
     location: record.location || "N/A",
     remarks:
       record.remarks ||
@@ -447,17 +447,6 @@ const ManagerAttendance = () => {
       0
     );
 
-    const totalEarnings = attendance.reduce((sum, record) => {
-      if (record.dailyEarnings) return sum + record.dailyEarnings;
-      if (record.status === "present") return sum + 500;
-      if (record.status === "late") return sum + 400;
-      return sum;
-    }, 0);
-
-    const lateDeductions = late * 100;
-    const overtimeBonus = overtimeHours * 50;
-    const netPayroll = totalEarnings - lateDeductions + overtimeBonus;
-
     return {
       total,
       present,
@@ -469,9 +458,6 @@ const ManagerAttendance = () => {
       averageHours: total ? totalHours / total : 0,
       overtimeHours,
       undertimeHours,
-      lateDeductions,
-      overtimeBonus,
-      netPayroll,
     };
   }, [attendance]);
 
@@ -533,19 +519,9 @@ const ManagerAttendance = () => {
       showToast("Attendance remarks updated successfully.", "success");
     } catch (err) {
       console.error("Save attendance remarks error:", err);
-
-      setAttendance((prev) =>
-        prev.map((record) =>
-          record.id === selectedAttendance.id
-            ? { ...record, remarks: remarksForm.remarks }
-            : record
-        )
-      );
-
-      setShowRemarksModal(false);
       showToast(
-        "Remarks were updated on-screen. Backend remarks endpoint still needs verification.",
-        "warning"
+        err.message || "Attendance remarks were not saved. Please try again.",
+        "error"
       );
     } finally {
       setActionLoadingId(null);
@@ -668,10 +644,10 @@ const ManagerAttendance = () => {
             <FontAwesomeIcon icon={faClock} />
           </span>
           <div>
-            <h2>Payroll Attendance Basis</h2>
+            <h2>Attendance Hours</h2>
             <p>
-              Attendance hours, late arrivals, undertime, and overtime can be
-              used as payroll references.
+              These are attendance totals only. Earnings and deductions are
+              calculated by payroll from its approved rules.
             </p>
           </div>
         </div>
@@ -680,21 +656,6 @@ const ManagerAttendance = () => {
           <InfoMetric label="Average Hours" value={`${statistics.averageHours.toFixed(2)}h`} />
           <InfoMetric label="Overtime Hours" value={`${statistics.overtimeHours.toFixed(2)}h`} />
           <InfoMetric label="Undertime" value={`${statistics.undertimeHours.toFixed(2)}h`} />
-          <InfoMetric
-            label="Late Deductions"
-            value={`-${formatCurrency(statistics.lateDeductions)}`}
-            tone="danger"
-          />
-          <InfoMetric
-            label="Overtime Bonus"
-            value={`+${formatCurrency(statistics.overtimeBonus)}`}
-            tone="success"
-          />
-          <InfoMetric
-            label="Estimated Net Payroll"
-            value={formatCurrency(statistics.netPayroll)}
-            tone="primary"
-          />
         </div>
       </section>
 

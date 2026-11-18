@@ -38,6 +38,7 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
   const navItems = role === "vet_tech"
     ? [
         { to: "/veterinary/appointments", label: "Appointments", icon: faCalendarAlt },
+        { to: "/staff/attendance", label: "My Attendance", icon: faClockRotateLeft },
         { to: "/veterinary/payroll", label: "My Payroll", icon: faWallet },
         { to: "/veterinary/profile", label: "Profile", icon: faUser },
       ]
@@ -50,6 +51,7 @@ const VeterinarySidebar = ({ mobileOpen, onMobileMenuToggle }) => {
         { to: "/veterinary/services", label: "Services", icon: faStethoscope },
         { to: "/veterinary/history", label: "History", icon: faClockRotateLeft },
         { to: "/veterinary/reports", label: "Reports", icon: faChartBar },
+        { to: "/staff/attendance", label: "My Attendance", icon: faClockRotateLeft },
         { to: "/veterinary/payroll", label: "My Payroll", icon: faWallet },
         { to: "/veterinary/profile", label: "Profile", icon: faUser },
       ];

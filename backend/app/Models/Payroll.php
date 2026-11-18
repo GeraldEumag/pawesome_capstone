@@ -54,6 +54,8 @@ class Payroll extends Model
         'undertime_minutes',
         'incomplete_punch_days',
         'paid_leave_days',
+        'vacation_leave_days',
+        'sick_leave_days',
         'salary_loan',
         'cash_advance',
         'loans_settled',
@@ -81,6 +83,8 @@ class Payroll extends Model
         'present_days' => 'float',
         'absent_days' => 'float',
         'paid_leave_days' => 'float',
+        'vacation_leave_days' => 'float',
+        'sick_leave_days' => 'float',
         'regular_hours' => 'decimal:2',
         'overtime_hours' => 'decimal:2',
         'overtime_pay' => 'decimal:2',
@@ -211,6 +215,12 @@ class Payroll extends Model
             return;
         }
 
+        if (($this->rate_type ?? 'monthly') !== 'monthly') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'rate_type' => ['Daily/hourly payroll cannot be calculated until an approved rate policy is configured.'],
+            ]);
+        }
+
         // Set employee details
         $this->department = $person->department ?? 'Unassigned';
         $this->position = $person->position ?? 'Staff';
@@ -286,6 +296,8 @@ class Payroll extends Model
         $this->present_days             = $computed['present_days'];
         $this->absent_days              = $computed['absent_days'];
         $this->paid_leave_days          = $computed['paid_leave_days'];
+        $this->vacation_leave_days      = $computed['vacation_leave_days'];
+        $this->sick_leave_days          = $computed['sick_leave_days'];
         $this->regular_hours            = $computed['regular_hours'];
         $this->overtime_hours           = $computed['overtime_hours'];
         $this->overtime_pay             = $computed['overtime_pay'];

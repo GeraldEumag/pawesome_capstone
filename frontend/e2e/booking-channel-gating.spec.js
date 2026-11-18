@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { apiLogin } = require('./test-utils');
 
 const frontendUrl = process.env.E2E_BASE_URL || 'http://127.0.0.1:3000';
-const apiUrl = `${process.env.E2E_API_URL || 'http://127.0.0.1:8000'}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || 'http://127.0.0.1:8000').replace(/\/api\/?$/, '')}/api`;
 
 // Marks fixtures so reruns stay identifiable; created rows are cancelled at the
 // end of each test.

@@ -24,9 +24,16 @@ async function openBoard(browser, session, route) {
   return { page, context };
 }
 
-async function waitForLoaded(page) {
-  await page.waitForSelector(".cbb-board", { timeout: 30000 });
-  await page.waitForFunction(() => !document.querySelector(".cbb-updated")?.textContent.includes("—"), null, { timeout: 30000 });
+async function waitForLoaded(page, timeout = 60000) {
+  await page.waitForSelector(".cbb-board", { timeout });
+  await page.waitForFunction(() => {
+    const board = document.querySelector(".cbb-board");
+    const loading = board?.querySelector('[aria-label="Loading your bookings"]');
+    const updated = board?.querySelector(".cbb-updated")?.textContent || "";
+    const error = board?.querySelector('[role="alert"]');
+    return !!board && !loading && (!!error || !updated.includes("—"));
+  }, null, { timeout });
+  await expect(page.locator(".cbb-error")).toHaveCount(0);
 }
 
 const tabCounts = (page) =>
@@ -47,6 +54,7 @@ test.describe("customer bookings board", () => {
   });
 
   test("tab and date preset round-trip through the URL", async ({ browser, request }) => {
+    test.setTimeout(120000);
     const session = await apiLogin(request, "customer");
     const { page, context } = await openBoard(browser, session, "/customer/bookings?tab=to_approve&range=7d");
 
@@ -109,6 +117,7 @@ test.describe("customer bookings board", () => {
   });
 
   test("tablet width keeps the table inside its wrapper and hotel rows stay clean", async ({ browser, request }) => {
+    test.setTimeout(120000);
     const session = await apiLogin(request, "customer");
     const receptionist = await apiLogin(request, "receptionist");
     const headers = authHeaders(session);

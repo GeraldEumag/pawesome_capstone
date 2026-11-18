@@ -235,4 +235,27 @@ class PayrollLeavePolicyAuditTest extends TestCase
         $this->assertGreaterThan(0, (float) $row['total_late_minutes']);
         $this->assertGreaterThan(0, (float) $row['late_deductions']);
     }
+
+    public function test_approved_half_day_with_approval_created_on_leave_row_stays_half_day(): void
+    {
+        $user = $this->staffUser();
+        $this->punchAllExcept($user, '2024-06-05');
+        $leaveId = $this->insertLeave($user, 'sick_leave', '2024-06-05', 'approved');
+        DB::table('leave_requests')->where('id', $leaveId)->update([
+            'half_day' => 1,
+            'days_counted' => 0.5,
+        ]);
+        Attendance::create([
+            'user_id' => $user->id,
+            'date' => '2024-06-05',
+            'status' => 'on_leave',
+        ]);
+
+        $row = $this->computeRow($user);
+
+        $this->assertEquals(0.5, (float) $row['paid_leave_days']);
+        $this->assertEquals(0.5, (float) $row['sick_leave_days']);
+        $this->assertEquals(0.5, (float) $row['absent_days']);
+        $this->assertEqualsWithDelta(self::DAILY * 0.5, (float) $row['absent_deductions'], 0.05);
+    }
 }

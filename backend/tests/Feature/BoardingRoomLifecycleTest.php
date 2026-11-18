@@ -124,6 +124,45 @@ class BoardingRoomLifecycleTest extends TestCase
             ->assertJsonPath('boarding.pet.id', $pet->id);
     }
 
+    public function test_receptionist_queue_serializes_store_local_boarding_dates_without_utc_shift(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-18 18:45:00', 'UTC'));
+        $receptionist = $this->user('receptionist');
+        [, $customer, $pet] = $this->customerPet();
+        $room = $this->room();
+        $storeDate = Carbon::now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString();
+        $boarding = $this->boarding($customer, $pet, [
+            'status' => 'scheduled',
+            'payment_status' => 'paid',
+            'booking_channel' => 'online',
+            'check_in' => $storeDate,
+            'check_out' => $storeDate,
+        ]);
+        BoardingRoomReservation::create([
+            'room_id' => $room->id,
+            'source_type' => 'pet_hotel',
+            'source_id' => $boarding->id,
+            'pet_id' => $pet->id,
+            'customer_id' => $customer->id,
+            'check_in_date' => $storeDate,
+            'check_out_date' => $storeDate,
+            'status' => 'scheduled',
+        ]);
+
+        $this->withHeaders($this->headers($receptionist))
+            ->getJson('/api/receptionist/boarding-requests')
+            ->assertOk()
+            ->assertJsonPath('store_today', $storeDate)
+            ->assertJsonPath('data.0.id', $boarding->id)
+            ->assertJsonPath('data.0.status', 'scheduled')
+            ->assertJsonPath('data.0.payment_status', 'paid')
+            ->assertJsonPath('data.0.workflow_stage', 'on_going')
+            ->assertJsonPath('data.0.check_in', $storeDate)
+            ->assertJsonPath('data.0.check_out', $storeDate)
+            ->assertJsonPath('data.0.room_reservation.check_in_date', $storeDate)
+            ->assertJsonPath('data.0.room_reservation.check_out_date', $storeDate);
+    }
+
     public function test_duplicate_boarding_approval_is_rejected_after_the_first_transition(): void
     {
         $receptionist = $this->user('receptionist');
@@ -187,6 +226,43 @@ class BoardingRoomLifecycleTest extends TestCase
             'room_id' => $room->id,
             'status' => 'scheduled',
         ]);
+    }
+
+    public function test_schedule_uses_store_local_today_instead_of_utc_today(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-18 17:30:00', 'UTC'));
+        $receptionist = $this->user('receptionist');
+        [, $customer, $pet] = $this->customerPet();
+        $room = $this->room();
+        $boarding = $this->boarding($customer, $pet, ['status' => 'approved']);
+        $headers = $this->headers($receptionist);
+
+        $utcDate = Carbon::today('UTC')->toDateString();
+        $storeDate = Carbon::today(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString();
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/schedule", [
+                'room_id' => $room->id,
+                'check_in' => $utcDate,
+                'check_out' => $utcDate,
+                'total_amount' => 800,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('check_in');
+
+        $this->assertSame('approved', $boarding->fresh()->status);
+
+        $this->withHeaders($headers)
+            ->postJson("/api/receptionist/boarding-requests/{$boarding->id}/schedule", [
+                'room_id' => $room->id,
+                'check_in' => $storeDate,
+                'check_out' => $storeDate,
+                'total_amount' => 800,
+            ])
+            ->assertOk();
+
+        $this->assertSame('scheduled', $boarding->fresh()->status);
+        $this->assertSame($storeDate, $boarding->fresh()->check_in->toDateString());
     }
 
     public function test_legacy_hotel_room_schedule_still_uses_the_hotel_room_id_contract(): void

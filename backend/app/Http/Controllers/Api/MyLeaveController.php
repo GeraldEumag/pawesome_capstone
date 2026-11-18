@@ -71,6 +71,22 @@ class MyLeaveController extends Controller
             'half_day'   => 'nullable|integer|in:0,1,2',
         ]);
 
+        // Overlap check: a user cannot hold two non-terminal leave requests
+        // covering the same dates (prevents double balance deductions on
+        // approval). Cancelled/rejected requests do not block.
+        $overlap = DB::table('leave_requests')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'approved'])
+            ->whereDate('start_date', '<=', $data['end_date'])
+            ->whereDate('end_date', '>=', $data['start_date'])
+            ->exists();
+
+        if ($overlap) {
+            return response()->json([
+                'message' => 'This leave period overlaps an existing pending or approved leave request.',
+            ], 422);
+        }
+
         // Count working days in the leave range
         $start     = Carbon::parse($data['start_date']);
         $end       = Carbon::parse($data['end_date']);

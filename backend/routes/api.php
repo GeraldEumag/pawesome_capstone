@@ -803,10 +803,12 @@ Route::middleware(['auth.api', 'throttle:api'])->group(function () {
     Route::post('/my-leaves', [\App\Http\Controllers\Api\MyLeaveController::class, 'store']);
     Route::get('/my-leaves/balance', [\App\Http\Controllers\Api\MyLeaveController::class, 'balance']);
     Route::delete('/my-leaves/{id}', [\App\Http\Controllers\Api\MyLeaveController::class, 'cancel']);
-    // Attendance self-service
-    Route::get('/my-attendance', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'attendance']);
-    Route::get('/my-attendance/corrections', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'index']);
-    Route::post('/my-attendance/corrections', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'store']);
+    // Attendance self-service is staff-only; customers do not have time records.
+    Route::middleware('role:receptionist,cashier,inventory,veterinary,vet,vet_tech,manager,admin,payroll,groomer,super_receptionist,staff')->group(function () {
+        Route::get('/my-attendance', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'attendance']);
+        Route::get('/my-attendance/corrections', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'index']);
+        Route::post('/my-attendance/corrections', [\App\Http\Controllers\Api\MyAttendanceCorrectionController::class, 'store']);
+    });
     // Loan self-service
     Route::get('/my-loans', [\App\Http\Controllers\Api\MyLoanController::class, 'index']);
     Route::post('/my-loans', [\App\Http\Controllers\Api\MyLoanController::class, 'store']);
@@ -876,7 +878,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('m
 });
 
 // Attendance punching is staff-only — customers have no attendance workflow.
-Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,cashier,inventory,veterinary,vet_tech,manager,admin'])->group(function () {
+Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,cashier,inventory,veterinary,vet,vet_tech,manager,admin,payroll,groomer,super_receptionist,staff'])->group(function () {
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut']);
 });

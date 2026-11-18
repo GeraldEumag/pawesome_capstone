@@ -91,6 +91,12 @@ const CashierSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/staff/attendance" onClick={handleNavClick} className={({ isActive }) => isActive ? "active" : ""}>
+              <FontAwesomeIcon icon={faClockRotateLeft} className="nav-icon" />
+              <span>My Attendance</span>
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/cashier/payroll" onClick={handleNavClick} className={({ isActive }) => isActive ? "active" : ""}>
               <FontAwesomeIcon icon={faWallet} className="nav-icon" />
               <span>My Payroll</span>

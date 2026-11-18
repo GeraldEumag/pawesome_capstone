@@ -188,6 +188,86 @@ class CompanySchedule
     }
 
     /**
+     * Whether the configured shift crosses midnight (shift_end <= shift_start,
+     * e.g. 22:00–06:00). When false the shift ends on the same calendar day.
+     */
+    public static function isOvernightShift(): bool
+    {
+        return static::shiftEnd() <= static::shiftStart();
+    }
+
+    /**
+     * Scheduled shift-end datetime for a work date. Overnight shifts end on
+     * the following calendar day.
+     */
+    public static function scheduledShiftEnd(Carbon $workDate): Carbon
+    {
+        $end = $workDate->copy()->startOfDay()->setTimeFromTimeString(static::shiftEnd());
+        if (static::isOvernightShift()) {
+            $end->addDay();
+        }
+        return $end;
+    }
+
+    /**
+     * Resolve the actual check-out datetime for an attendance record.
+     *
+     * check_out is stored as a bare H:i on the attendance (check-in) date.
+     * A checkout at or before the check-in time is interpreted as the next
+     * calendar day — matching Attendance::calculateHours() and the overnight
+     * checkout path in AttendanceController::checkOut(). Without a check-in
+     * the overnight-shift rule alone decides: times at/before shift start
+     * roll to the next day.
+     */
+    public static function resolveCheckOutDateTime(Carbon $workDate, ?string $checkInHHMM, string $checkOutHHMM): Carbon
+    {
+        $actual = $workDate->copy()->startOfDay()->setTimeFromTimeString(substr($checkOutHHMM, 0, 5));
+
+        if ($checkInHHMM !== null && $checkInHHMM !== '') {
+            if ($actual->format('H:i') <= substr($checkInHHMM, 0, 5)) {
+                $actual->addDay();
+            }
+        } elseif (static::isOvernightShift()
+            && $actual->format('H:i') <= static::shiftStart()) {
+            $actual->addDay();
+        }
+
+        return $actual;
+    }
+
+    /**
+     * Minutes late for a check-in on a specific attendance date.
+     * Date-aware variant of lateMinutes() — identical result for day shifts.
+     */
+    public static function lateMinutesForDate(string $date, string $checkInHHMM): int
+    {
+        $shiftStart = Carbon::parse($date)->setTimeFromTimeString(static::shiftStart());
+        $grace      = $shiftStart->copy()->addMinutes(static::graceMinutes());
+        $actual     = Carbon::parse($date)->setTimeFromTimeString(substr($checkInHHMM, 0, 5));
+
+        return $actual->gt($grace) ? (int) $shiftStart->diffInMinutes($actual) : 0;
+    }
+
+    /**
+     * Minutes a check-out precedes the scheduled shift end, evaluated against
+     * the correct scheduled datetime (next-day end for overnight shifts) and
+     * the correct checkout datetime (next-day checkout when it is not after
+     * the check-in). 0 when on time or after shift end.
+     *
+     * @param  string  $date        attendance date 'Y-m-d'
+     * @param  string|null  $checkInHHMM  'H:i'/'H:i:s' or null
+     * @param  string  $checkOutHHMM      'H:i'/'H:i:s'
+     */
+    public static function undertimeMinutesForDate(string $date, ?string $checkInHHMM, string $checkOutHHMM): int
+    {
+        $workDate = Carbon::parse($date);
+        $scheduledEnd = static::scheduledShiftEnd($workDate);
+        $actualOut    = static::resolveCheckOutDateTime($workDate, $checkInHHMM, $checkOutHHMM);
+
+        return $actualOut->lt($scheduledEnd) ? (int) $actualOut->diffInMinutes($scheduledEnd) : 0;
+    }
+
+    /**
      * Number of minutes the employee worked within the night differential window
      * (10 PM to 6 AM next day) for a given attendance record.
      *

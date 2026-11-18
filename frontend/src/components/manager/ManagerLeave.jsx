@@ -177,17 +177,7 @@ const ManagerLeave = () => {
       setSelectedRecord(null);
     } catch (err) {
       console.error("Leave action error:", err);
-      setRecords((prev) =>
-        prev.map((r) =>
-          r.id === selectedRecord.id
-            ? { ...r, status: actionModal, manager_remarks: remarks }
-            : r
-        )
-      );
-      showToast(`Updated locally. Backend may need verification.`, "warning");
-      setActionModal(null);
-      setRemarks("");
-      setSelectedRecord(null);
+      showToast(err.message || "Leave decision failed. The request was not changed.", "error");
     } finally {
       setActionLoading(false);
     }

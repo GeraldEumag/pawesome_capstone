@@ -17,9 +17,9 @@ class Holiday extends Model
     ];
 
     protected $casts = [
-        'date'         => 'date',
+        'date' => 'date',
         'is_recurring' => 'boolean',
-        'year'         => 'integer',
+        'year' => 'integer',
     ];
 
     public function creator(): BelongsTo
@@ -42,7 +42,10 @@ class Holiday extends Model
     public static function blockedMap(int $year): array
     {
         return Cache::remember("holidays_blocked_{$year}", 600, function () use ($year) {
-            return static::where('year', $year)->orderBy('date')->get()
+            return static::where('year', $year)
+                ->whereIn('type', ['regular', 'special_non_working'])
+                ->orderBy('date')
+                ->get()
                 ->mapWithKeys(fn (self $h) => [$h->date->toDateString() => $h->name])
                 ->all();
         });
@@ -52,6 +55,7 @@ class Holiday extends Model
     public static function blockedNameOn(Carbon|string $date): ?string
     {
         $day = Carbon::parse($date)->toDateString();
+
         return static::blockedMap((int) substr($day, 0, 4))[$day] ?? null;
     }
 
@@ -74,6 +78,7 @@ class Holiday extends Model
                 $result[] = ['date' => $d->toDateString(), 'name' => $name];
             }
         }
+
         return $result;
     }
 

@@ -27,15 +27,16 @@ class MyAttendanceCorrectionController extends Controller
     public function attendance(Request $request): JsonResponse
     {
         $user      = auth()->user();
+        $today     = now()->toDateString();
         $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
-        $endDate   = $request->query('end_date', now()->toDateString());
+        $endDate   = $request->query('end_date', $today);
 
         $records = Attendance::where('user_id', $user->id)
             ->whereBetween('date', [$startDate, $endDate])
             ->orderBy('date', 'desc')
             ->get();
 
-        return response()->json(['success' => true, 'data' => $records]);
+        return response()->json(['success' => true, 'today' => $today, 'data' => $records]);
     }
 
     /** POST /api/my-attendance/corrections */
@@ -64,31 +65,52 @@ class MyAttendanceCorrectionController extends Controller
             ->where('user_id', $user->id)
             ->whereDate('pay_period_start', $period[0])
             ->whereDate('pay_period_end', $period[1])
-            ->whereIn('status', ['approved', 'paid'])
+            ->whereIn('status', ['pending', 'approved', 'paid'])
             ->exists();
 
-        // Even in locked periods, employees can still file a correction —
-        // manager will review and manually update if warranted.
+        if ($locked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This payroll period is approved or released. Use the authorized historical correction process.',
+            ], 422);
+        }
 
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', $data['date'])
-            ->first();
+        $result = DB::transaction(function () use ($user, $data) {
+            \App\Models\User::lockForUpdate()->findOrFail($user->id);
+            $duplicate = AttendanceCorrection::where('user_id', $user->id)
+                ->whereDate('date', $data['date'])
+                ->where('status', 'pending')
+                ->exists();
+            if ($duplicate) {
+                return null;
+            }
 
-        $correction = AttendanceCorrection::create([
-            'user_id'              => $user->id,
-            'attendance_id'        => $attendance?->id,
-            'date'                 => $data['date'],
-            'requested_check_in'   => $data['requested_check_in'] ?? null,
-            'requested_check_out'  => $data['requested_check_out'] ?? null,
-            'reason'               => $data['reason'],
-            'status'               => 'pending',
-        ]);
+            $attendance = Attendance::where('user_id', $user->id)
+                ->whereDate('date', $data['date'])
+                ->first();
+
+            return AttendanceCorrection::create([
+                'user_id' => $user->id,
+                'attendance_id' => $attendance?->id,
+                'date' => $data['date'],
+                'requested_check_in' => $data['requested_check_in'] ?? null,
+                'requested_check_out' => $data['requested_check_out'] ?? null,
+                'reason' => $data['reason'],
+                'status' => 'pending',
+            ]);
+        });
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A pending correction already exists for this date.',
+            ], 422);
+        }
 
         return response()->json([
             'success'  => true,
             'message'  => 'Correction request filed. Manager will review.',
-            'data'     => $correction,
-            'period_locked' => $locked,
+            'data'     => $result,
+            'period_locked' => false,
         ], 201);
     }
 }

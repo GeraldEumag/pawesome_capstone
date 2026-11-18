@@ -1,0 +1,41 @@
+{
+  "run": "selected-booking-regression-final-rerun",
+  "environment": {
+    "frontend": "http://127.0.0.1:3001",
+    "api": "http://127.0.0.1:8030/api",
+    "database": "pawesome_booking_audit",
+    "browser": "chromium",
+    "workers": 1,
+    "retries": 0
+  },
+  "command": "npx playwright test e2e/booking-channel-gating.spec.js e2e/customer-bookings-board.spec.js e2e/phase12-boarding-workflow.spec.js e2e/phase12-veterinary-workflow.spec.js e2e/receptionist-booking-order.spec.js e2e/receptionist-room-assignment.spec.js --project=chromium --workers=1 --retries=0 --reporter=list",
+  "result": {
+    "passed": 16,
+    "failed": 1,
+    "did_not_run": 2,
+    "flaky": 0,
+    "duration": "7.1m"
+  },
+  "failure": {
+    "test": "Phase 12.2 native boarding lifecycle: reservation, documents, approval, room, payment, check-in",
+    "location": "frontend/e2e/phase12-boarding-workflow.spec.js:253",
+    "assertion": "Scheduled paid boarding must appear in the receptionist's today/on-going list before check-in.",
+    "expected_rows": 1,
+    "actual_rows": 0,
+    "database_observation": {
+      "boarding_id": 88,
+      "pet_id": 145,
+      "room_id": 23,
+      "room_reservation_id": 48,
+      "status": "scheduled",
+      "payment_status": "paid",
+      "check_in": "2026-11-19",
+      "room_reservation_status": "scheduled"
+    },
+    "evidence": [
+      "07-boarding-checkin-tab-failure.png",
+      "07-boarding-checkin-tab-failure-context.md"
+    ],
+    "disposition": "Unresolved: DB state is scheduled and paid, but the UI showed zero rows in the selected on-going tab. Root cause is not asserted; the API payload/workflow-stage mapping and filter need tracing."
+  }
+}

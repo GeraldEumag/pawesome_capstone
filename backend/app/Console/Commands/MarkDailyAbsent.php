@@ -31,6 +31,14 @@ class MarkDailyAbsent extends Command
             $checkDate = $today->copy()->subDays($i);
             $dateStr = $checkDate->toDateString();
 
+            // Non-working holidays never receive ordinary absence rows.
+            // special_working holidays remain regular workdays.
+            $holiday = \App\Models\Holiday::forDate($dateStr);
+            if ($holiday && in_array($holiday->type, ['regular', 'special_non_working'], true)) {
+                $this->line("  {$dateStr}: skipped (holiday — {$holiday->name})");
+                continue;
+            }
+
             // Account users (staff roles) — workday check is per-person so
             // configured day-offs are honored (staff with offs on $checkDate
             // are skipped even if the company is open that weekday).

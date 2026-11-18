@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Attendance-driven payroll computation shared by preview (compute),
@@ -126,6 +127,8 @@ class PayrollComputationService
         $earlyLeaveDays       = 0;
         $absentDays           = 0;
         $paidLeaveDays        = 0;
+        $vacationLeaveDays    = 0.0;
+        $sickLeaveDays        = 0.0;
         $totalLateMinutes     = 0;
         $totalUndertimeMinutes = 0;
         $nightDiffMinutes     = 0;
@@ -136,7 +139,11 @@ class PayrollComputationService
         $otRegHolidayHours    = 0.0;
         $otSpecialHolidayHours = 0.0;
 
-        $regularHours  = (float) $attendanceRecords->sum('total_hours');
+        // Attendance total_hours includes OT; keep the payroll regular-hours
+        // field mutually exclusive with overtime_hours.
+        $regularHours  = (float) $attendanceRecords->sum(
+            fn ($record) => max(0, (float) ($record->total_hours ?? 0) - (float) ($record->overtime_hours ?? 0))
+        );
         $overtimeHours = (float) $attendanceRecords->sum('overtime_hours');
 
         $leaveDates = [];
@@ -264,21 +271,64 @@ class PayrollComputationService
 
                 if ($record) {
                     $status = $record->status ?? 'present';
+                    $leave = $approvedLeaveDates[$dateKey] ?? null;
+                    $paidLeave = $leave && $leave['type'] !== 'unpaid_leave';
+                    $halfDayPaidLeave = $paidLeave && (bool) ($leave['half_day'] ?? false);
 
                     if (in_array($status, ['present', 'late', 'early_leave'], true)) {
                         $presentDays++;
+                        if ($halfDayPaidLeave) {
+                            $paidLeaveDays += 0.5;
+                            if ($leave['type'] === 'vacation_leave') {
+                                $vacationLeaveDays += 0.5;
+                            } elseif ($leave['type'] === 'sick_leave') {
+                                $sickLeaveDays += 0.5;
+                            }
+                            $leaveDates[$dateKey] = true;
+                        }
                     } elseif ($status === 'absent') {
-                        $absentDays++;
+                        if ($halfDayPaidLeave) {
+                            $paidLeaveDays += 0.5;
+                            $absentDays += 0.5;
+                            if ($leave['type'] === 'vacation_leave') {
+                                $vacationLeaveDays += 0.5;
+                            } elseif ($leave['type'] === 'sick_leave') {
+                                $sickLeaveDays += 0.5;
+                            }
+                            $leaveDates[$dateKey] = true;
+                        } elseif ($paidLeave) {
+                            $paidLeaveDays++;
+                            if ($leave['type'] === 'vacation_leave') {
+                                $vacationLeaveDays++;
+                            } elseif ($leave['type'] === 'sick_leave') {
+                                $sickLeaveDays++;
+                            }
+                            $leaveDates[$dateKey] = true;
+                        } else {
+                            $absentDays++;
+                        }
                     } elseif ($status === 'on_leave') {
                         // An on_leave attendance row alone can't distinguish
                         // paid from unpaid leave — consult the approved leave
                         // request covering this date. Unpaid leave deducts
                         // like an absence, matching the no-record path below.
-                        $leave = $approvedLeaveDates[$dateKey] ?? null;
                         if ($leave && $leave['type'] === 'unpaid_leave') {
                             $absentDays += 1;
+                        } elseif ($halfDayPaidLeave) {
+                            $paidLeaveDays += 0.5;
+                            $absentDays += 0.5;
+                            if ($leave['type'] === 'vacation_leave') {
+                                $vacationLeaveDays += 0.5;
+                            } elseif ($leave['type'] === 'sick_leave') {
+                                $sickLeaveDays += 0.5;
+                            }
                         } else {
                             $paidLeaveDays++;
+                            if ($leave && $leave['type'] === 'vacation_leave') {
+                                $vacationLeaveDays++;
+                            } elseif ($leave && $leave['type'] === 'sick_leave') {
+                                $sickLeaveDays++;
+                            }
                         }
                         $leaveDates[$dateKey] = true;
                     }
@@ -292,16 +342,21 @@ class PayrollComputationService
                         : null;
 
                     if ($checkIn) {
-                        $lateMin = CompanySchedule::lateMinutes($checkIn);
+                        $lateMin = CompanySchedule::lateMinutesForDate($dateKey, $checkIn);
                         if ($lateMin > 0) {
                             $lateDays++;
                             $totalLateMinutes += $lateMin;
                         }
 
-                        // Early leave = undertime minutes before shift end
-                        if ($checkOut && $checkOut < $shiftEnd) {
-                            $earlyLeaveDays++;
-                            $totalUndertimeMinutes += CompanySchedule::undertimeMinutes($checkOut);
+                        // Early leave = undertime vs the scheduled shift end
+                        // (next-day end for overnight shifts; next-day checkout
+                        // resolved from the check-in time).
+                        if ($checkOut) {
+                            $underMin = CompanySchedule::undertimeMinutesForDate($dateKey, $checkIn, $checkOut);
+                            if ($underMin > 0) {
+                                $earlyLeaveDays++;
+                                $totalUndertimeMinutes += $underMin;
+                            }
                         }
 
                         // Check-in without check-out: flagged, never deducted
@@ -356,8 +411,18 @@ class PayrollComputationService
                         // Half-day paid leave: half paid, other half due to work
                         $paidLeaveDays += 0.5;
                         $absentDays += 0.5;
+                        if ($leave['type'] === 'vacation_leave') {
+                            $vacationLeaveDays += 0.5;
+                        } elseif ($leave['type'] === 'sick_leave') {
+                            $sickLeaveDays += 0.5;
+                        }
                     } else {
                         $paidLeaveDays += 1;
+                        if ($leave['type'] === 'vacation_leave') {
+                            $vacationLeaveDays++;
+                        } elseif ($leave['type'] === 'sick_leave') {
+                            $sickLeaveDays++;
+                        }
                     }
                     $leaveDates[$dateKey] = true;
                     continue;
@@ -392,14 +457,15 @@ class PayrollComputationService
                     ? ($record->check_out instanceof \Carbon\Carbon ? $record->check_out->format('H:i') : substr((string) $record->check_out, 0, 5))
                     : null;
                 if ($checkIn) {
-                    $lateMin = CompanySchedule::lateMinutes($checkIn);
+                    $recordDate = Carbon::parse($record->date)->toDateString();
+                    $lateMin = CompanySchedule::lateMinutesForDate($recordDate, $checkIn);
                     if ($lateMin > 0) {
                         $lateDays++;
                         $totalLateMinutes += $lateMin;
                     }
 
                     if ($checkOut) {
-                        $totalUndertimeMinutes += CompanySchedule::undertimeMinutes($checkOut);
+                        $totalUndertimeMinutes += CompanySchedule::undertimeMinutesForDate($recordDate, $checkIn, $checkOut);
                     } else {
                         $incompletePunchDays++;
                     }
@@ -420,6 +486,8 @@ class PayrollComputationService
             'early_leave_days'               => $earlyLeaveDays,
             'absent_days'                    => $absentDays,
             'paid_leave_days'                => $paidLeaveDays,
+            'vacation_leave_days'            => $vacationLeaveDays,
+            'sick_leave_days'                => $sickLeaveDays,
             'total_late_minutes'             => $totalLateMinutes,
             'total_undertime_minutes'        => $totalUndertimeMinutes,
             'incomplete_punch_days'          => $incompletePunchDays,
@@ -471,9 +539,19 @@ class PayrollComputationService
         );
         $factor = $this->periodFactor($startDate, $endDate);
 
-        $baseSalary = isset($extras['base_salary']) && $extras['base_salary'] !== null
-            ? (float) $extras['base_salary']
-            : (float) ($employee->base_salary ?? 15000);
+        $salaryValue = array_key_exists('base_salary', $extras) && $extras['base_salary'] !== null
+            ? $extras['base_salary']
+            : $employee->base_salary;
+        if (!is_numeric($salaryValue) || !is_finite((float) $salaryValue) || (float) $salaryValue <= 0) {
+            throw ValidationException::withMessages([
+                'salary' => [sprintf(
+                    'Payroll is blocked for %s (ID %s): a positive monthly base salary must be configured.',
+                    $employee->name,
+                    $employee->id
+                )],
+            ]);
+        }
+        $baseSalary = (float) $salaryValue;
         // Stored hourly_rate is authoritative; fallback = base_salary ÷ 208
         $hourlyRate = isset($extras['hourly_rate']) && $extras['hourly_rate'] !== null
             ? (float) $extras['hourly_rate']
@@ -551,14 +629,14 @@ class PayrollComputationService
         $grossPay = max(0, $grossPay);
 
         // --- Statutory contributions (half per semi-monthly cutoff) ---
-        $sss        = $this->calculateSss($baseSalary) * $factor;
+        $sss        = $this->calculateSss($baseSalary, $startDate) * $factor;
         $philhealth = $this->calculatePhilHealth($baseSalary) * $factor;
-        $pagibig    = $this->calculatePagibig($baseSalary) * $factor;
+        $pagibig    = $this->calculatePagibig($baseSalary, $startDate) * $factor;
 
         // Employer shares for remittance/reporting (not employee deductions)
-        $sssEr        = $this->calculateSssEmployer($baseSalary) * $factor;
+        $sssEr        = $this->calculateSssEmployer($baseSalary, $startDate) * $factor;
         $philhealthEr = $this->calculatePhilHealth($baseSalary) * $factor;
-        $pagibigEr    = $this->calculatePagibig($baseSalary) * $factor;
+        $pagibigEr    = $this->calculatePagibigEmployer($baseSalary, $startDate) * $factor;
 
         // --- Withholding tax (monthly bracket, halved for semi-monthly) ---
         // De-minimis / non-taxable allowances are excluded from taxable income.
@@ -635,6 +713,8 @@ class PayrollComputationService
             'incomplete_punch_days'       => $stats['incomplete_punch_days'],
             'absent_days'                 => $stats['absent_days'],
             'paid_leave_days'             => $stats['paid_leave_days'],
+            'vacation_leave_days'         => $stats['vacation_leave_days'],
+            'sick_leave_days'             => $stats['sick_leave_days'],
             'regular_hours'               => round($stats['regular_hours'], 2),
             'overtime_hours'              => round($stats['overtime_hours'], 2),
             'overtime_pay'                => round($overtimePay, 2),
@@ -845,6 +925,10 @@ class PayrollComputationService
      */
     public function computeForAllPeople(string $startDate, string $endDate): array
     {
+        $staff = $this->staffEmployees();
+        $employees = $this->activeEmployees();
+        $this->assertPayrollEligible($staff->concat($employees));
+
         return array_merge(
             $this->computeForAllStaff($startDate, $endDate),
             $this->computeForAllEmployees($startDate, $endDate)
@@ -858,53 +942,121 @@ class PayrollComputationService
             'manager', 'cashier', 'receptionist', 'veterinary', 'vet_tech',
             'inventory', 'payroll', 'staff', 'groomer',
             'super_receptionist', 'admin',
-        ])->where('is_active', true)->get();
+        ])->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('employment_status')
+                    ->orWhereIn('employment_status', ['active', 'probationary']);
+            })
+            ->get();
     }
 
     /** All active non-account employees. */
     public function activeEmployees()
     {
-        return Employee::where('is_active', true)->whereNull('user_id')->get();
+        return Employee::where('is_active', true)
+            ->whereNull('user_id')
+            ->where(function ($query) {
+                $query->whereNull('employment_status')
+                    ->orWhereIn('employment_status', ['active', 'probationary']);
+            })
+            ->get();
+    }
+
+    /**
+     * Block an entire preview/generation batch when any eligible worker lacks
+     * a valid salary. Returning an explicit error is safer than omitting them.
+     */
+    public function assertPayrollEligible(iterable $people): void
+    {
+        $issues = [];
+        foreach ($people as $person) {
+            $salary = $person->base_salary;
+            if (!is_numeric($salary) || !is_finite((float) $salary) || (float) $salary <= 0) {
+                $issues[] = sprintf(
+                    '%s (ID %s) has no valid positive base salary; configure salary before payroll.',
+                    $person->name,
+                    $person->id
+                );
+            }
+        }
+
+        if ($issues) {
+            throw ValidationException::withMessages(['employees' => $issues]);
+        }
     }
 
     // -------------------------------------------------------------------------
     // Philippine statutory contribution calculators
     // -------------------------------------------------------------------------
 
-    /** SSS 2025 Monthly Salary Credit: ₱5,000–₱35,000, ₱500 steps. */
-    private function sssMsc(float $baseSalary): float
+    /**
+     * SSS monthly schedules. Periods before 2023 are deliberately blocked
+     * rather than calculated with an unverified legacy table.
+     */
+    private function sssSchedule(?string $periodStart): array
     {
-        if ($baseSalary <= 5250) {
-            return 5000.0;
-        }
-        if ($baseSalary >= 34750) {
-            return 35000.0;
+        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today();
+        if ($date->lt('2023-01-01')) {
+            throw ValidationException::withMessages([
+                'period_start' => ['SSS payroll calculations before January 2023 require a verified historical schedule.'],
+            ]);
         }
 
-        return (float) ((int) ceil($baseSalary / 500) * 500);
+        if ($date->lt('2025-01-01')) {
+            return [
+                'min_msc' => 4000.0,
+                'max_msc' => 30000.0,
+                'employee_rate' => 0.045,
+                'employer_rate' => 0.095,
+            ];
+        }
+
+        return [
+            'min_msc' => 5000.0,
+            'max_msc' => 35000.0,
+            'employee_rate' => 0.05,
+            'employer_rate' => 0.10,
+        ];
     }
 
-    /** SSS 2025: employee share 5.0% of Monthly Salary Credit (5,000–35,000). */
-    public function calculateSss(float $baseSalary): float
+    private function sssMsc(float $baseSalary, ?string $periodStart): float
+    {
+        $schedule = $this->sssSchedule($periodStart);
+        if ($baseSalary <= $schedule['min_msc'] + 250) {
+            return $schedule['min_msc'];
+        }
+        if ($baseSalary >= $schedule['max_msc'] - 250) {
+            return $schedule['max_msc'];
+        }
+
+        return min($schedule['max_msc'], (float) ((int) ceil($baseSalary / 500) * 500));
+    }
+
+    public function calculateSss(float $baseSalary, ?string $periodStart = null): float
     {
         if ($baseSalary <= 0) {
             return 0.0;
         }
 
-        return round($this->sssMsc($baseSalary) * 0.05, 2);
+        $schedule = $this->sssSchedule($periodStart);
+        return round($this->sssMsc($baseSalary, $periodStart) * $schedule['employee_rate'], 2);
     }
 
     /**
-     * SSS 2025: employer share 10.0% of MSC plus the ₱10 Employees'
-     * Compensation premium (employer-paid, never deducted from the employee).
+     * SSS employer share plus EC. EC is ₱10 through MSC ₱14,500 and ₱30
+     * from MSC ₱15,000; it is employer-paid and not an employee deduction.
      */
-    public function calculateSssEmployer(float $baseSalary): float
+    public function calculateSssEmployer(float $baseSalary, ?string $periodStart = null): float
     {
         if ($baseSalary <= 0) {
             return 0.0;
         }
 
-        return round($this->sssMsc($baseSalary) * 0.10 + 10, 2);
+        $schedule = $this->sssSchedule($periodStart);
+        $msc = $this->sssMsc($baseSalary, $periodStart);
+        $ec = $msc <= 14500 ? 10.0 : 30.0;
+
+        return round($msc * $schedule['employer_rate'] + $ec, 2);
     }
 
     /** PhilHealth 2025: 5% premium (₱500–₱5,000), employee share 50%. */
@@ -913,13 +1065,23 @@ class PayrollComputationService
         return max(500, min($baseSalary * 0.05, 5000)) / 2;
     }
 
-    /**
-     * Pag-IBIG employee share: 2% of compensation, maximum ₱100.
-     * (HDMF Circular 274)
-     */
-    public function calculatePagibig(float $baseSalary): float
+    /** Pag-IBIG employee share; MFS rose from ₱5,000 to ₱10,000 in Feb 2024. */
+    public function calculatePagibig(float $baseSalary, ?string $periodStart = null): float
     {
-        return min($baseSalary * 0.02, 100.0);
+        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today();
+        $maxFundSalary = $date->gte('2024-02-01') ? 10000.0 : 5000.0;
+        $fundSalary = min(max(0, $baseSalary), $maxFundSalary);
+        $employeeRate = $baseSalary <= 1500 ? 0.01 : 0.02;
+
+        return round($fundSalary * $employeeRate, 2);
+    }
+
+    public function calculatePagibigEmployer(float $baseSalary, ?string $periodStart = null): float
+    {
+        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today();
+        $maxFundSalary = $date->gte('2024-02-01') ? 10000.0 : 5000.0;
+
+        return round(min(max(0, $baseSalary), $maxFundSalary) * 0.02, 2);
     }
 
     /** BIR monthly withholding tax (2023 onwards, RR 11-2018 Annex E). */

@@ -101,6 +101,21 @@ class ConsultationWorkflowController extends Controller
         }
 
         $outcome = DB::transaction(function () use ($appointment, $request) {
+            $appointment = Appointment::with(['customer', 'pet'])
+                ->whereKey($appointment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (!in_array($appointment->status, VeterinaryStatus::STARTED, true)) {
+                return ['error' => 'Only active consultations can be completed', 'status' => 422];
+            }
+
+            if ($appointment->veterinarian_id
+                && (int) $appointment->veterinarian_id !== (int) $request->user()->id
+                && !$request->user()->hasRoleAccess('admin')) {
+                return ['error' => 'This consultation is assigned to another veterinarian', 'status' => 403];
+            }
+
             // Sync billing totals so cashier sees an accurate bill
             $summary = ServiceBillingService::finalizeServiceBill(ServiceItemUsage::SERVICE_VETERINARY, (int) $appointment->id);
 
@@ -167,6 +182,10 @@ class ConsultationWorkflowController extends Controller
 
             return ['summary' => $summary, 'closed' => $closed];
         });
+
+        if (isset($outcome['error'])) {
+            return response()->json(['error' => $outcome['error']], $outcome['status']);
+        }
 
         WorkflowNotifier::notifyUser($appointment->customer?->user_id, 'Consultation finalized', 'Your pet consultation has been finalized.', 'info', 'appointment', $appointment->id);
         WorkflowNotifier::notifyRole('cashier', 'Vet consultation awaiting payment', "Pet {$appointment->pet?->name} consultation is ready for billing.", 'info', 'appointment', $appointment->id);

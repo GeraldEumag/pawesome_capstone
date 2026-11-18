@@ -244,6 +244,49 @@ class PayrollIndustryTest extends TestCase
         $this->assertEqualsWithDelta((25000 / 26) * 0.5, (float) $row['absent_deductions'], 0.05);
     }
 
+    public function test_vacation_and_sick_leave_days_are_saved_to_payroll(): void
+    {
+        $user = $this->staffUser();
+        $this->punchAllWorkdays($user, ['2024-06-05', '2024-06-06']);
+
+        DB::table('leave_requests')->insert([
+            [
+                'user_id' => $user->id,
+                'type' => 'vacation_leave',
+                'start_date' => '2024-06-05',
+                'end_date' => '2024-06-05',
+                'reason' => 'Vacation',
+                'half_day' => 0,
+                'days_counted' => 1,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'user_id' => $user->id,
+                'type' => 'sick_leave',
+                'start_date' => '2024-06-06',
+                'end_date' => '2024-06-06',
+                'reason' => 'Sick leave',
+                'half_day' => 1,
+                'days_counted' => 0.5,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $row = $this->generateRow($user);
+
+        $this->assertEquals(1, (float) $row['vacation_leave_days']);
+        $this->assertEquals(0.5, (float) $row['sick_leave_days']);
+        $this->assertEquals(1.5, (float) $row['paid_leave_days']);
+
+        $payroll = Payroll::findOrFail($row['id']);
+        $this->assertEquals(1, (float) $payroll->vacation_leave_days);
+        $this->assertEquals(0.5, (float) $payroll->sick_leave_days);
+    }
+
     /** DOLE overtime tiers differ by day type. */
     public function test_overtime_tiers_by_day_type(): void
     {
@@ -285,8 +328,8 @@ class PayrollIndustryTest extends TestCase
             'non_taxable_allowances' => 5000,
         ]);
 
-        // SSS 2025 ER: MSC 35,000 × 10% + ₱10 EC = 3,510 monthly → 1,755 per cutoff
-        $this->assertEqualsWithDelta(1755, (float) $without['sss_er_share'], 0.01);
+        // June 2024 SSS: MSC 30,000 × 9.5% + ₱30 EC = 2,880 monthly → 1,440/cutoff.
+        $this->assertEqualsWithDelta(1440, (float) $without['sss_er_share'], 0.01);
         $this->assertEqualsWithDelta((float) $without['philhealth_contribution'], (float) $without['philhealth_er_share'], 0.01);
         $this->assertEqualsWithDelta((float) $without['pagibig_contribution'], (float) $without['pagibig_er_share'], 0.01);
 

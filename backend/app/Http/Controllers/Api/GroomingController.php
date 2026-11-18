@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Services\BookingAvailabilityService;
 use App\Services\GroomingInventoryService;
+use App\Services\GroomingStatusSynchronizer;
 use App\Services\ServiceBillingService;
 use App\Services\ServiceDurationService;
 use App\Services\ServiceCatalog;
@@ -132,14 +133,6 @@ class GroomingController extends Controller
             ], 422);
         }
 
-        if (in_array($newStatus, ['approved', 'in_progress'], true)) {
-            $this->ensureBaseBillingItem($grooming);
-        }
-
-        if ($newStatus === 'approved' && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
-            $grooming->payment_status = 'unpaid';
-        }
-
         if ($newStatus === 'completed') {
             $billing = ServiceBillingService::canCompleteService(ServiceItemUsage::SERVICE_GROOMING, (int) $grooming->id);
             $paymentStatus = strtolower((string) ($grooming->payment_status ?? 'unpaid'));
@@ -155,18 +148,43 @@ class GroomingController extends Controller
                 ], 422);
             }
 
-            $grooming->completed_at = now();
         }
 
-        $grooming->status = $newStatus;
-        $grooming->save();
-        if ($serviceRequest && $serviceRequest->status !== $newStatus) {
-            $serviceRequest->status = $newStatus;
-            if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('service_requests', 'completed_at')) {
-                $serviceRequest->completed_at = now();
-            }
-            $serviceRequest->save();
+        if (in_array($newStatus, ['approved', 'in_progress'], true)) {
+            $this->ensureBaseBillingItem($grooming);
         }
+
+        $groomingChanges = ['status' => $newStatus];
+        if ($newStatus === 'approved' && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
+            $groomingChanges['payment_status'] = 'unpaid';
+        }
+        if ($newStatus === 'completed') {
+            $groomingChanges['completed_at'] = now();
+        }
+
+        $requestChanges = [];
+        if ($serviceRequest && $serviceRequest->status !== $newStatus) {
+            $requestChanges['status'] = $newStatus;
+            if ($newStatus === 'completed' && \Illuminate\Support\Facades\Schema::hasColumn('service_requests', 'completed_at')) {
+                $requestChanges['completed_at'] = now();
+            }
+        }
+
+        $sync = app(GroomingStatusSynchronizer::class)->synchronize(
+            $serviceRequest,
+            $grooming,
+            $requestChanges,
+            $groomingChanges
+        );
+        if ($sync['error']) {
+            return response()->json([
+                'success' => false,
+                'message' => $sync['error']['message'],
+                'current_status' => $sync['error']['current_status'],
+                'requested_status' => $sync['error']['requested_status'],
+            ], 422);
+        }
+        $grooming = $sync['grooming'];
 
         if ($newStatus === 'completed' && $oldStatus !== 'completed') {
             $this->sendGroomingCompletionNotification($grooming);

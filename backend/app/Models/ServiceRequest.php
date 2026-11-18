@@ -35,6 +35,7 @@ class ServiceRequest extends Model
         'status',
         'approved_by',
         'approved_at',
+        'ready_for_pickup_at',
         'rejected_by',
         'rejected_at',
         'rejection_reason',

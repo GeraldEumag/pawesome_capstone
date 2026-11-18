@@ -16,6 +16,7 @@ import {
   faWarehouse,
   faClipboardCheck,
   faWallet,
+  faClock,
   faUserCircle,
   faSignOutAlt,
   faTimes,
@@ -64,6 +65,7 @@ const NAV_SECTIONS = [
     label: "Account",
     icon: faUserCircle,
     items: [
+      { to: "/staff/attendance", label: "My Attendance", icon: faClock },
       { to: "/super-receptionist/payroll", label: "My Payroll", icon: faWallet },
       { to: "/super-receptionist/profile", label: "Profile", icon: faUserCircle },
     ],

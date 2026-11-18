@@ -1,0 +1,139 @@
+{
+  "type": "grooming",
+  "channel": "walk_in",
+  "serviceRequestId": 311,
+  "bookingId": 178,
+  "petId": 145,
+  "date": "2026-11-21",
+  "time": "14:30",
+  "responseStatus": 201,
+  "approvalStatus": 200,
+  "customerVisible": true,
+  "cashierQueueVisible": true,
+  "database": {
+    "request": {
+      "id": 311,
+      "customer_id": 9,
+      "pet_id": 145,
+      "request_type": "grooming",
+      "service_name": "Basic Bath and Blow Dry Medium Breed",
+      "request_date": "2026-11-21",
+      "request_time": "14:30",
+      "status": "approved",
+      "payment_status": "unpaid",
+      "booking_channel": "walk_in",
+      "price": "500.00"
+    },
+    "booking": {
+      "id": 178,
+      "service_request_id": 311,
+      "appointment_date": "2026-11-21",
+      "appointment_time": "14:30",
+      "status": "approved",
+      "payment_status": "unpaid",
+      "booking_channel": "walk_in"
+    },
+    "reservation": null
+  },
+  "screenshots": [
+    "grooming-walk-in.png"
+  ],
+  "network": [
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": "REQUEST_FAILED",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/availability/grooming",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/walk-ins",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200
+    }
+  ]
+}

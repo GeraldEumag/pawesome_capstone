@@ -9,6 +9,7 @@ const routeRoleMap = {
   inventory: ["inventory", "admin", "super_receptionist"],
   manager: ["manager", "admin"],
   veterinary: ["veterinary", "vet", "veterinarian", "vet_tech", "admin"],
+  staff: ["admin", "manager", "receptionist", "cashier", "inventory", "veterinary", "vet", "veterinarian", "vet_tech", "super_receptionist", "payroll", "groomer", "staff"],
   "super-receptionist": ["super_receptionist"],
 };
 

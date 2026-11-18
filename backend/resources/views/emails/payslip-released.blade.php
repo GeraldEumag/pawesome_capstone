@@ -11,7 +11,7 @@
 
     <p style="margin:0 0 8px 0;">
         Your payslip for <strong>{{ $payPeriod }}</strong> is now available.
-        A summary is shown below — sign in to view the full breakdown.
+        The complete payslip is attached as a PDF for you to open or download directly.
     </p>
 
     {{-- Net pay hero block --}}
@@ -36,11 +36,8 @@
         ['label' => 'Paid on', 'value' => !empty($paidAt) ? \Illuminate\Support\Carbon::parse($paidAt)->format('M d, Y') : null],
     ]])
 
-    @include('emails.partials.cta', ['url' => $payslipUrl ?? null, 'label' => 'View Payslip'])
-
     <p class="muted small" style="margin:16px 0 0 0;">
-        You can view your full payslip breakdown and previous payslips in the Pawesome HR portal.
-        This message contains confidential payroll information — please do not forward it.
+        The attached file and this message contain confidential payroll information — please do not forward them.
     </p>
 
     <p style="margin:16px 0 0 0;">Thank you,</p>

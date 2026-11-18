@@ -1,0 +1,152 @@
+{
+  "type": "hotel",
+  "channel": "walk_in",
+  "serviceRequestId": 310,
+  "bookingId": 90,
+  "petId": 145,
+  "date": "2026-11-25",
+  "time": null,
+  "responseStatus": 201,
+  "approvalStatus": 200,
+  "customerVisible": true,
+  "cashierQueueVisible": true,
+  "database": {
+    "request": {
+      "id": 310,
+      "customer_id": 9,
+      "pet_id": 145,
+      "request_type": "hotel",
+      "service_name": "Hotel Boarding (dog_standard)",
+      "request_date": "2026-11-25",
+      "request_time": null,
+      "status": "approved",
+      "payment_status": "unpaid",
+      "booking_channel": "walk_in",
+      "price": "100.00"
+    },
+    "booking": {
+      "id": 90,
+      "service_request_id": 310,
+      "check_in": "2026-11-25 00:00:00",
+      "check_out": "2026-11-25 00:00:00",
+      "status": "approved",
+      "payment_status": "unpaid",
+      "booking_channel": "walk_in"
+    },
+    "reservation": {
+      "id": 50,
+      "room_id": 25,
+      "source_type": "pet_hotel",
+      "source_id": 90,
+      "check_in_date": "2026-11-25",
+      "check_out_date": "2026-11-25",
+      "status": "approved"
+    }
+  },
+  "screenshots": [
+    "hotel-walk-in.png"
+  ],
+  "network": [
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": "REQUEST_FAILED",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/services",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/customers/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/walk-ins",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/walk-ins",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    }
+  ]
+}

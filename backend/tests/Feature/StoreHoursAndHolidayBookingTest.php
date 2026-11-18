@@ -140,4 +140,70 @@ class StoreHoursAndHolidayBookingTest extends TestCase
 
         $this->assertSame('Test Closure', Holiday::blockedNameOn('2027-01-10'));
     }
+
+    public function test_philippine_calendar_includes_official_movable_holidays_and_working_days(): void
+    {
+        $this->assertDatabaseHas('holidays', [
+            'date' => '2026-03-20',
+            'name' => "Eid'l Fitr (Feast of Ramadhan)",
+            'type' => 'regular',
+        ]);
+        $this->assertDatabaseHas('holidays', [
+            'date' => '2026-05-27',
+            'name' => "Eid'l Adha (Feast of Sacrifice)",
+            'type' => 'regular',
+        ]);
+        $this->assertDatabaseHas('holidays', [
+            'date' => '2026-02-25',
+            'type' => 'special_working',
+        ]);
+        $this->assertDatabaseHas('holidays', [
+            'date' => '2027-02-25',
+            'type' => 'special_working',
+        ]);
+
+        $this->assertNull(Holiday::blockedNameOn('2026-02-25'));
+        $this->assertNull(Holiday::blockedNameOn('2027-02-25'));
+        $this->assertSame("Eid'l Fitr (Feast of Ramadhan)", Holiday::blockedNameOn('2026-03-20'));
+    }
+
+    public function test_manager_can_add_a_later_announced_one_time_holiday(): void
+    {
+        $manager = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+        $token = $manager->createToken('holiday-test')->plainTextToken;
+
+        $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->postJson('/api/manager/holidays', [
+                'date' => '2027-09-13',
+                'name' => 'New government-announced special day',
+                'type' => 'special_non_working',
+                'is_recurring' => false,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.is_recurring', false);
+
+        $this->assertSame(
+            'New government-announced special day',
+            Holiday::blockedNameOn('2027-09-13')
+        );
+    }
+
+    public function test_manager_can_add_special_working_day_without_blocking_bookings(): void
+    {
+        $manager = User::factory()->create(['role' => 'manager', 'is_active' => true]);
+        $token = $manager->createToken('holiday-test')->plainTextToken;
+
+        $this->withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->postJson('/api/manager/holidays', [
+                'date' => '2027-09-14',
+                'name' => 'Declared special working day',
+                'type' => 'special_working',
+                'is_recurring' => true,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.type', 'special_working')
+            ->assertJsonPath('data.is_recurring', false);
+
+        $this->assertNull(Holiday::blockedNameOn('2027-09-14'));
+    }
 }

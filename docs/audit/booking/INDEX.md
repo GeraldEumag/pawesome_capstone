@@ -1,13 +1,13 @@
 # Pawesome Final-Stage Booking System Audit — Deliverables Index
 
-**Audit date:** 2026-11-18 · **Scope:** Veterinary, Hotel/Boarding, Grooming booking modules (online + walk-in)
+**Audit date:** 2026-11-18 onward · **Scope:** Veterinary, Hotel/Boarding, Grooming booking modules (online + walk-in)
 **Auditor:** Devin (senior-engineering audit, evidence-based)
 
 ## Environment under audit
 
 | Component | Value |
 | --- | --- |
-| Repository | `C:\xampp\htdocs\Pawesome_Capstone` (`main`) |
+| Repository | `C:\xampp\htdocs\Pawesome_Capstone` (`audit/pawesome-final-acceptance`) |
 | Backend | Laravel 12.72.0 · PHP 8.2.12 · `backend/` |
 | Frontend | React 18 + Vite · `frontend/` |
 | Live mutation DB | `pawesome_booking_audit` — fresh `mysqldump` clone of `pawesome` (94 tables). Initial probes accidentally reached `pawesome` through a stale `:8010` pool; all exact residue was backed up and transactionally removed. See `evidence/PAWESOME_RESIDUE_DELETION_REPORT.md`. All later probes used the isolated clone. |
@@ -49,7 +49,13 @@ Final reports:
 | `FINAL_BOOKING_SYSTEM_AUDIT.md` | Overall technical assessment + readiness |
 | `BOOKING_FINAL_ACCEPTANCE_REPORT.md` | Acceptance criteria pass/fail/blocked + recommendation |
 | `BOOKING_SYSTEM_AUDIT.md` | Required executive system-level audit deliverable |
+| `FINAL_REMEDIATION_AND_DEFENSE_ACCEPTANCE.md` | RES-001 rollback proof, Playwright dispositions, workflow matrix, final gate |
+| `FINAL_END_TO_END_ACCEPTANCE_REPORT.md` | Final remediation findings, regression status, NO-GO recommendation |
+| `FINAL_WORKFLOW_ACCEPTANCE_MATRIX.md` | Browser/API/database evidence for the six online and walk-in combinations |
+| `FINAL_REGRESSION_TEST_REPORT.md` | Backend, frontend, Playwright, build and syntax outcomes |
+| `FINAL_DATABASE_INTEGRITY_REPORT.md` | Database isolation, verified relationships and remaining scan limits |
+| `RELEASE_READINESS_CHECKLIST.md` | Functional, security, browser, data and deployment readiness gates |
 
 `evidence/` holds raw artifacts (route matrix, probe JSON, test output).
 
-**Acceptance note:** the selected Playwright batch was not all green (3 failed, 6 skipped, 4 not run). The final recommendation is conditional; see `BOOKING_FINAL_ACCEPTANCE_REPORT.md`.
+**Acceptance note:** hotel walk-in request/boarding/reservation status synchronization was fixed and verified. The final selected Playwright rerun found an unresolved online hotel check-in queue failure (scheduled/paid DB row absent from Today/ON GOING); it reported 16 passed, 1 failed and 2 not run. The full backend run also retained 10 unrelated Payroll/Pharmacy/payslip failures after a booking date-fixture correction passed focused regression. Final acceptance remains **NO-GO**. See `FINAL_END_TO_END_ACCEPTANCE_REPORT.md`, `FINAL_WORKFLOW_ACCEPTANCE_MATRIX.md` and `FINAL_REGRESSION_TEST_REPORT.md`.

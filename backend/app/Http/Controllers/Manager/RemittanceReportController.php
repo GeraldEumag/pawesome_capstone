@@ -31,6 +31,7 @@ class RemittanceReportController extends Controller
 
         $rows = DB::table('payrolls')
             ->whereBetween('pay_period_start', [$startDate, $endDate])
+            ->where('status', 'paid')
             ->whereNull('deleted_at')
             ->select([
                 'employee_name',
@@ -38,8 +39,11 @@ class RemittanceReportController extends Controller
                 'employee_id',
                 'base_salary',
                 'sss_contribution',
+                'sss_er_share',
                 'philhealth_contribution',
+                'philhealth_er_share',
                 'pagibig_contribution',
+                'pagibig_er_share',
                 'gross_pay',
             ])
             ->get();
@@ -73,27 +77,30 @@ class RemittanceReportController extends Controller
                 'gross_pay'      => (float) $row->gross_pay,
             ];
 
-            return match ($type) {
-                'sss' => array_merge($base, [
-                    'sss_no'           => $govIds['sss_no'],
-                    'employee_share'   => (float) $row->sss_contribution,
-                    'employer_share'   => round((float) $row->sss_contribution * (8.5 / 5.0), 2), // ~8.5% employer
-                    'total'            => round((float) $row->sss_contribution * (13.5 / 5.0), 2),
-                ]),
-                'philhealth' => array_merge($base, [
-                    'philhealth_no'    => $govIds['philhealth_no'],
-                    'employee_share'   => (float) $row->philhealth_contribution,
-                    'employer_share'   => (float) $row->philhealth_contribution, // 50/50
-                    'total'            => (float) $row->philhealth_contribution * 2,
-                ]),
-                'pagibig' => array_merge($base, [
-                    'pagibig_no'       => $govIds['pagibig_no'],
-                    'employee_share'   => (float) $row->pagibig_contribution,
-                    'employer_share'   => (float) $row->pagibig_contribution, // 2% employer match
-                    'total'            => (float) $row->pagibig_contribution * 2,
-                ]),
-                default => $base,
+            [$employeeShare, $employerShare, $idKey] = match ($type) {
+                'sss' => [
+                    (float) $row->sss_contribution,
+                    (float) $row->sss_er_share,
+                    'sss_no',
+                ],
+                'philhealth' => [
+                    (float) $row->philhealth_contribution,
+                    (float) $row->philhealth_er_share,
+                    'philhealth_no',
+                ],
+                'pagibig' => [
+                    (float) $row->pagibig_contribution,
+                    (float) $row->pagibig_er_share,
+                    'pagibig_no',
+                ],
             };
+
+            return array_merge($base, [
+                $idKey => $govIds[$idKey],
+                'employee_share' => $employeeShare,
+                'employer_share' => $employerShare,
+                'total' => round($employeeShare + $employerShare, 2),
+            ]);
         });
 
         $totals = [

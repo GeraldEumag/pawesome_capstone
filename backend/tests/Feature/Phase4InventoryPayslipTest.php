@@ -93,6 +93,11 @@ class Phase4InventoryPayslipTest extends TestCase
         // reference code and gross pay flow from the payroll row itself.
         $this->assertStringContainsString($payroll->payroll_id, $payload);
         $this->assertStringContainsString('12500', $payload);
+
+        /** @var \App\Mail\PayslipReleasedMail $mail */
+        $mail = unserialize($payload);
+        $this->assertSame($payroll->pay_period_label, $mail->payslipData['pay_period']);
+        $this->assertSame($this->employee->name, $mail->payslipData['employee']['name']);
     }
 
     public function test_payslip_mailable_renders_professional_layout(): void
@@ -101,7 +106,6 @@ class Phase4InventoryPayslipTest extends TestCase
             'Test <b>Employee</b>',
             'Jan 01 - Jan 15, 2026',
             11000.00,
-            'https://frontend.example/cashier/payroll',
             'payee@example.com',
             'PAYROLL-2026-001',
             '2026-01-15',
@@ -122,9 +126,11 @@ class Phase4InventoryPayslipTest extends TestCase
         $this->assertStringContainsString('Bank Transfer', $html);
         $this->assertStringContainsString('Jan 15, 2026', $html);
 
-        // Confidentiality notice and CTA
+        // The email directs the recipient to its attached PDF, not the login portal.
         $this->assertStringContainsString('confidential payroll information', $html);
-        $this->assertStringContainsString('View Payslip', $html);
+        $this->assertStringContainsString('attached as a PDF', $html);
+        $this->assertStringNotContainsString('View Payslip', $html);
+        $this->assertStringNotContainsString('frontend.example', $html);
 
         // Dynamic values are Blade-escaped, not raw HTML
         $this->assertStringNotContainsString('<b>Employee</b>', $html);
@@ -137,7 +143,6 @@ class Phase4InventoryPayslipTest extends TestCase
             'Test Employee',
             'Jan 01 - Jan 15, 2026',
             11000.00,
-            'https://frontend.example/cashier/payroll',
             'payee@example.com'
         ))->render();
 
@@ -145,13 +150,46 @@ class Phase4InventoryPayslipTest extends TestCase
         $this->assertStringContainsString('Net Pay', $html);
         $this->assertStringContainsString('₱11,000.00', $html);
         $this->assertStringContainsString('Jan 01 - Jan 15, 2026', $html);
-        $this->assertStringContainsString('View Payslip', $html);
+        $this->assertStringContainsString('attached as a PDF', $html);
+        $this->assertStringNotContainsString('View Payslip', $html);
 
         // Absent optional fields produce no empty detail rows
         $this->assertStringNotContainsString('Payroll reference', $html);
         $this->assertStringNotContainsString('Gross pay', $html);
         $this->assertStringNotContainsString('Payment method', $html);
         $this->assertStringNotContainsString('Paid on', $html);
+    }
+
+    public function test_payslip_email_attaches_a_pdf_named_with_payroll_reference(): void
+    {
+        $mail = new \App\Mail\PayslipReleasedMail(
+            'Test Employee',
+            'Jan 01 - Jan 15, 2026',
+            11000.00,
+            'payee@example.com',
+            'PAY-2026-001',
+            '2026-01-15',
+            'Bank Transfer',
+            12500.00,
+            [
+                'payroll_id' => 'PAY-2026-001',
+                'pay_period' => 'Jan 01 - Jan 15, 2026',
+                'employee' => ['name' => 'Test Employee'],
+                'earnings' => ['gross_pay' => 12500],
+                'deductions' => ['total_deductions' => 1500],
+                'net_pay' => 11000,
+            ]
+        );
+
+        $attachment = $mail->attachments()[0];
+        $pdf = $attachment->attachWith(
+            fn () => null,
+            fn ($data) => $data()
+        );
+
+        $this->assertSame('Payslip-PAY-2026-001.pdf', $attachment->as);
+        $this->assertSame('application/pdf', $attachment->mime);
+        $this->assertStringStartsWith('%PDF-', $pdf);
     }
 
     public function test_repeat_release_does_not_duplicate_intent(): void

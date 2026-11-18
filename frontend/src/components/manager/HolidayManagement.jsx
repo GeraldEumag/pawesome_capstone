@@ -21,6 +21,13 @@ import "./HolidayManagement.css";
 const EMPTY = { date: "", name: "", type: "regular", is_recurring: false };
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 15 }, (_, index) => currentYear - 5 + index);
+const HOLIDAY_TYPE_LABELS = {
+  regular: "Regular",
+  special_non_working: "Special Non-Working",
+  special_working: "Special Working Day",
+};
 
 const HolidayManagement = () => {
   const [holidays, setHolidays] = useState([]);
@@ -70,7 +77,10 @@ const HolidayManagement = () => {
       } else {
         await apiRequest("/manager/holidays", { method: "POST", body: JSON.stringify(form) });
       }
-      setShowForm(false); load();
+      setShowForm(false);
+      const holidayYear = Number(form.date.slice(0, 4));
+      if (holidayYear === year) load();
+      else setYear(holidayYear);
     } catch (e) { setMsg(e.message || "Failed to save."); }
     finally { setSaving(false); }
   };
@@ -124,7 +134,7 @@ const HolidayManagement = () => {
             Holiday Calendar
           </div>
           <h1>Public Holidays</h1>
-          <p>Manage regular and special non-working holidays for payroll and attendance computation.</p>
+          <p>Manage Philippine regular, special non-working, and special working days for payroll and attendance.</p>
         </div>
         <div className="hm-hero-actions">
           <select
@@ -132,7 +142,7 @@ const HolidayManagement = () => {
             onChange={(e) => setYear(Number(e.target.value))}
             className="hm-year-select"
           >
-            {[2024, 2025, 2026, 2027, 2028].map((y) => <option key={y}>{y}</option>)}
+            {YEAR_OPTIONS.map((y) => <option key={y}>{y}</option>)}
           </select>
           <button className="hm-btn primary" onClick={openCreate}>
             <FontAwesomeIcon icon={faPlus} />
@@ -214,7 +224,7 @@ const HolidayManagement = () => {
                       <td>{h.name}</td>
                       <td>
                         <span className={`hm-type-badge ${h.type}`}>
-                          {h.type === "regular" ? "Regular" : "Special Non-Working"}
+                          {HOLIDAY_TYPE_LABELS[h.type] || h.type}
                         </span>
                       </td>
                       <td>
@@ -289,9 +299,14 @@ const HolidayManagement = () => {
 
               <div className="hm-field">
                 <label>Type</label>
-                <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
+                <select value={form.type} onChange={(e) => setForm((f) => ({
+                  ...f,
+                  type: e.target.value,
+                  is_recurring: e.target.value === "special_working" ? false : f.is_recurring,
+                }))}>
                   <option value="regular">Regular Holiday</option>
                   <option value="special_non_working">Special Non-Working Holiday</option>
+                  <option value="special_working">Special Working Day</option>
                 </select>
               </div>
 
@@ -299,10 +314,18 @@ const HolidayManagement = () => {
                 <input
                   type="checkbox"
                   checked={form.is_recurring}
+                  disabled={form.type === "special_working"}
                   onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))}
                 />
-                <span>Repeat annually (recurring holiday)</span>
+                <span>
+                  {form.type === "special_working"
+                    ? "Special working days must be added for each year's proclamation"
+                    : "Repeat annually (recurring holiday)"}
+                </span>
               </label>
+              <p className="hm-announced-note">
+                Add newly announced holidays as one-time entries. Select recurring only when the date and holiday type are fixed every year.
+              </p>
             </div>
         </Modal>
       )}

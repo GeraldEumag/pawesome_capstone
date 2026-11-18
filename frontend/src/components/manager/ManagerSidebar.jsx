@@ -77,6 +77,11 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item nav-item-sub">
+            <NavLink to="/manager/attendance-corrections" onClick={handleNavClick}>
+              Attendance Corrections
+            </NavLink>
+          </li>
+          <li className="nav-item nav-item-sub">
             <NavLink to="/manager/day-offs" onClick={handleNavClick}>
               Day-Off Schedule
             </NavLink>

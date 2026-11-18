@@ -1,10 +1,10 @@
 {
-  "boardingId": 19,
-  "petId": 9,
-  "roomId": 17,
-  "originalDate": "2026-12-18",
-  "scheduledDate": "2026-11-17",
-  "reference": "P12B-26168800",
+  "boardingId": 89,
+  "petId": 145,
+  "roomId": 24,
+  "originalDate": "2026-12-19",
+  "scheduledDate": "2026-11-19",
+  "reference": "P12B-29443419",
   "negativeChecks": {
     "owner_vaccination_file": 200,
     "anonymous_vaccination_file": 401,
@@ -19,57 +19,57 @@
   "checkinStatus": 200,
   "database": {
     "boarding": {
-      "id": 19,
+      "id": 89,
       "service_request_id": null,
-      "pet_id": 9,
-      "customer_id": 1,
+      "pet_id": 145,
+      "customer_id": 5,
       "boarding_type": "dog_standard",
-      "check_in": "2026-11-17 00:00:00",
-      "check_out": "2026-11-17 00:00:00",
+      "check_in": "2026-11-19 00:00:00",
+      "check_out": "2026-11-19 00:00:00",
       "status": "in_care",
-      "total_amount": "500.00",
+      "total_amount": "100.00",
       "payment_status": "paid",
       "payment_method": "gcash",
-      "payment_reference": "P12B-26168800",
-      "payment_proof": "payment-proofs/boardings/boarding_proof_1794926194_1oB9cmMZKk.png",
-      "vaccination_card": "vaccination_cards/DQvcAMbL60SDB86hN0nyhyDxWg6WthRTIg7vIFfs.png",
-      "vaccination_card_verified_at": "2026-11-17 14:36:49",
+      "payment_reference": "P12B-29443419",
+      "payment_proof": "payment-proofs/boardings/boarding_proof_1795029507_aCvT8L1cri.png",
+      "vaccination_card": "vaccination_cards/6sV41qHPAk9GVYuRrpUdeuNM6xntISIpFA9SFnmn.png",
+      "vaccination_card_verified_at": "2026-11-19 03:18:45",
       "booking_channel": "online",
-      "approved_by": 3,
-      "approved_at": "2026-11-17 14:36:51",
-      "verified_by": 5,
-      "verified_at": "2026-11-17 14:37:17",
-      "paid_at": "2026-11-17 14:37:18",
-      "receipt_number": "BD-REC-20261117143717-19",
-      "actual_check_in": "2026-11-17 14:37:29",
-      "checked_in_at": "2026-11-17 14:37:29",
-      "checked_in_by": 3
+      "approved_by": 4,
+      "approved_at": "2026-11-19 03:18:49",
+      "verified_by": 6,
+      "verified_at": "2026-11-19 03:19:31",
+      "paid_at": "2026-11-19 03:19:31",
+      "receipt_number": "BD-REC-20261119031931-89",
+      "actual_check_in": "2026-11-19 03:19:44",
+      "checked_in_at": "2026-11-19 03:19:44",
+      "checked_in_by": 4
     },
     "reservations": [
       {
-        "id": 16,
-        "room_id": 17,
+        "id": 49,
+        "room_id": 24,
         "source_type": "pet_hotel",
-        "source_id": 19,
-        "pet_id": 9,
-        "customer_id": 1,
-        "check_in_date": "2026-11-17",
-        "check_out_date": "2026-11-17",
+        "source_id": 89,
+        "pet_id": 145,
+        "customer_id": 5,
+        "check_in_date": "2026-11-19",
+        "check_out_date": "2026-11-19",
         "status": "checked_in"
       }
     ],
     "receipts": [
       {
-        "id": 25,
+        "id": 11,
         "payable_type": "boarding",
-        "payable_id": 19,
+        "payable_id": 89,
         "uploaded_by": 9,
         "disk": "private",
-        "disk_path": "payment-proofs/boardings/boarding_proof_1794926194_1oB9cmMZKk.png",
+        "disk_path": "payment-proofs/boardings/boarding_proof_1795029507_aCvT8L1cri.png",
         "mime": "image/png",
         "size_bytes": 85,
-        "sha256": "d089897adbfd0bb495038f305261031030cae24e9ef6289c6f6b7170ef800924",
-        "submitted_reference": "P12B-26168800",
+        "sha256": "8a485385da900610432a7aec68d386104570a5172cfdcac8d93ada17c5f0dd0b",
+        "submitted_reference": "P12B-29443419",
         "status": "confirmed"
       }
     ],
@@ -77,19 +77,19 @@
       {
         "id": 7,
         "provider": "gcash",
-        "reference_normalized": "P12B26168800",
+        "reference_normalized": "P12B29443419",
         "payable_type": "boarding",
-        "payable_id": 19,
-        "receipt_id": 25,
-        "confirmed_by": 5,
-        "confirmed_at": "2026-11-17 14:37:18"
+        "payable_id": 89,
+        "receipt_id": 11,
+        "confirmed_by": 6,
+        "confirmed_at": "2026-11-19 03:19:31"
       }
     ],
     "careLogs": [
       {
-        "id": 3,
-        "boarding_id": 19,
-        "logged_by": 3,
+        "id": 16,
+        "boarding_id": 89,
+        "logged_by": 4,
         "log_type": "general_update",
         "title": "Pet checked in",
         "notes": "Pet checked in for boarding care."
@@ -127,13 +127,13 @@
     },
     {
       "method": "GET",
-      "path": "/api/customer/pets",
+      "path": "/api/chatbot/welcome",
       "status": 200,
       "page": "/customer/hotel"
     },
     {
       "method": "GET",
-      "path": "/api/chatbot/welcome",
+      "path": "/api/customer/pets",
       "status": 200,
       "page": "/customer/hotel"
     },
@@ -151,25 +151,19 @@
     },
     {
       "method": "GET",
-      "path": "/api/notifications",
-      "status": 200,
-      "page": "/customer/hotel"
-    },
-    {
-      "method": "GET",
       "path": "/api/holidays/blocked",
       "status": 200,
       "page": "/customer/hotel"
     },
     {
       "method": "GET",
-      "path": "/api/customer/pets",
+      "path": "/api/chatbot/welcome",
       "status": 200,
       "page": "/customer/hotel"
     },
     {
       "method": "GET",
-      "path": "/api/chatbot/welcome",
+      "path": "/api/customer/pets",
       "status": 200,
       "page": "/customer/hotel"
     },
@@ -188,6 +182,12 @@
     {
       "method": "GET",
       "path": "/api/boarding/rooms/available",
+      "status": 200,
+      "page": "/customer/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
       "status": 200,
       "page": "/customer/hotel"
     },
@@ -223,7 +223,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/customer/boarding-requests/19/payment-proof",
+      "path": "/api/customer/boarding-requests/89/payment-proof",
       "status": 200,
       "page": "/customer/hotel"
     },
@@ -259,7 +259,31 @@
     },
     {
       "method": "GET",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/receptionist/boarding-rooms",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/89/verify-vaccination",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
       "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "POST",
+      "path": "/api/receptionist/boarding-requests/89/approve",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
@@ -276,26 +300,8 @@
       "page": "/receptionist/bookings/hotel"
     },
     {
-      "method": "POST",
-      "path": "/api/receptionist/boarding-requests/19/verify-vaccination",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
-      "method": "POST",
-      "path": "/api/receptionist/boarding-requests/19/approve",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
       "method": "GET",
-      "path": "/api/receptionist/boarding-requests",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
-      "method": "GET",
-      "path": "/api/notifications",
+      "path": "/api/settings/public",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
@@ -331,7 +337,19 @@
     },
     {
       "method": "GET",
-      "path": "/api/settings/public",
+      "path": "/api/receptionist/boarding-requests",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/billing/boarding/89/summary",
+      "status": 200,
+      "page": "/receptionist/bookings/hotel"
+    },
+    {
+      "method": "GET",
+      "path": "/api/billing/boarding/89/summary",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
@@ -342,32 +360,8 @@
       "page": "/receptionist/bookings/hotel"
     },
     {
-      "method": "GET",
-      "path": "/api/receptionist/boarding-requests",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
-      "method": "GET",
-      "path": "/api/receptionist/boarding-rooms",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
-      "method": "GET",
-      "path": "/api/billing/boarding/19/summary",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
       "method": "POST",
-      "path": "/api/receptionist/boarding-requests/19/schedule",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
-      "method": "GET",
-      "path": "/api/billing/boarding/19/summary",
+      "path": "/api/receptionist/boarding-requests/89/schedule",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
@@ -439,19 +433,19 @@
     },
     {
       "method": "GET",
-      "path": "/api/files/payment-proofs/boarding/19/view",
+      "path": "/api/files/payment-proofs/boarding/89/view",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
     {
       "method": "GET",
-      "path": "/api/cashier/receipts/25",
+      "path": "/api/cashier/receipts/11",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
     {
       "method": "POST",
-      "path": "/api/cashier/receipts/25/confirm",
+      "path": "/api/cashier/receipts/11/confirm",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
@@ -463,7 +457,7 @@
     },
     {
       "method": "GET",
-      "path": "/api/cashier/receipts/25",
+      "path": "/api/cashier/receipts/11",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
@@ -481,13 +475,13 @@
     },
     {
       "method": "GET",
-      "path": "/api/receptionist/boarding-requests",
+      "path": "/api/notifications",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
     {
       "method": "GET",
-      "path": "/api/notifications",
+      "path": "/api/receptionist/boarding-requests",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
@@ -500,12 +494,6 @@
     {
       "method": "GET",
       "path": "/api/receptionist/boarding-requests",
-      "status": 200,
-      "page": "/receptionist/bookings/hotel"
-    },
-    {
-      "method": "GET",
-      "path": "/api/notifications",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     },
@@ -517,7 +505,7 @@
     },
     {
       "method": "POST",
-      "path": "/api/receptionist/boarding-requests/19/check-in",
+      "path": "/api/receptionist/boarding-requests/89/check-in",
       "status": 200,
       "page": "/receptionist/bookings/hotel"
     }
@@ -525,8 +513,8 @@
   "console": [
     {
       "type": "warning",
-      "text": "Unable to load LNA library Error: Dynamic require of \"lna\" is not supported\n    at http://127.0.0.1:3001/node_modules/.vite/deps/chunk-2TUXWMP5.js?v=a1fbd29d:12:9\n    at Object.loadLna (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:667:24)\n    at Object.getLna (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:654:41)\n    at Object.connectToAddress (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:154:35)\n    at Object.findConnection (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:222:49)\n    at delayed (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:1289:39)\n    at attempt (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:1292:19)\n    at http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:1297:15\n    at new Promise (<anonymous>)\n    at Object.promise (http://127.0.0.1:3001/node_modules/.vite/deps/qz-tray.js?v=a1fbd29d:617:22)",
-      "page": "http://127.0.0.1:3001/cashier/payment-verification"
+      "text": "Unable to load LNA library Error: Dynamic require of \"lna\" is not supported\n    at http://127.0.0.1:3002/node_modules/.vite/deps/chunk-2TUXWMP5.js?v=81d28442:12:9\n    at Object.loadLna (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:667:24)\n    at Object.getLna (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:654:41)\n    at Object.connectToAddress (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:154:35)\n    at Object.findConnection (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:222:49)\n    at delayed (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:1289:39)\n    at attempt (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:1292:19)\n    at http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:1297:15\n    at new Promise (<anonymous>)\n    at Object.promise (http://127.0.0.1:3002/node_modules/.vite/deps/qz-tray.js?v=15d91cc1:617:22)",
+      "page": "http://127.0.0.1:3002/cashier/payment-verification"
     }
   ]
 }

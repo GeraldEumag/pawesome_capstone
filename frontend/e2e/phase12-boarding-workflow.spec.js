@@ -3,20 +3,25 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { apiLogin } = require("./test-utils");
+const { checkAuditEnv } = require("./audit-guard");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
+const auditDatabase = process.env.E2E_AUDIT_DATABASE || "";
+const approvedAuditDatabases = new Set(["pawesome_e2e_audit", "pawesome_booking_audit"]);
 const evidenceDir = path.resolve(__dirname, "../../browser-evidence/system-security-audit-20261108/phase12-boarding");
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 
 test.describe.configure({ mode: "serial" });
 test.beforeEach(() => {
-  test.skip(process.env.E2E_AUDIT_DATABASE !== "pawesome_e2e_audit", "Requires the approved isolated audit database.");
-  expect(apiUrl).toBe("http://127.0.0.1:8001/api");
+  const audit = checkAuditEnv();
+  if (audit.action !== "proceed" || !approvedAuditDatabases.has(auditDatabase)) {
+    throw new Error(`Refusing live mutation with unverified audit configuration: ${audit.reason || audit.action}`);
+  }
+  expect(audit.auditDb).toBe(auditDatabase);
 });
 
 const uniqueBuffer = (tag) => Buffer.concat([png, Buffer.from(`-${tag}`)]);
-const today = () => new Date().toISOString().slice(0, 10);
 const futureDate = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const list = (body) => body?.rooms || body?.available_rooms || body?.boarding_requests || body?.boardings || body?.pets || body?.data || body || [];
 
@@ -56,7 +61,7 @@ async function shot(page, name) {
 
 function dbBoarding(id) {
   const code = `
-$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDatabase}","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $id=(int)$argv[1];
 $b=$db->query("SELECT id,service_request_id,pet_id,customer_id,boarding_type,check_in,check_out,status,total_amount,payment_status,payment_method,payment_reference,payment_proof,vaccination_card,vaccination_card_verified_at,booking_channel,approved_by,approved_at,verified_by,verified_at,paid_at,receipt_number,actual_check_in,checked_in_at,checked_in_by FROM boardings WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
 $r=$db->query("SELECT id,room_id,source_type,source_id,pet_id,customer_id,check_in_date,check_out_date,status FROM boarding_room_reservations WHERE source_type='pet_hotel' AND source_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
@@ -68,7 +73,7 @@ echo json_encode(["boarding"=>$b,"reservations"=>$r,"receipts"=>$pr,"references"
 }
 
 function dbCount(sql) {
-  const code = `$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root",""); echo json_encode($db->query(${JSON.stringify(sql)})->fetchAll(PDO::FETCH_ASSOC));`;
+  const code = `$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDatabase}","root",""); echo json_encode($db->query(${JSON.stringify(sql)})->fetchAll(PDO::FETCH_ASSOC));`;
   return JSON.parse(execFileSync("php", ["-r", code], { cwd: path.resolve(__dirname, "../../backend"), encoding: "utf8" }));
 }
 
@@ -189,7 +194,9 @@ test("Phase 12.2 native boarding lifecycle: reservation, documents, approval, ro
   const confirm = receptionistPage.locator(".swal2-confirm");
   if (await confirm.isVisible({ timeout: 10000 }).catch(() => false)) await confirm.click();
   expect((await approvePromise).status()).toBe(200);
-  await expect(modal).toHaveCount(0, { timeout: 10000 });
+  // The action handler refreshes bookings and room availability before it
+  // closes the modal; those API calls can serialize through the local worker pool.
+  await expect(modal).toHaveCount(0, { timeout: 30000 });
   screenshots.push(await shot(receptionistPage, "04-boarding-approved"));
 
   // Reopen the approved booking from ALL (it leaves TO APPROVE) and schedule it
@@ -202,7 +209,10 @@ test("Phase 12.2 native boarding lifecycle: reservation, documents, approval, ro
   await receptionistPage.getByRole("button", { name: "View / Manage" }).click();
   await expect(modal).toBeVisible();
   await modal.locator("select").first().selectOption(`boarding:${room.id}`);
-  const [ty, tm, td] = today().split("-");
+  const queue = await api(request, receptionist, "get", "/receptionist/boarding-requests");
+  const storeToday = queue.store_today;
+  expect(storeToday).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  const [ty, tm, td] = storeToday.split("-");
   const scheduleDate = modal.getByPlaceholder("mm/dd/yyyy");
   await scheduleDate.fill(`${tm}/${td}/${ty}`);
   await scheduleDate.press("Enter");
@@ -251,7 +261,7 @@ test("Phase 12.2 native boarding lifecycle: reservation, documents, approval, ro
 
   const db = dbBoarding(boardingId);
   const workflow = {
-    boardingId, petId: pet.id, roomId: room.id, originalDate: date, scheduledDate: today(), reference, negativeChecks,
+    boardingId, petId: pet.id, roomId: room.id, originalDate: date, scheduledDate: storeToday, reference, negativeChecks,
     uploadStatus: uploadResponse.status(), approveStatus: 200, scheduleStatus: scheduleResponse.status(), verifyStatus: verifyResponse.status(), checkinStatus: checkinResponse.status(),
     database: db, screenshots, network, console: consoleLog,
   };

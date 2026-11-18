@@ -3,15 +3,20 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { apiLogin } = require("./test-utils");
+const { checkAuditEnv } = require("./audit-guard");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
+const auditDatabase = process.env.E2E_AUDIT_DATABASE || "";
 const evidenceDir = path.resolve(__dirname, "../../browser-evidence/system-security-audit-20261108/phase12");
 const proofPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 
 test.beforeEach(() => {
-  test.skip(process.env.E2E_AUDIT_DATABASE !== "pawesome_e2e_audit", "Requires the approved isolated audit database.");
-  expect(apiUrl).toBe("http://127.0.0.1:8001/api");
+  const audit = checkAuditEnv();
+  if (audit.action !== "proceed" || !["pawesome_e2e_audit", "pawesome_booking_audit"].includes(auditDatabase)) {
+    throw new Error(`Refusing live mutation with unverified audit configuration: ${audit.reason || audit.action}`);
+  }
+  expect(audit.auditDb).toBe(auditDatabase);
 });
 
 const normalizeList = (payload, keys = []) => {
@@ -65,7 +70,7 @@ async function shot(page, name) {
 
 function dbRequest(requestId) {
   const code = `
-$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=pawesome_e2e_audit","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$db=new PDO("mysql:host=127.0.0.1;port=3306;dbname=${auditDatabase}","root","",[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $id=(int)$argv[1];
 $request=$db->query("SELECT id,customer_id,pet_id,request_type,service_name,status,payment_status,payment_method,payment_reference,receipt_number,booking_channel,approved_by,approved_at,verified_by,verified_at,paid_at FROM service_requests WHERE id=$id")->fetch(PDO::FETCH_ASSOC);
 $receipts=$db->query("SELECT id,payable_type,payable_id,uploaded_by,disk,disk_path,mime,size_bytes,sha256,provider,submitted_reference,status,reject_reason,created_at,updated_at FROM payment_receipts WHERE payable_type='service_request' AND payable_id=$id ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);

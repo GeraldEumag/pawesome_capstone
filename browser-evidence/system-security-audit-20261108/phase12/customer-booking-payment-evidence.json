@@ -1,34 +1,34 @@
 {
-  "requestId": 38,
-  "petId": 18,
+  "requestId": 294,
+  "petId": 142,
   "service": "Basic Bath and Blow Dry Medium Breed",
-  "date": "2026-11-25",
+  "date": "2026-11-26",
   "time": "10:00",
-  "reference": "P12-26451745",
-  "notes": "PHASE12_NATIVE_UI_26451745",
+  "reference": "P12-24991588",
+  "notes": "PHASE12_NATIVE_UI_24991588",
   "upload": {
     "status": 200,
     "body": {
       "success": true,
       "message": "Payment proof received. Cashier verification will begin after the booking is approved.",
       "request": {
-        "id": 38,
+        "id": 294,
         "customer_id": 9,
-        "customer": "CUSTOMER",
-        "customer_name": "CUSTOMER",
+        "customer": "Customer",
+        "customer_name": "Customer",
         "email": "customer@example.com",
         "customer_email": "customer@example.com",
-        "pet_id": 18,
-        "pet": "PHASE12 Pet 26451745",
-        "pet_name": "PHASE12 Pet 26451745",
+        "pet_id": 142,
+        "pet": "PHASE12 Pet 24991588",
+        "pet_name": "PHASE12 Pet 24991588",
         "type": "grooming",
         "request_type": "grooming",
         "service_type": "Basic Bath and Blow Dry Medium Breed",
         "service": "Basic Bath and Blow Dry Medium Breed",
         "service_name": "Basic Bath and Blow Dry Medium Breed",
-        "date": "2026-11-25",
-        "request_date": "2026-11-25",
-        "requested_date": "2026-11-25",
+        "date": "2026-11-26",
+        "request_date": "2026-11-26",
+        "requested_date": "2026-11-26",
         "time": "10:00",
         "request_time": "10:00",
         "appointment_id": null,
@@ -38,23 +38,23 @@
         "additional_charges": 0,
         "billing_balance_due": 0,
         "appointment_payment_status": null,
-        "notes": "PHASE12_NATIVE_UI_26451745",
+        "notes": "PHASE12_NATIVE_UI_24991588",
         "status": "pending",
         "price": "500.00",
         "amount": "500.00",
         "payment": "pending",
         "payment_status": "pending",
         "payment_method": "gcash",
-        "payment_reference": "P12-26451745",
-        "payment_proof": "payment-proofs/proof_1794926475_TxPjQs2uXy.png",
+        "payment_reference": "P12-24991588",
+        "payment_proof": "payment-proofs/proof_1795025016_3ENJ9VJnmO.png",
         "rejection_reason": null,
-        "created_at": "2026-11-17T14:41:10.000000Z",
+        "created_at": "2026-11-18T18:03:32.000000Z",
         "ready_for_pickup_at": null,
         "workflow_stage": "to_approve"
       },
       "payment_status": "pending",
-      "proof_url": "/api/files/payment-proofs/service-request/38/view",
-      "receipt_poll": "/customer/receipts/service_request/38"
+      "proof_url": "/api/files/payment-proofs/service-request/294/view",
+      "receipt_poll": "/customer/receipts/service_request/294"
     }
   },
   "approveStatus": 200,
@@ -64,7 +64,7 @@
       "success": true,
       "message": "Service request payment verified successfully.",
       "payment_status": "paid",
-      "receipt_number": "SR-REC-20261117144140-38",
+      "receipt_number": "SR-REC-20261118180401-294",
       "breakdown": {
         "currency": "PHP",
         "vat_inclusive": true,
@@ -77,9 +77,9 @@
           {
             "method": "gcash",
             "amount": 500,
-            "reference_number": "P12-26451745",
-            "receipt_number": "SR-REC-20261117144140-38",
-            "paid_at": "2026-11-17T14:41:40.000000Z",
+            "reference_number": "P12-24991588",
+            "receipt_number": "SR-REC-20261118180401-294",
+            "paid_at": "2026-11-18T18:04:01.000000Z",
             "status": "paid"
           }
         ],
@@ -97,52 +97,52 @@
   },
   "database": {
     "request": {
-      "id": 38,
+      "id": 294,
       "customer_id": 9,
-      "pet_id": 18,
+      "pet_id": 142,
       "request_type": "grooming",
       "service_name": "Basic Bath and Blow Dry Medium Breed",
       "status": "approved",
       "payment_status": "paid",
       "payment_method": "gcash",
-      "payment_reference": "P12-26451745",
-      "receipt_number": "SR-REC-20261117144140-38",
+      "payment_reference": "P12-24991588",
+      "receipt_number": "SR-REC-20261118180401-294",
       "booking_channel": "online",
-      "approved_by": 3,
-      "approved_at": "2026-11-17 14:41:25",
-      "verified_by": 5,
-      "verified_at": "2026-11-17 14:41:40",
-      "paid_at": "2026-11-17 14:41:40"
+      "approved_by": 4,
+      "approved_at": "2026-11-18 18:03:49",
+      "verified_by": 6,
+      "verified_at": "2026-11-18 18:04:01",
+      "paid_at": "2026-11-18 18:04:01"
     },
     "receipts": [
       {
-        "id": 26,
+        "id": 9,
         "payable_type": "service_request",
-        "payable_id": 38,
+        "payable_id": 294,
         "uploaded_by": 9,
         "disk": "private",
-        "disk_path": "payment-proofs/proof_1794926475_TxPjQs2uXy.png",
+        "disk_path": "payment-proofs/proof_1795025016_3ENJ9VJnmO.png",
         "mime": "image/png",
         "size_bytes": 78,
-        "sha256": "8c12fc175d72112748ee7784f110142c479c1515863bda17e1543b0ac05368ec",
+        "sha256": "b4a0379e9adc80a2d0eb6bf152baaf79aa90c3d07c46b3d3be4bdd4fea301104",
         "provider": null,
-        "submitted_reference": "P12-26451745",
+        "submitted_reference": "P12-24991588",
         "status": "confirmed",
         "reject_reason": null,
-        "created_at": "2026-11-17 14:41:15",
-        "updated_at": "2026-11-17 14:41:40"
+        "created_at": "2026-11-18 18:03:36",
+        "updated_at": "2026-11-18 18:04:01"
       }
     ],
     "references": [
       {
-        "id": 8,
+        "id": 5,
         "provider": "gcash",
-        "reference_normalized": "P1226451745",
+        "reference_normalized": "P1224991588",
         "payable_type": "service_request",
-        "payable_id": 38,
-        "receipt_id": 26,
-        "confirmed_by": 5,
-        "confirmed_at": "2026-11-17 14:41:40"
+        "payable_id": 294,
+        "receipt_id": 9,
+        "confirmed_by": 6,
+        "confirmed_at": "2026-11-18 18:04:01"
       }
     ]
   },
@@ -158,21 +158,14 @@
     {
       "source": "browser",
       "method": "GET",
+      "path": "/api/customer/services",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
       "path": "/api/settings/public",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/holidays/blocked",
       "status": 200,
       "page": "/customer/grooming"
     },
@@ -186,14 +179,14 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/customer/services",
+      "path": "/api/holidays/blocked",
       "status": 200,
       "page": "/customer/grooming"
     },
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/chatbot/welcome",
+      "path": "/api/notifications",
       "status": 200,
       "page": "/customer/grooming"
     },
@@ -214,14 +207,7 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/notifications",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/holidays/blocked",
+      "path": "/api/chatbot/welcome",
       "status": 200,
       "page": "/customer/grooming"
     },
@@ -235,21 +221,14 @@
     {
       "source": "browser",
       "method": "GET",
+      "path": "/api/holidays/blocked",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
       "path": "/api/customer/services",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/chatbot/welcome",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/customer/tracking",
       "status": 200,
       "page": "/customer/grooming"
     },
@@ -264,6 +243,20 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/customer/availability/grooming",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
       "status": 200,
       "page": "/customer/grooming"
     },
@@ -297,6 +290,13 @@
     },
     {
       "source": "browser",
+      "method": "POST",
+      "path": "/api/customer/requests/294/payment-proof",
+      "status": 200,
+      "page": "/customer/grooming"
+    },
+    {
+      "source": "browser",
       "method": "GET",
       "path": "/api/customer/bookings",
       "status": 200,
@@ -304,34 +304,6 @@
     },
     {
       "source": "browser",
-      "method": "POST",
-      "path": "/api/customer/requests/38/payment-proof",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/customer/receipts/service_request/38",
-      "status": 200,
-      "page": "/customer/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/settings/public",
-      "status": 200,
-      "page": "/receptionist/bookings/grooming"
-    },
-    {
-      "source": "browser",
       "method": "GET",
       "path": "/api/settings/public",
       "status": 200,
@@ -341,6 +313,13 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/notifications",
+      "status": 200,
+      "page": "/receptionist/bookings/grooming"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
       "status": 200,
       "page": "/receptionist/bookings/grooming"
     },
@@ -348,13 +327,6 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/receptionist/requests",
-      "status": 200,
-      "page": "/receptionist/bookings/grooming"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
       "status": 200,
       "page": "/receptionist/bookings/grooming"
     },
@@ -368,7 +340,7 @@
     {
       "source": "browser",
       "method": "PATCH",
-      "path": "/api/receptionist/requests/38/status",
+      "path": "/api/receptionist/requests/294/status",
       "status": 200,
       "page": "/receptionist/bookings/grooming"
     },
@@ -389,13 +361,6 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/cashier/inventory/sellable",
-      "status": 200,
-      "page": "/cashier/payment-verification"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
       "path": "/api/cashier/pos/services",
       "status": 200,
       "page": "/cashier/payment-verification"
@@ -404,6 +369,13 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/cashier/customers",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
@@ -417,6 +389,13 @@
     {
       "source": "browser",
       "method": "GET",
+      "path": "/api/cashier/pos/services",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
       "path": "/api/cashier/payment-requests",
       "status": 200,
       "page": "/cashier/payment-verification"
@@ -424,14 +403,7 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/cashier/inventory/sellable",
-      "status": 200,
-      "page": "/cashier/payment-verification"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/cashier/pos/services",
+      "path": "/api/files/payment-proofs/service-request/294/view",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
@@ -445,6 +417,13 @@
     {
       "source": "browser",
       "method": "GET",
+      "path": "/api/cashier/inventory/sellable",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
       "path": "/api/cashier/payment-requests",
       "status": 200,
       "page": "/cashier/payment-verification"
@@ -452,35 +431,28 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/files/payment-proofs/service-request/38/view",
+      "path": "/api/cashier/receipts/9",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/cashier/receipts/26",
+      "path": "/api/cashier/receipts/9",
+      "status": 200,
+      "page": "/cashier/payment-verification"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/cashier/payment-requests",
       "status": 200,
       "page": "/cashier/payment-verification"
     },
     {
       "source": "browser",
       "method": "POST",
-      "path": "/api/cashier/receipts/26/confirm",
-      "status": 200,
-      "page": "/cashier/payment-verification"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/cashier/payment-requests",
-      "status": 200,
-      "page": "/cashier/payment-verification"
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/cashier/receipts/26",
+      "path": "/api/cashier/receipts/9/confirm",
       "status": 200,
       "page": "/cashier/payment-verification"
     }

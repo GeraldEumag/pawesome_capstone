@@ -50,7 +50,7 @@ class ServiceBillingRemediationTest extends TestCase
         return Boarding::create(array_merge([
             'pet_id' => $pet->id,
             'customer_id' => $customer->id,
-            'check_in' => now()->toDateString(),
+            'check_in' => now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'check_out' => now()->addDay()->toDateString(),
             'status' => 'approved',
             'payment_status' => 'unpaid',
@@ -388,7 +388,7 @@ class ServiceBillingRemediationTest extends TestCase
 
         $this->as('receptionist')->postJson("/api/receptionist/boarding-requests/{$boarding->id}/schedule", [
             'hotel_room_id' => $room->id,
-            'check_in' => now()->toDateString(),
+            'check_in' => now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'total_amount' => 900,
         ])->assertOk();
 

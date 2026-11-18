@@ -147,50 +147,78 @@ class LeaveController extends Controller
 
     public function approve(Request $request, int $id): JsonResponse
     {
-        $record = DB::table('leave_requests')->where('id', $id)->first();
-
-        if (!$record) {
-            return response()->json(['success' => false, 'message' => 'Leave request not found.'], 404);
-        }
-
-        if ($record->status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'Leave is not pending.'], 422);
-        }
-
-        $daysCounted = (float) ($record->days_counted ?? $this->countWorkingDays($record->start_date, $record->end_date, 0, $record->user_id ? User::find($record->user_id) : null));
-        $start = Carbon::parse($record->start_date);
-
-        // Deduct from leave balance (skip for unpaid_leave)
-        if ($record->type !== 'unpaid_leave' && $record->user_id) {
-            $balance = LeaveBalance::where('user_id', $record->user_id)
-                ->where('leave_type', $record->type)
-                ->where('year', $start->year)
-                ->first();
-
-            if ($balance) {
-                $balance->used_days      = min($balance->total_days, (float) $balance->used_days + $daysCounted);
-                $balance->remaining_days = max(0, (float) $balance->remaining_days - $daysCounted);
-                $balance->save();
+        $data = $request->validate(['remarks' => 'nullable|string|max:500']);
+        $result = DB::transaction(function () use ($id, $data) {
+            $record = DB::table('leave_requests')->where('id', $id)->lockForUpdate()->first();
+            if (!$record) {
+                return ['error' => 'Leave request not found.', 'status' => 404];
             }
-        }
+            if ($record->status !== 'pending') {
+                return ['error' => 'Leave is not pending.', 'status' => 422];
+            }
 
-        // Auto-mark attendance rows as on_leave for each working day in the range
-        if ($record->user_id) {
-            $this->markAttendanceOnLeave($record->user_id, $record->start_date, $record->end_date);
-        }
+            $user = $record->user_id ? User::whereKey($record->user_id)->lockForUpdate()->first() : null;
+            $overlap = DB::table('leave_requests')
+                ->where('user_id', $record->user_id)
+                ->where('status', 'approved')
+                ->where('id', '!=', $record->id)
+                ->whereDate('start_date', '<=', $record->end_date)
+                ->whereDate('end_date', '>=', $record->start_date)
+                ->exists();
+            if ($overlap) {
+                return ['error' => 'This request overlaps another approved leave request.', 'status' => 422];
+            }
 
-        DB::table('leave_requests')->where('id', $id)->update([
-            'status'          => 'approved',
-            'manager_remarks' => $request->input('remarks', ''),
-            'reviewed_by'     => Auth::id(),
-            'reviewed_at'     => now(),
-            'updated_at'      => now(),
-        ]);
+            $payrollLocked = DB::table('payrolls')
+                ->where('user_id', $record->user_id)
+                ->whereDate('pay_period_start', '<=', $record->end_date)
+                ->whereDate('pay_period_end', '>=', $record->start_date)
+                ->whereIn('status', ['pending', 'approved', 'paid'])
+                ->exists();
+            if ($payrollLocked) {
+                return ['error' => 'Payroll is approved or released for this period; use the authorized historical correction process.', 'status' => 422];
+            }
+
+            $daysCounted = (float) ($record->days_counted ?? $this->countWorkingDays(
+                $record->start_date,
+                $record->end_date,
+                (int) ($record->half_day ?? 0),
+                $user
+            ));
+            if ($record->type !== 'unpaid_leave' && $record->user_id) {
+                $balance = LeaveBalance::where('user_id', $record->user_id)
+                    ->where('leave_type', $record->type)
+                    ->where('year', Carbon::parse($record->start_date)->year)
+                    ->lockForUpdate()
+                    ->first();
+                if ($balance) {
+                    $balance->used_days = (float) $balance->used_days + $daysCounted;
+                    $balance->remaining_days = max(0, (float) $balance->remaining_days - $daysCounted);
+                    $balance->save();
+                }
+            }
+
+            if ($record->user_id) {
+                $this->markAttendanceOnLeave($record->user_id, $record->start_date, $record->end_date);
+            }
+            DB::table('leave_requests')->where('id', $id)->update([
+                'status' => 'approved',
+                'manager_remarks' => $data['remarks'] ?? '',
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return ['days_counted' => $daysCounted];
+        });
+        if (isset($result['error'])) {
+            return response()->json(['success' => false, 'message' => $result['error']], $result['status']);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Leave request approved.',
-            'days_counted' => $daysCounted,
+            'days_counted' => $result['days_counted'],
         ]);
     }
 
@@ -200,23 +228,26 @@ class LeaveController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
-        $record = DB::table('leave_requests')->where('id', $id)->first();
-
-        if (!$record) {
-            return response()->json(['success' => false, 'message' => 'Leave request not found.'], 404);
+        $result = DB::transaction(function () use ($id, $validated) {
+            $record = DB::table('leave_requests')->where('id', $id)->lockForUpdate()->first();
+            if (!$record) {
+                return ['error' => 'Leave request not found.', 'status' => 404];
+            }
+            if ($record->status !== 'pending') {
+                return ['error' => 'Leave is not pending.', 'status' => 422];
+            }
+            DB::table('leave_requests')->where('id', $id)->update([
+                'status' => 'rejected',
+                'manager_remarks' => $validated['remarks'],
+                'reviewed_by' => Auth::id(),
+                'reviewed_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return ['success' => true];
+        });
+        if (isset($result['error'])) {
+            return response()->json(['success' => false, 'message' => $result['error']], $result['status']);
         }
-
-        if ($record->status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'Leave is not pending.'], 422);
-        }
-
-        DB::table('leave_requests')->where('id', $id)->update([
-            'status'          => 'rejected',
-            'manager_remarks' => $validated['remarks'],
-            'reviewed_by'     => Auth::id(),
-            'reviewed_at'     => now(),
-            'updated_at'      => now(),
-        ]);
 
         return response()->json([
             'success' => true,
@@ -227,37 +258,56 @@ class LeaveController extends Controller
     /** Restore leave balance and revert on_leave attendance rows. */
     public function cancel(int $id): JsonResponse
     {
-        $record = DB::table('leave_requests')->where('id', $id)->first();
-
-        if (!$record) {
-            return response()->json(['success' => false, 'message' => 'Leave request not found.'], 404);
-        }
-
-        if ($record->status === 'approved' && $record->type !== 'unpaid_leave' && $record->user_id) {
-            $daysCounted = (float) ($record->days_counted ?? 0);
-            $start = Carbon::parse($record->start_date);
-
-            $balance = LeaveBalance::where('user_id', $record->user_id)
-                ->where('leave_type', $record->type)
-                ->where('year', $start->year)
-                ->first();
-
-            if ($balance) {
-                $balance->used_days      = max(0, (float) $balance->used_days - $daysCounted);
-                $balance->remaining_days = min($balance->total_days, (float) $balance->remaining_days + $daysCounted);
-                $balance->save();
+        $result = DB::transaction(function () use ($id) {
+            $record = DB::table('leave_requests')->where('id', $id)->lockForUpdate()->first();
+            if (!$record) {
+                return ['error' => 'Leave request not found.', 'status' => 404];
+            }
+            if ($record->status !== 'approved') {
+                return ['error' => 'Only approved leave can be cancelled here.', 'status' => 422];
             }
 
-            // Revert on_leave attendance rows to absent
             if ($record->user_id) {
-                $this->revertAttendanceOnLeave($record->user_id, $record->start_date, $record->end_date);
+                User::whereKey($record->user_id)->lockForUpdate()->first();
             }
-        }
+            $payrollLocked = DB::table('payrolls')
+                ->where('user_id', $record->user_id)
+                ->whereDate('pay_period_start', '<=', $record->end_date)
+                ->whereDate('pay_period_end', '>=', $record->start_date)
+                ->whereIn('status', ['pending', 'approved', 'paid'])
+                ->exists();
+            if ($payrollLocked) {
+                return ['error' => 'Payroll is approved or released for this period; use the authorized historical correction process.', 'status' => 422];
+            }
 
-        DB::table('leave_requests')->where('id', $id)->update([
-            'status'     => 'cancelled',
-            'updated_at' => now(),
-        ]);
+            if ($record->type !== 'unpaid_leave' && $record->user_id) {
+                $balance = LeaveBalance::where('user_id', $record->user_id)
+                    ->where('leave_type', $record->type)
+                    ->where('year', Carbon::parse($record->start_date)->year)
+                    ->lockForUpdate()
+                    ->first();
+                if ($balance) {
+                    $daysCounted = (float) ($record->days_counted ?? 0);
+                    $balance->used_days = max(0, (float) $balance->used_days - $daysCounted);
+                    $balance->remaining_days = min((float) $balance->total_days, (float) $balance->remaining_days + $daysCounted);
+                    $balance->save();
+                }
+            }
+
+            DB::table('leave_requests')->where('id', $id)->update([
+                'status' => 'cancelled',
+                'cancelled_by' => Auth::id(),
+                'cancelled_at' => now(),
+                'updated_at' => now(),
+            ]);
+            if ($record->user_id) {
+                $this->revertAttendanceOnLeave($record->user_id, $record->start_date, $record->end_date, $id);
+            }
+            return ['success' => true];
+        });
+        if (isset($result['error'])) {
+            return response()->json(['success' => false, 'message' => $result['error']], $result['status']);
+        }
 
         return response()->json(['success' => true, 'message' => 'Leave cancelled and balance restored.']);
     }
@@ -333,12 +383,24 @@ class LeaveController extends Controller
     }
 
     /** Revert on_leave attendance rows back to absent in a leave date range. */
-    private function revertAttendanceOnLeave(int $userId, string $startDate, string $endDate): void
+    private function revertAttendanceOnLeave(int $userId, string $startDate, string $endDate, int $cancelledLeaveId): void
     {
-        Attendance::where('user_id', $userId)
+        $records = Attendance::where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
             ->where('status', 'on_leave')
             ->whereNull('check_in') // only records with no actual punch
-            ->update(['status' => 'absent']);
+            ->get();
+        foreach ($records as $attendance) {
+            $covered = DB::table('leave_requests')
+                ->where('user_id', $userId)
+                ->where('id', '!=', $cancelledLeaveId)
+                ->where('status', 'approved')
+                ->whereDate('start_date', '<=', $attendance->date)
+                ->whereDate('end_date', '>=', $attendance->date)
+                ->exists();
+            if (!$covered) {
+                $attendance->update(['status' => 'absent']);
+            }
+        }
     }
 }

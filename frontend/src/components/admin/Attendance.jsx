@@ -28,8 +28,14 @@ const Attendance = () => {
 
   const transformRecord = (record) => ({
     id: record.id,
-    employee: record.user?.name || record.employee_name || "Unknown",
-    employeeId: record.user?.id || record.user_id || "-",
+    employee: record.user?.name || record.employee?.name || record.employee_name || "Unknown",
+    employeeId:
+      record.user?.employee_no ||
+      record.employee?.employee_no ||
+      record.user?.id ||
+      record.user_id ||
+      record.employee_id ||
+      "-",
     date: record.date || "-",
     checkIn: formatTime(record.check_in),
     checkOut: formatTime(record.check_out),
@@ -60,11 +66,15 @@ const Attendance = () => {
 
   const summary = useMemo(() => {
     const total = records.length;
-    const present = records.filter((r) => r.rawStatus === "present").length;
-    const working = records.filter((r) => r.rawStatus === "working").length;
+    // Backend statuses: present, absent, late, early_leave, on_leave.
+    // "late"/"early_leave" are still worked days → counted as present.
+    const present = records.filter((r) =>
+      ["present", "late", "early_leave"].includes(r.rawStatus)
+    ).length;
+    const onLeave = records.filter((r) => r.rawStatus === "on_leave").length;
     const absent = records.filter((r) => r.rawStatus === "absent").length;
 
-    return { total, present, working, absent };
+    return { total, present, onLeave, absent };
   }, [records]);
 
   return (
@@ -106,8 +116,8 @@ const Attendance = () => {
         </div>
 
         <div className="summary-card working-card">
-          <span>Working</span>
-          <strong>{summary.working}</strong>
+          <span>On Leave</span>
+          <strong>{summary.onLeave}</strong>
         </div>
 
         <div className="summary-card absent-card">
@@ -135,13 +145,13 @@ const Attendance = () => {
           </div>
 
           <div>
-            <span>Working</span>
+            <span>On Leave</span>
             <div className="bar">
               <div
                 className="bar-fill working-fill"
                 style={{
                   width: summary.total
-                    ? `${(summary.working / summary.total) * 100}%`
+                    ? `${(summary.onLeave / summary.total) * 100}%`
                     : "0%",
                 }}
               />

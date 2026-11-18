@@ -343,6 +343,7 @@ class ReceptionistRequestController extends Controller
 
         if (
             $this->requestIsGrooming($serviceRequest)
+            && array_key_exists($validated['status'], Grooming::STATUS_TRANSITIONS)
             && $previousStatus !== $validated['status']
             && !Grooming::allowsTransition((string) $previousStatus, $validated['status'])
         ) {
@@ -468,7 +469,35 @@ class ReceptionistRequestController extends Controller
             $serviceRequest->payment_status = 'unpaid';
         }
 
-        $serviceRequest->save();
+        $newStatus = $validated['status'];
+        $groomingChanges = [];
+        if ($linkedGrooming) {
+            $groomingChanges['status'] = $newStatus;
+            if (in_array($newStatus, ['rejected', 'cancelled'], true) && !$hasPendingProof) {
+                $groomingChanges['payment_status'] = 'unpaid';
+            }
+            if ($newStatus === 'completed') {
+                $groomingChanges['completed_at'] = now();
+            }
+        }
+
+        $sync = app(\App\Services\GroomingStatusSynchronizer::class)->synchronize(
+            $serviceRequest,
+            $linkedGrooming,
+            $serviceRequest->getDirty(),
+            $groomingChanges
+        );
+        if ($sync['error']) {
+            return response()->json([
+                'success' => false,
+                'message' => $sync['error']['message'],
+                'current_status' => $sync['error']['current_status'],
+                'requested_status' => $sync['error']['requested_status'],
+            ], 422);
+        }
+        $serviceRequest = $sync['request'] ?? $serviceRequest;
+        $linkedGrooming = $sync['grooming'];
+
         if ($validated['status'] === 'approved' && $hasPendingProof) {
             WorkflowNotifier::notifyRole('cashier', 'Service payment proof ready for verification', "Approved service request #{$serviceRequest->id} has a customer-submitted payment proof.", 'info', 'service_request', $serviceRequest->id);
         } elseif (in_array($validated['status'], ['rejected', 'cancelled'], true) && $hasPendingProof) {
@@ -476,27 +505,15 @@ class ReceptionistRequestController extends Controller
         }
 
         // Propagate status change to linked dedicated records
-        $newStatus = $validated['status'];
         if (in_array($newStatus, ['rejected', 'cancelled'])) {
             $linkedUpdates = ['status' => $newStatus];
             if (!$hasPendingProof) $linkedUpdates['payment_status'] = 'unpaid';
             if (Schema::hasColumn('appointments', 'service_request_id')) {
                 Appointment::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
-            if (Schema::hasColumn('groomings', 'service_request_id')) {
-                Grooming::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
-            }
             if (Schema::hasColumn('boardings', 'service_request_id')) {
                 Boarding::where('service_request_id', $serviceRequest->id)->update($linkedUpdates);
             }
-        }
-
-        if ($linkedGrooming && in_array($newStatus, ['in_progress', 'completed'], true)) {
-            $groomingUpdates = ['status' => $newStatus];
-            if ($newStatus === 'completed') {
-                $groomingUpdates['completed_at'] = now();
-            }
-            $linkedGrooming->update($groomingUpdates);
         }
 
         // Safety net: create/update linked records when approving via PATCH
@@ -545,7 +562,10 @@ class ReceptionistRequestController extends Controller
                     );
 
                     if (!$grooming->wasRecentlyCreated) {
-                        $groomingUpdates = ['status' => 'approved'];
+                        $groomingUpdates = [];
+                        if ($grooming->status !== 'approved') {
+                            $groomingUpdates['status'] = 'approved';
+                        }
 
                         if (!$hasPendingProof && ($grooming->payment_status ?? 'unpaid') !== 'paid') {
                             $groomingUpdates['payment_status'] = 'unpaid';
@@ -560,7 +580,9 @@ class ReceptionistRequestController extends Controller
                             $groomingUpdates['balance_due'] = $price;
                         }
 
-                        $grooming->update($groomingUpdates);
+                        if ($groomingUpdates !== []) {
+                            $grooming->update($groomingUpdates);
+                        }
                     }
 
                     // Auto-create base service billing item so groomer sees the service fee

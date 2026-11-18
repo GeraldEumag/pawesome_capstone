@@ -158,7 +158,10 @@ class PayrollYear2026Test extends TestCase
             $date = Carbon::parse($holiday->date);
             if ($holiday->type === 'regular') {
                 $gross += self::DAILY_RATE; // worked premium, or Art. 94 unworked pay
-            } elseif (CompanySchedule::isWorkday($date, $person)) {
+            } elseif (
+                $holiday->type === 'special_non_working'
+                && CompanySchedule::isWorkday($date, $person)
+            ) {
                 $gross += self::DAILY_RATE * 0.3; // special holiday, worked
             }
         }
@@ -238,6 +241,29 @@ class PayrollYear2026Test extends TestCase
         // Attendance deductions apply once (inside gross); net = 2906.25 −
         // (650 SSS + 325 PhilHealth + 50 Pag-IBIG) = 1881.25.
         $this->assertEqualsWithDelta(1881.25, $row['net_pay'], 0.01);
+    }
+
+    public function test_2026_eid_is_regular_holiday_and_edsaday_is_special_working(): void
+    {
+        foreach ($this->workdaysIn('2026-03-16', '2026-03-31', $this->employee) as $date) {
+            if ($date !== '2026-03-20') {
+                $this->punchDay($this->employee, $date);
+            }
+        }
+
+        $eidPayroll = $this->computeRow('2026-03-16', '2026-03-31');
+        $this->assertEqualsWithDelta(1000, (float) $eidPayroll['regular_holiday_pay'], 0.01);
+        $this->assertSame(1.0, (float) $eidPayroll['absent_days']);
+
+        foreach ($this->workdaysIn('2026-02-16', '2026-02-28', $this->employee) as $date) {
+            if ($date !== '2026-02-17') {
+                $this->punchDay($this->employee, $date);
+            }
+        }
+
+        $edsaPayroll = $this->computeRow('2026-02-16', '2026-02-28');
+        $this->assertEqualsWithDelta(0, (float) $edsaPayroll['special_holiday_pay'], 0.01);
+        $this->assertEqualsWithDelta(0, (float) $edsaPayroll['regular_holiday_pay'], 0.01);
     }
 
     /**
@@ -347,7 +373,10 @@ class PayrollYear2026Test extends TestCase
         foreach ($allHolidays as $holiday) {
             if ($holiday->type === 'regular') {
                 $expectedYear += self::DAILY_RATE;
-            } elseif (CompanySchedule::isWorkday(Carbon::parse($holiday->date), $this->employee)) {
+            } elseif (
+                $holiday->type === 'special_non_working'
+                && CompanySchedule::isWorkday(Carbon::parse($holiday->date), $this->employee)
+            ) {
                 $expectedYear += self::DAILY_RATE * 0.3;
             }
         }
