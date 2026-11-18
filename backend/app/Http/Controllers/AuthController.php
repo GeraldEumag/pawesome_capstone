@@ -508,6 +508,14 @@ class AuthController extends Controller
                 'api_token' => null,
             ]);
 
+            // Consuming an emailed token proves mailbox ownership — staff-
+            // created accounts (walk-ins, admin welcome links) are unverified
+            // until this point and must not stay locked out of booking.
+            if (!$user->email_verified_at) {
+                $user->email_verified_at = now();
+                $user->save();
+            }
+
             // Revoke all existing Sanctum sessions — a reset means the old
             // credentials may be compromised, so issued tokens must die too.
             $user->tokens()->delete();

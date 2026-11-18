@@ -158,6 +158,26 @@ class WalkInBookingTest extends TestCase
                 ->where('source_id', $response->json('data.booking_id'))
                 ->first()
         );
+
+        // The account is created unverified — the emailed set-password link
+        // is what proves mailbox ownership. Simulating that link click by
+        // swapping the issued token for a known one and consuming it must
+        // both set the password and verify the account, so the customer can
+        // immediately log in and book.
+        $user = User::where('email', 'walkin.guest@example.com')->firstOrFail();
+        $this->assertNull($user->email_verified_at);
+
+        DB::table('password_reset_tokens')->where('email', $user->email)
+            ->update(['token' => \Illuminate\Support\Facades\Hash::make('known-welcome-token')]);
+
+        $this->postJson('/api/auth/password/reset', [
+            'email' => $user->email,
+            'token' => 'known-welcome-token',
+            'new_password' => 'WalkinPass123!',
+            'new_password_confirmation' => 'WalkinPass123!',
+        ])->assertOk();
+
+        $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
     public function test_grooming_walk_in_for_existing_customer_is_persisted_and_listed(): void
