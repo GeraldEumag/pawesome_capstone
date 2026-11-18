@@ -200,9 +200,12 @@ class PayrollController extends Controller
                     ->where($isEmployee ? 'employee_id' : 'user_id', $employee->id)
                     ->whereDate('pay_period_start', $startDate)
                     ->whereDate('pay_period_end', $endDate)
-                    ->exists();
+                    ->first();
 
-                if ($existingPayroll) {
+                // Drafts are refreshed below so stale figures never reach
+                // release; approved (pending) and paid rows are immutable
+                // here and must be voided/regenerated through their own flow.
+                if ($existingPayroll && $existingPayroll->status !== 'draft') {
                     $skipped[] = [
                         'user_id' => $isEmployee ? null : $employee->id,
                         'employee_id' => $isEmployee ? $employee->id : null,
@@ -227,8 +230,23 @@ class PayrollController extends Controller
                 // collision — each attempt re-runs the creating hook and
                 // recomputes MAX(seq)+1, so a concurrent insert that stole
                 // the suffix is recovered instead of dropping the row.
-                $payroll = retry(3, function () use ($isEmployee, $employee, $startDate, $endDate, $computed, $periodLabel) {
-                    return Payroll::updateOrCreate(
+                if ($existingPayroll) {
+                    // Draft refresh — update in place; the attribute lookup
+                    // inside updateOrCreate can miss rows stored as datetime.
+                    $existingPayroll->fill([
+                        'employee_name' => $computed['employee_name'],
+                        'pay_period_label' => $periodLabel,
+                        'department' => $computed['department'],
+                        'position' => $computed['position'],
+                        'base_salary' => $computed['base_salary'],
+                        'hourly_rate' => $computed['hourly_rate'],
+                        'processed_by' => Auth::id(),
+                        'processed_at' => now(),
+                    ]);
+                    $payroll = $existingPayroll;
+                } else {
+                    $payroll = retry(3, function () use ($isEmployee, $employee, $startDate, $endDate, $computed, $periodLabel) {
+                        return Payroll::updateOrCreate(
                         array_merge(
                             $isEmployee
                                 ? ['employee_id' => $employee->id]
@@ -250,7 +268,8 @@ class PayrollController extends Controller
                             'processed_at' => now(),
                         ]
                     );
-                }, 100, fn ($e) => $e instanceof UniqueConstraintViolationException);
+                    }, 100, fn ($e) => $e instanceof UniqueConstraintViolationException);
+                }
 
                 // Single source of truth: full attendance-driven recomputation
                 // (premiums, statutory, loans, undertime, auto-absences).
@@ -420,6 +439,33 @@ class PayrollController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Payroll requires recorded approval before payment can be released.',
+                ], 422);
+            }
+
+            // Freshness guard: recompute on a non-persisted copy. If
+            // attendance or schedule changed after this row was generated,
+            // the stored figures no longer reflect reality — revert to draft
+            // so it can be regenerated and re-approved, never paying stale
+            // amounts.
+            $fresh = $payroll->replicate();
+            $fresh->calculatePayroll(true);
+            $staleFields = [
+                'gross_pay', 'net_pay', 'late_deductions', 'undertime_deductions',
+                'absent_deductions', 'overtime_pay', 'night_differential',
+                'regular_holiday_pay', 'special_holiday_pay', 'rest_day_pay',
+                'sss_contribution', 'philhealth_contribution', 'pagibig_contribution',
+                'tax_deduction', 'regular_hours', 'overtime_hours',
+                'present_days', 'absent_days',
+            ];
+            $diffs = array_values(array_filter($staleFields, fn ($f) =>
+                abs((float) ($fresh->$f ?? 0) - (float) ($payroll->$f ?? 0)) > 0.01
+            ));
+            if ($diffs) {
+                $payroll->update(['status' => 'draft']);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payroll figures are stale relative to current attendance/schedule. Reverted to draft — regenerate and re-approve before releasing.',
+                    'stale_fields' => $diffs,
                 ], 422);
             }
 
