@@ -145,8 +145,8 @@ class PayrollEndToEndTest extends TestCase
         $this->assertGreaterThan(0, $computedRow['gross_pay']);
         $this->assertGreaterThan(0, $computedRow['sss_contribution']);
         $this->assertGreaterThan(0, $computedRow['philhealth_contribution']);
-        // Pag-IBIG is 100/month; semi-monthly cutoff pays half = 50
-        $this->assertEquals(50, $computedRow['pagibig_contribution']);
+        // Pag-IBIG post-Feb-2024: 2% of ₱10,000 MFS = ₱200/month → ₱100/cutoff
+        $this->assertEquals(100, $computedRow['pagibig_contribution']);
         // 25,000 salary → monthly taxable ~23,025 → monthly tax ~328.80 → ~164.40 per cutoff
         $this->assertGreaterThan(0, $computedRow['tax_deduction']);
 
@@ -257,8 +257,8 @@ class PayrollEndToEndTest extends TestCase
         $this->assertEquals('Pawesome Retreat Inc.', $payslip['company_name']);
         $this->assertGreaterThan(0, $payslip['deductions']['sss']);
         $this->assertGreaterThan(0, $payslip['deductions']['philhealth']);
-        // Pag-IBIG is 100/month; semi-monthly cutoff deducts half = 50
-        $this->assertEquals(50, (float) $payslip['deductions']['pagibig']);
+        // Pag-IBIG post-Feb-2024: ₱200/month → ₱100/cutoff
+        $this->assertEquals(100, (float) $payslip['deductions']['pagibig']);
         $this->assertGreaterThan(0, $payslip['deductions']['tax']);
         $this->assertEquals('GCash', $payslip['payment_method']);
         $this->assertEquals('paid', $payslip['status']);
@@ -536,7 +536,10 @@ class PayrollEndToEndTest extends TestCase
             'pay_period_start' => '2024-06-01',
             'pay_period_end' => '2024-06-15',
             'pay_period_label' => 'Jun 01 - Jun 15, 2024',
+            // Release requires pending status + recorded approval.
             'status' => 'pending',
+            'approved_by' => $this->manager->id,
+            'approved_at' => now(),
             'gross_pay' => 25000,
             'net_pay' => 22000,
         ]);

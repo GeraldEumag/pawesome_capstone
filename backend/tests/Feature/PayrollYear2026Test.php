@@ -83,7 +83,10 @@ class PayrollYear2026Test extends TestCase
         return $this->postJson(
             '/api/kiosk/punch',
             ['barcode' => $barcode],
-            ['X-Kiosk-Pin' => self::KIOSK_PIN]
+            [
+                'X-Kiosk-Pin' => self::KIOSK_PIN,
+                'Idempotency-Key' => (string) \Illuminate\Support\Str::uuid(),
+            ]
         );
     }
 
@@ -239,8 +242,8 @@ class PayrollYear2026Test extends TestCase
         // gross = 13,000 + 1,000 holiday − 11,000 absent − 93.75 late
         $this->assertEqualsWithDelta(2906.25, $row['gross_pay'], 0.01);
         // Attendance deductions apply once (inside gross); net = 2906.25 −
-        // (650 SSS + 325 PhilHealth + 50 Pag-IBIG) = 1881.25.
-        $this->assertEqualsWithDelta(1881.25, $row['net_pay'], 0.01);
+        // (650 SSS + 325 PhilHealth + 100 Pag-IBIG post-Feb-2024 MFS) = 1831.25.
+        $this->assertEqualsWithDelta(1831.25, $row['net_pay'], 0.01);
     }
 
     public function test_2026_eid_is_regular_holiday_and_edsaday_is_special_working(): void
@@ -412,7 +415,10 @@ class PayrollYear2026Test extends TestCase
         $this->assertSame(60, $row['total_undertime_minutes']);
         $this->assertSame(1, $row['rest_day_days']);
         $this->assertEqualsWithDelta(2.5, $row['ot_workday_hours'], 0.01);
-        $this->assertEqualsWithDelta(96.75, $row['regular_hours'], 0.01); // incl. rest-day 8 h
+        // 8 full days (8h) + late day (7.25h) + OT day (8h reg) + undertime
+        // day (7h) + rest day (8h) = 94.25h — the late day correctly counts
+        // only the 7.25h actually worked.
+        $this->assertEqualsWithDelta(94.25, $row['regular_hours'], 0.01); // incl. rest-day 8 h
 
         $this->assertEqualsWithDelta(93.75, $row['late_deductions'], 0.01);        // 45 × 125/60
         $this->assertEqualsWithDelta(1000.0, $row['absent_deductions'], 0.01);    // 1 day × 1000

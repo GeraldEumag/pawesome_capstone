@@ -90,11 +90,12 @@ class PayrollAuditDefectReproductionTest extends TestCase
      *
      * ₱26,000/mo → daily ₱1,000 · period base ₱13,000 · 1 absence ₱1,000.
      * Earned gross = 13,000 − 1,000 = 12,000.
-     * Statutory per cutoff: SSS 650 + PhilHealth 325 + Pag-IBIG 50.
-     * Tax: taxable monthly-equiv = 24,000 − 2,050 = 21,950 → 15% band →
-     *      167.55 monthly → 83.78 per cutoff.
-     * Correct net = 12,000 − (650 + 325 + 50 + 83.78) = 10,891.22.
-     * Buggy net (double-charge) = 12,000 − 1,000 − 1,108.78 = 9,891.22.
+     * Statutory per cutoff: SSS 585 + PhilHealth 325 + Pag-IBIG 100.
+     * Tax: taxable monthly-equiv = 24,000 − 2,020 = 21,980 → 15% band →
+     *      172.05 monthly → 86.03 per cutoff.
+     * Correct net = 12,000 − (585 + 325 + 100 + 86.03) = 10,903.97
+     * (stored rounded value 10,903.98).
+     * Buggy net (double-charge) = 12,000 − 1,000 − 1,096.03 = 9,903.97.
      */
     public function test_absent_day_is_charged_once_not_twice(): void
     {
@@ -111,21 +112,25 @@ class PayrollAuditDefectReproductionTest extends TestCase
 
         $this->assertEqualsWithDelta(12000.0, (float) $row['gross_pay'], 0.01);
         $this->assertEqualsWithDelta(1000.0, (float) $row['absent_deductions'], 0.01);
-        $this->assertEqualsWithDelta(650.0, (float) $row['sss_contribution'], 0.01);
+        // Pre-2025 SSS (4.5% EE on MSC 26,000 = 1,170/mo → 585/cutoff);
+        // PhilHealth 5%/2 = 650/mo → 325; Pag-IBIG post-Feb-2024 MFS 10k
+        // (2% → 200/mo → 100); tax on monthly taxable 21,980 → 86.03/cutoff.
+        $this->assertEqualsWithDelta(585.0, (float) $row['sss_contribution'], 0.01);
         $this->assertEqualsWithDelta(325.0, (float) $row['philhealth_contribution'], 0.01);
-        $this->assertEqualsWithDelta(50.0, (float) $row['pagibig_contribution'], 0.01);
-        $this->assertEqualsWithDelta(83.78, (float) $row['tax_deduction'], 0.05);
+        $this->assertEqualsWithDelta(100.0, (float) $row['pagibig_contribution'], 0.01);
+        $this->assertEqualsWithDelta(86.03, (float) $row['tax_deduction'], 0.05);
 
         // The absence is already removed from gross — it must not also be
         // part of the deduction total applied to reach net.
+        // 585 SSS + 325 PhilHealth + 100 Pag-IBIG + 86.03 tax = 1096.03
         $this->assertEqualsWithDelta(
-            1108.78,
+            1096.03,
             (float) $row['total_deductions'],
             0.05,
             'total_deductions must not re-include attendance deductions already removed from gross'
         );
         $this->assertEqualsWithDelta(
-            10891.22,
+            10903.98,
             (float) $row['net_pay'],
             0.05,
             'net_pay double-charges the ₱1,000 absence'
