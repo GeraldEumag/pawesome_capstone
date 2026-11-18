@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\ServiceDurationService;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\AttendanceCorrection;
@@ -45,7 +46,7 @@ class MyAttendanceCorrectionController extends Controller
         $user = auth()->user();
 
         $data = $request->validate([
-            'date'                  => 'required|date|before_or_equal:today',
+            'date'                  => 'required|date|before_or_equal:' . ServiceDurationService::storeToday(),
             'requested_check_in'    => 'nullable|date_format:H:i',
             'requested_check_out'   => 'nullable|date_format:H:i',
             'reason'                => 'required|string|max:500',

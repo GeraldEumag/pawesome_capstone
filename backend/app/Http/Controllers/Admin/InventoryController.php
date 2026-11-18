@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Services\ServiceDurationService;
 use App\Http\Controllers\Concerns\HandlesInventoryUploads;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
@@ -641,7 +642,7 @@ class InventoryController extends Controller
                 $requiresExpiry = $item->needsFefo();
                 $validated = $request->validate([
                     'batch_no' => 'nullable|string|max:50',
-                    'received_date' => 'required|date|before_or_equal:today',
+                    'received_date' => 'required|date|before_or_equal:' . ServiceDurationService::storeToday(),
                     'manufacturing_date' => 'nullable|date|before_or_equal:received_date',
                     'expiration_date' => ($requiresExpiry ? 'required' : 'nullable') . '|date|after_or_equal:received_date',
                     'quantity' => 'required|integer|min:1',

@@ -16,7 +16,6 @@ use App\Models\MedicationAdministrationRecord;
 use App\Models\WardBed;
 use App\Services\MarService;
 use App\Services\VisitCompletionService;
-use App\Services\VisitConsentService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,7 +51,7 @@ class MedicalConfinementController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = MedicalConfinement::with(['consultation', 'customer', 'pet', 'veterinarian', 'room']);
+        $query = MedicalConfinement::with(['consultation', 'customer', 'pet', 'veterinarian', 'room', 'wardBed']);
 
         $user = $request->user();
 
@@ -259,15 +258,6 @@ class MedicalConfinementController extends Controller
 
         if (!$confinement->room_id && !$confinement->ward_bed_id) {
             return response()->json(['error' => 'Assign a ward bed or room before admission'], 422);
-        }
-
-        // Admission requires a signed confinement consent unless the
-        // originating visit was checked in as an emergency.
-        if (Schema::hasTable('visit_consents')
-            && !VisitConsentService::canAdmitConfinement($confinement)) {
-            return response()->json([
-                'error' => 'A signed confinement consent is required before admission (emergency visits are exempt).'
-            ], 422);
         }
 
         $oldStatus = $confinement->status;

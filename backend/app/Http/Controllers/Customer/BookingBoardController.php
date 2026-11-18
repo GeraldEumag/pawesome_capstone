@@ -132,7 +132,7 @@ class BookingBoardController extends Controller
 
         if ($additional > 0) {
             $actions[] = 'view_bill';
-        } elseif (in_array($status, ['approved', 'scheduled'], true) && in_array($payment, self::PAYABLE, true)) {
+        } elseif (in_array($status, ['approved', 'scheduled', 'in_progress', 'ready_for_pickup', 'checked_in'], true) && in_array($payment, self::PAYABLE, true)) {
             $actions[] = 'pay';
         }
         if ($status === 'pending') {

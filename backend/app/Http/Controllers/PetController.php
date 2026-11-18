@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ServiceDurationService;
 use App\Models\Pet;
 use App\Models\Customer;
 use App\Services\FileStorageService;
@@ -77,8 +78,8 @@ class PetController extends Controller
             'name' => 'required|string|max:255',
             'species' => 'required|string|max:255',
             'breed' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date|before_or_equal:today',
-            'birth_date' => 'nullable|date|before_or_equal:today',
+            'birthdate' => 'nullable|date|before_or_equal:' . ServiceDurationService::storeToday(),
+            'birth_date' => 'nullable|date|before_or_equal:' . ServiceDurationService::storeToday(),
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
@@ -142,8 +143,8 @@ class PetController extends Controller
             'name' => 'required|string|max:255',
             'species' => 'required|string|max:255',
             'breed' => 'nullable|string|max:255',
-            'birthdate' => 'nullable|date|before_or_equal:today',
-            'birth_date' => 'nullable|date|before_or_equal:today',
+            'birthdate' => 'nullable|date|before_or_equal:' . ServiceDurationService::storeToday(),
+            'birth_date' => 'nullable|date|before_or_equal:' . ServiceDurationService::storeToday(),
             'age' => 'nullable|integer|min:0',
             'gender' => 'nullable|string|max:50',
             'notes' => 'nullable|string',

@@ -414,6 +414,65 @@ class PaymentBookingChannelTest extends TestCase
         $this->assertSame('gcash', $grooming->payment_method);
     }
 
+    public function test_grooming_proof_upload_allowed_while_in_progress_ready_for_pickup_and_checked_in(): void
+    {
+        Storage::fake('private');
+        [$user, $customer, $pet] = $this->customerWithPet();
+        $headers = $this->headers($user);
+
+        foreach (['in_progress', 'ready_for_pickup', 'checked_in'] as $status) {
+            $sr = $this->serviceRequest([
+                'customer_id' => $user->id,
+                'customer_email' => $user->email,
+                'pet_id' => $pet->id,
+                'status' => $status,
+                'payment_status' => 'unpaid',
+                'booking_channel' => 'walk_in',
+                'service_name' => 'Bath and Brush ' . $status,
+            ]);
+
+            $this->withHeaders($headers)
+                ->post("/api/customer/requests/{$sr->id}/payment-proof", [
+                    'payment_method' => 'gcash',
+                    'payment_reference' => 'GC-' . strtoupper($status),
+                    'payment_proof' => UploadedFile::fake()->create('proof-' . $status . '.jpg', 100, 'image/jpeg'),
+                ])
+                ->assertOk();
+
+            $sr->refresh();
+            $this->assertSame('pending', $sr->payment_status, "proof not accepted for {$status}");
+            $this->assertNotNull($sr->payment_proof);
+        }
+    }
+
+    public function test_grooming_proof_upload_rejected_for_terminal_statuses(): void
+    {
+        Storage::fake('private');
+        [$user, $customer, $pet] = $this->customerWithPet();
+        $headers = $this->headers($user);
+
+        foreach (['completed', 'cancelled', 'rejected'] as $status) {
+            $sr = $this->serviceRequest([
+                'customer_id' => $user->id,
+                'customer_email' => $user->email,
+                'pet_id' => $pet->id,
+                'status' => $status,
+                'payment_status' => 'unpaid',
+                'booking_channel' => 'walk_in',
+                'service_name' => 'Bath and Brush ' . $status,
+            ]);
+
+            $this->withHeaders($headers)
+                ->post("/api/customer/requests/{$sr->id}/payment-proof", [
+                    'payment_method' => 'gcash',
+                    'payment_proof' => UploadedFile::fake()->create('proof-' . $status . '.jpg', 100, 'image/jpeg'),
+                ])
+                ->assertForbidden();
+
+            $this->assertNull($sr->fresh()->payment_proof);
+        }
+    }
+
     public function test_payment_reference_cannot_be_reused_for_a_different_booking(): void
     {
         Storage::fake('private');

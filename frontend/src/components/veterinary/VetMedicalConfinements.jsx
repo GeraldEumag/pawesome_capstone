@@ -19,6 +19,7 @@ import {
   faChevronUp,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
+import { formatCurrency } from "../../utils/currency";
 import { showSuccess, showError } from "../../utils/alert.jsx";
 import "./theme.css";
 import "./VetMedicalConfinements.css";
@@ -31,6 +32,7 @@ const normalizeList = (result) => {
 };
 
 const ACTIVE_STATUSES = ["admitted", "under_care", "under_observation", "under_treatment"];
+const PRE_ADMISSION = ["recommended", "consented", "bed_assigned", "approved_for_admission"];
 
 const STATUS_CONFIG = {
   recommended: {
@@ -323,6 +325,8 @@ const VetMedicalConfinements = () => {
   const [expandedNotes, setExpandedNotes] = useState({});
   const [expandedMar, setExpandedMar] = useState({});
   const [notes, setNotes] = useState({});
+  const [wardBeds, setWardBeds] = useState([]);
+  const [bedDraft, setBedDraft] = useState({});
 
   const load = async ({ silent = false } = {}) => {
     try {
@@ -354,7 +358,16 @@ const VetMedicalConfinements = () => {
     }
   };
 
-  useEffect(() => { load(); loadItems(); }, []);
+  const loadBeds = async () => {
+    try {
+      const data = await apiRequest("/veterinary/ward-beds?all=1");
+      setWardBeds(Array.isArray(data?.ward_beds) ? data.ward_beds : []);
+    } catch {
+      // Bed list failure leaves admission controls empty; the error surfaces on action.
+    }
+  };
+
+  useEffect(() => { load(); loadItems(); loadBeds(); }, []);
 
   const post = async (url, body, successMsg, recordId) => {
     try {
@@ -736,12 +749,51 @@ const VetMedicalConfinements = () => {
                     <span>This patient died in care.</span>
                   </div>
                 )}
-                {["recommended", "consented", "bed_assigned", "approved_for_admission"].includes(record.status) && (
-                  <div className="conf-discharged-banner">
-                    <FontAwesomeIcon icon={faExclamationTriangle} />
-                    <span>This patient is waiting for admission.</span>
-                  </div>
-                )}
+                {PRE_ADMISSION.includes(record.status) && (() => {
+                  const assignUrl = `/veterinary/medical-confinements/${record.id}/assign-bed`;
+                  const admitUrl = `/veterinary/medical-confinements/${record.id}/admit`;
+                  const selectedBed = bedDraft[record.id] ?? String(record.ward_bed_id ?? "");
+                  const bedOptions = wardBeds.filter((b) => b.status === "available" || b.id === record.ward_bed_id);
+                  return (
+                    <div className="conf-admission">
+                      <div className="conf-admission-status">
+                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                        <span>Waiting for admission</span>
+                      </div>
+                      <div className="conf-admission-actions">
+                        <select
+                          aria-label="Ward bed"
+                          value={selectedBed}
+                          onChange={(e) => setBedDraft((prev) => ({ ...prev, [record.id]: e.target.value }))}
+                        >
+                          <option value="">Choose a ward bed</option>
+                          {bedOptions.map((bed) => (
+                            <option key={bed.id} value={bed.id}>
+                              {`${bed.name} · ${bed.ward}${bed.is_isolation ? " · isolation" : ""} · ${formatCurrency(bed.daily_rate)}/day`}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="conf-admission-btn"
+                          disabled={!selectedBed || Number(selectedBed) === record.ward_bed_id || actionLoading[`${record.id}-${assignUrl}`]}
+                          onClick={() => post(assignUrl, { ward_bed_id: Number(selectedBed) }, "Ward bed assigned.", record.id)}
+                        >
+                          {record.ward_bed_id ? "Change bed" : "Assign bed"}
+                        </button>
+                        <button
+                          type="button"
+                          className="conf-admission-btn conf-admission-btn--primary"
+                          disabled={!record.ward_bed_id || actionLoading[`${record.id}-${admitUrl}`]}
+                          title={record.ward_bed_id ? "Admit to the assigned bed" : "Assign a ward bed first"}
+                          onClick={() => post(admitUrl, null, "Patient admitted.", record.id)}
+                        >
+                          Admit
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </article>
             );
           })}

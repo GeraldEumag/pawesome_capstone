@@ -51,10 +51,12 @@ test.describe('Batch 2: receptionist role', () => {
     });
   }
 
-  test('receptionist medical-confinements route redirects to the hotel bookings queue', async ({ page }) => {
+  test('receptionist medical-confinements page renders the admissions queue', async ({ page }) => {
     await loginAs(page, 'receptionist');
     await page.goto('/receptionist/medical-confinements');
-    await expect(page).toHaveURL(/\/receptionist\/bookings\/hotel$/);
+    await expect(page).toHaveURL(/\/receptionist\/medical-confinements$/);
+    await expect(page.getByRole('heading', { name: 'Medical Confinement Admissions' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Active' })).toBeVisible();
   });
 
   for (const path of ['/customer', '/manager', '/admin', '/cashier', '/veterinary']) {

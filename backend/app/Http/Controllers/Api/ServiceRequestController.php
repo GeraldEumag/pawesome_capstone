@@ -868,9 +868,12 @@ class ServiceRequestController extends Controller
         }
 
         $isPendingBooking = $serviceRequest->status === 'pending';
-        if (!in_array($serviceRequest->status, ['pending', 'approved', 'scheduled'], true)) {
+        // Active in-flight statuses stay payable: staff may start or ready a
+        // grooming/vet request before the customer pays, and completion is
+        // still gated on verified payment downstream.
+        if (!in_array($serviceRequest->status, ['pending', 'approved', 'scheduled', 'in_progress', 'ready_for_pickup', 'checked_in'], true)) {
             return response()->json([
-                'message' => 'Payment proof can only be uploaded for pending, approved, or scheduled requests.',
+                'message' => 'Payment proof can only be uploaded for pending, approved, scheduled, or in-progress requests.',
             ], 403);
         }
 

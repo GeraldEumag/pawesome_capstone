@@ -11,6 +11,7 @@ use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceItemUsage;
 use App\Models\User;
+use App\Models\WardBed;
 use App\Models\VisitInvoice;
 use App\Models\VisitInvoiceAdjustment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -256,7 +257,7 @@ class VisitBillingPhaseCTest extends TestCase
 
     // ── Consents & confinement admission ─────────────────────────
 
-    public function test_confinement_admission_requires_signed_consent(): void
+    public function test_confinement_admission_does_not_require_signed_consent(): void
     {
         $vet = $this->userWithToken('veterinary');
         $receptionist = $this->userWithToken('receptionist');
@@ -276,19 +277,39 @@ class VisitBillingPhaseCTest extends TestCase
         ]);
 
         $this->postJson("/api/receptionist/medical-confinements/{$confinement->id}/admit", [], $this->authHeader($receptionist))
-            ->assertStatus(422);
-
-        $this->postJson('/api/veterinary/consents', [
-            'consentable_type' => 'appointment',
-            'consentable_id' => $appt->id,
-            'type' => 'confinement',
-            'title' => 'Consent to confinement',
-            'signer_name' => 'Pet Owner',
-        ], $this->authHeader($vet))->assertStatus(201);
-
-        $this->postJson("/api/receptionist/medical-confinements/{$confinement->id}/admit", [], $this->authHeader($receptionist))
             ->assertOk();
         $this->assertSame('admitted', $confinement->fresh()->status);
+    }
+
+    public function test_veterinary_assigns_bed_and_admits_without_receptionist(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $appt = $this->makeAppointment($vet);
+        $bed = WardBed::create(['name' => 'VET-ADM-1', 'ward' => 'general', 'daily_rate' => 800]);
+
+        $confinement = MedicalConfinement::create([
+            'consultation_id' => $appt->id,
+            'pet_id' => $appt->pet_id,
+            'customer_id' => $appt->customer_id,
+            'vet_id' => $vet->id,
+            'status' => 'recommended',
+            'diagnosis' => 'Dehydration',
+            'reason_for_confinement' => 'IV fluids',
+            'urgency_level' => 'normal',
+        ]);
+
+        $this->withHeaders($this->authHeader($vet))
+            ->getJson('/api/veterinary/ward-beds')
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'VET-ADM-1']);
+
+        $this->postJson("/api/veterinary/medical-confinements/{$confinement->id}/assign-bed", ['ward_bed_id' => $bed->id], $this->authHeader($vet))
+            ->assertOk();
+        $this->postJson("/api/veterinary/medical-confinements/{$confinement->id}/admit", [], $this->authHeader($vet))
+            ->assertOk();
+
+        $this->assertSame('admitted', $confinement->fresh()->status);
+        $this->assertSame('occupied', $bed->fresh()->status);
     }
 
     public function test_emergency_confinement_admission_bypasses_consent(): void
