@@ -400,66 +400,6 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function payrollReports(Request $request)
-    {
-        $payroll = Payroll::with(['user', 'employee'])->latest('pay_period_start')->limit(300)->get();
-        $attendance = Attendance::with(['user', 'employee'])->latest('date')->limit(300)->get();
-
-        $payrollRows = $payroll->map(fn ($record) => [
-            'id' => $record->id,
-            'employee_name' => $record->user?->name ?? $record->employee?->name ?? $record->employee_name ?? 'Unknown Employee',
-            'employee_id' => $record->user_id ?? $record->employee_id,
-            'person_type' => $record->employee_id ? 'employee' : 'account',
-            'employee_no' => $record->employee?->employee_no ?? $record->user?->employee_no,
-            'department' => $record->department ?? $record->user?->department ?? $record->employee?->department ?? 'Unassigned',
-            'role' => $record->user?->role ?? $record->employee?->position ?? 'Staff',
-            'payroll_period' => trim(($record->pay_period_start ?? '') . ' - ' . ($record->pay_period_end ?? '')),
-            'attendance_days' => (float) ($record->attendance_days ?? $record->days_worked ?? 0),
-            'overtime_pay' => (float) ($record->overtime_pay ?? 0),
-            'gross_pay' => (float) ($record->gross_pay ?? $record->total_gross_pay ?? 0),
-            'total_deductions' => (float) ($record->total_deductions ?? $record->deductions ?? 0),
-            'net_pay' => (float) ($record->net_pay ?? $record->total_net_pay ?? 0),
-            'status' => $record->status ?? 'pending',
-            'created_at' => $record->created_at,
-            'updated_at' => $record->updated_at,
-        ]);
-
-        $attendanceRows = $attendance->map(fn ($record) => [
-            'id' => $record->id,
-            'employee_name' => $record->user?->name ?? $record->employee?->name ?? 'Unknown Employee',
-            'employee_id' => $record->user_id ?? $record->employee_id,
-            'person_type' => $record->employee_id ? 'employee' : 'account',
-            'employee_no' => $record->employee?->employee_no ?? $record->user?->employee_no,
-            'department' => $record->department ?? $record->user?->department ?? $record->employee?->department ?? 'Unassigned',
-            'role' => $record->user?->role ?? $record->employee?->position ?? 'Staff',
-            'date' => $record->date,
-            'status' => $record->status,
-            'time_in' => $record->check_in,
-            'time_out' => $record->check_out,
-            'overtime_hours' => (float) ($record->overtime_hours ?? 0),
-            'created_at' => $record->created_at,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'summary' => [
-                    'payroll_records' => $payrollRows->count(),
-                    'attendance_records' => $attendanceRows->count(),
-                    'gross_pay' => (float) $payrollRows->sum('gross_pay'),
-                    'deductions' => (float) $payrollRows->sum('total_deductions'),
-                    'net_pay' => (float) $payrollRows->sum('net_pay'),
-                    'pending_payroll' => $payrollRows->where('status', 'pending')->count(),
-                    'approved_payroll' => $payrollRows->whereIn('status', ['approved', 'released', 'paid'])->count(),
-                ],
-                'payroll' => $payrollRows,
-                'records' => $payrollRows,
-                'attendance' => $attendanceRows,
-            ],
-            'message' => $payrollRows->isEmpty() ? 'No payroll records found.' : null,
-        ]);
-    }
-
     public function managerAttendance(Request $request)
     {
         $query = Attendance::with(['user', 'employee'])->latest('date');

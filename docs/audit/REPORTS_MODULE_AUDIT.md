@@ -113,3 +113,33 @@ All fixes verified in the working tree; `php -l` clean; backend reports tests **
 
 ### Residual accepted behavior
 Invalid `status` values still filter-as-exact-match → empty 200 (standard filter semantics; not data corruption). `per_page` params in non-reports controllers (ActivityLog/Inventory/LoginLog) remain uncapped — outside this audit's scope.
+
+## Isolated E2E verification (2026-11-18, `pawesome_reports_audit` + API :8001)
+
+Driver: `docs/audit/scripts/e2e_workflow_audit.py` (idempotent, API-driven, direct-SQL reconciliation). Result: **7/7 reconciliations PASS**.
+
+| WF | Flow | Evidence |
+| --- | --- | --- |
+| WF8 customer creation | `POST /admin/customers` → 201, `POST /admin/customers/{id}/pets` → 201 | `/admin/reports/customers` contains row; `total_customers` = DB count |
+| WF2 POS sale | `POST /cashier/pos/transaction` (cash, 2 items) → 200, `TRX-*` + receipt + VAT breakdown | `/admin/reports/sales` `total_revenue` = SQL `SUM(amount)` on revenue-eligible rows (₱4,580 at checkpoint) |
+| WF6 boarding | `POST /boardings` (room + species validated, store-hours enforced) → 201 | services report `source:"boarding"` row present |
+| WF5 grooming | `POST /grooming` (catalog service + slot conflict detection) → 201 | services report `source:"grooming"` row present |
+| WF4 vet appointment | `POST /appointments` (future-slot enforced) → 201 | `/admin/reports/veterinary` `scheduled_appointments` increments |
+| WF7 inventory adjust | `POST /inventory/items/{id}/adjust-stock` `type=remove` → 200 | inventory report `manual_adjustments`/`stock_deductions` increment; `type=add` correctly rejected (batch receiving required) |
+| WF3 payment rejection | boarding `pending` → `POST /cashier/boarding-payments/{id}/reject` (`rejection_reason`) → `rejected` | cashier report `rejected_payments` = 1 = DB |
+| WF3b payment verify | boarding `approved` → `pending` → `POST /cashier/boarding-payments/{id}/verify` → `paid` + `BD-REC-*` receipt + VAT breakdown | cashier `verified_payments`=1, `receipt_count`=1; `total_revenue` ₱5,380 = POS 4,580 + paid boarding 800 |
+| WF1 customer order | `POST /customer/store/checkout` → **410 disabled**; `POST /receptionist/customer-orders/{id}/approve` → **410 disabled** | by design — customer store order workflow is disabled app-wide (`orderWorkflowsDisabled()`); orders report covers historical/POS-merged data only |
+
+Cross-endpoint consistency on audit DB: `executive.total_revenue` = `cashier.total_revenue` = `sales`-eligible SQL = **₱5,380** — single canonical definition holds across surfaces.
+
+### Additional verification
+- All 21 in-scope admin report endpoints → 200 on audit stack (sales, overview, cashier, inventory, manager, veterinary, customers, reception, payments, orders, services, logistics, executive, predictive, comparison, alerts, customers/segments, sales-analysis, staff-performance, inventory-optimization).
+- 422 on malformed + reversed date ranges (live-verified).
+- `ReportsTest` 17/17 pass on `pawesome_test` MySQL incl. new regressions: cancelled-sale exclusion, 422 date validation, `limit` cap, unauthenticated 401/403, customer-role block.
+- `vite build` green (28.5s, 2,371 modules, pre-existing chunk-size warnings only).
+- Incident during fixes: bulk param-validation patch corrupted `payrollReports()` (duplicate `managerAttendance`, fatal 500) — detected via E2E 500, method restored then cleanly removed per R-17 (dead code, zero route references); `php -l` + all endpoints re-verified.
+
+### Not covered (declared limits)
+- Playwright browser spot-checks not re-run this pass (Windows socket-exhaustion constraint; API-level coverage substituted). Prior Gate A/E2E evidence stands for UI rendering.
+- Local verification is MariaDB 10.4, not MySQL 8 CI — noted per AGENTS.md; phpunit suite targets MySQL.
+- `useReportData.js` deleted during prior pass (zero importers) — hook-cache staleness issue moot; live pages show `lastUpdated`.
