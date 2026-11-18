@@ -55,7 +55,11 @@ Final reports:
 | `FINAL_REGRESSION_TEST_REPORT.md` | Backend, frontend, Playwright, build and syntax outcomes |
 | `FINAL_DATABASE_INTEGRITY_REPORT.md` | Database isolation, verified relationships and remaining scan limits |
 | `RELEASE_READINESS_CHECKLIST.md` | Functional, security, browser, data and deployment readiness gates |
+| `HOTEL_ONLINE_QUEUE_ROOT_CAUSE_REPORT.md` | API-to-UI date-serialization root cause and regression evidence |
+| `FINAL_PLAYWRIGHT_ACCEPTANCE_REPORT.md` | Exact selected six-file Playwright command and final run disposition |
+| `WALK_IN_WORKFLOW_COMPLETION_REPORT.md` | Cross-role status and evidence for the three walk-in workflows |
+| `BACKEND_FAILURE_DISPOSITION_REPORT.md` | Backend failure root causes, ownership and release impact |
 
 `evidence/` holds raw artifacts (route matrix, probe JSON, test output).
 
-**Acceptance note:** hotel walk-in request/boarding/reservation status synchronization was fixed and verified. The final selected Playwright rerun found an unresolved online hotel check-in queue failure (scheduled/paid DB row absent from Today/ON GOING); it reported 16 passed, 1 failed and 2 not run. The full backend run also retained 10 unrelated Payroll/Pharmacy/payslip failures after a booking date-fixture correction passed focused regression. Final acceptance remains **NO-GO**. See `FINAL_END_TO_END_ACCEPTANCE_REPORT.md`, `FINAL_WORKFLOW_ACCEPTANCE_MATRIX.md` and `FINAL_REGRESSION_TEST_REPORT.md`.
+**Acceptance note:** the hotel online queue failure is root-caused and fixed at date serialization; API, targeted PHP/JS regressions and native browser check-in pass. The exact selected batch is being rerun on the documented multi-worker isolated stack because a single-worker diagnostic run timed out in a customer-board test. Walk-in operational handoffs, full backend failure disposition, fresh integrity/security checks and deployment readiness remain open; verdict remains **NO-GO**.

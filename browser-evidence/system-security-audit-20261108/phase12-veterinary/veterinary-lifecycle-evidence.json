@@ -1,58 +1,325 @@
 {
   "result": "PASS",
-  "request_id": 308,
-  "appointment_id": 84,
-  "marker": "P12VET_27638457",
+  "request_id": 314,
+  "appointment_id": 88,
+  "marker": "P12VET_30125222",
   "database": {
     "appointment": {
-      "id": 84,
-      "service_request_id": 308,
+      "id": 88,
+      "service_request_id": 314,
       "customer_id": 5,
       "pet_id": 145,
       "service_id": 2,
       "veterinarian_id": 8,
       "status": "checkout",
-      "scheduled_at": "2026-12-19 04:00:00",
-      "started_at": "2026-11-19 02:48:14",
-      "checked_in_at": "2026-11-19 02:47:59",
+      "scheduled_at": "2026-12-19 05:00:00",
+      "started_at": "2026-11-19 03:30:37",
+      "checked_in_at": "2026-11-19 03:29:58",
       "checked_in_by": 4,
-      "clinical_completed_at": "2026-11-19 02:48:36",
+      "clinical_completed_at": "2026-11-19 03:31:23",
       "clinical_completed_by": 8,
-      "checked_out_at": "2026-11-19 02:48:36",
+      "checked_out_at": "2026-11-19 03:31:23",
       "checked_out_by": 8,
       "completed_at": null,
-      "outcome": null,
+      "outcome": "discharged_home",
       "payment_status": "unpaid",
-      "diagnosis": null,
+      "diagnosis": "Phase12 sprain 30125222",
       "treatment_notes": null,
-      "vet_remarks": null,
+      "vet_remarks": "Phase12 clinical completion",
       "booking_channel": "online"
     },
     "records": [
       {
-        "id": 23,
+        "id": 26,
         "pet_id": 145,
-        "appointment_id": 84,
+        "appointment_id": 88,
         "veterinarian_id": 8,
         "status": "finalized",
-        "chief_complaint": "Phase12 limping 27638457",
-        "diagnosis": "Phase12 sprain 27638457",
+        "chief_complaint": "Phase12 limping 30125222",
+        "diagnosis": "Phase12 sprain 30125222",
         "treatment_plan": "Rest 7 days; anti-inflammatory course; recheck",
         "weight_kg": null,
         "is_editable": 1,
-        "finalized_at": "2026-11-19 02:48:24",
+        "finalized_at": "2026-11-19 03:31:00",
         "finalized_by": 8,
-        "created_at": "2026-11-19 02:48:14",
-        "updated_at": "2026-11-19 02:48:24"
+        "created_at": "2026-11-19 03:30:37",
+        "updated_at": "2026-11-19 03:31:00"
       }
     ],
     "prescriptions": [],
     "complete_response": {
-      "status": 422,
+      "status": 200,
       "body": {
-        "error": "Only active consultations can be completed",
-        "message": "Only active consultations can be completed",
-        "success": false
+        "message": "Consultation finalized. The visit closes automatically once the cashier verifies payment.",
+        "consultation": {
+          "id": 88,
+          "service_request_id": 314,
+          "customer_id": 5,
+          "pet_id": 145,
+          "service_id": 2,
+          "veterinarian_id": 8,
+          "status": "checkout",
+          "scheduled_at": "2026-12-18T21:00:00.000000Z",
+          "started_at": "2026-11-18T19:30:37.000000Z",
+          "checked_in_at": "2026-11-18T19:29:58.000000Z",
+          "checked_in_by": 4,
+          "clinical_completed_at": "2026-11-18T19:31:23.000000Z",
+          "clinical_completed_by": 8,
+          "checked_out_at": "2026-11-18T19:31:23.000000Z",
+          "checked_out_by": 8,
+          "completed_at": null,
+          "outcome": "discharged_home",
+          "emergency": false,
+          "confinement_recommended": false,
+          "follow_up_required": false,
+          "follow_up_due": null,
+          "price": "450.00",
+          "payment_status": "unpaid",
+          "consultation_fee": "450.00",
+          "base_amount": "450.00",
+          "additional_charges": "0.00",
+          "total_amount": "450.00",
+          "amount_paid": "0.00",
+          "balance_due": "450.00",
+          "paid_at": null,
+          "verified_by": null,
+          "verified_at": null,
+          "rejected_by": null,
+          "rejected_at": null,
+          "rejection_reason": null,
+          "cashier_remarks": null,
+          "receipt_number": null,
+          "reference_number": null,
+          "notes": "P12VET_30125222",
+          "diagnosis": "Phase12 sprain 30125222",
+          "treatment_notes": null,
+          "prescription": null,
+          "vet_remarks": "Phase12 clinical completion",
+          "cancellation_reason": null,
+          "created_at": "2026-11-18T19:29:50.000000Z",
+          "updated_at": "2026-11-18T19:31:23.000000Z",
+          "reminder_sent_at": null,
+          "booking_channel": "online",
+          "customer": {
+            "id": 5,
+            "user_id": 9,
+            "name": "Customer",
+            "email": "customer@example.com",
+            "original_email": null,
+            "phone": null,
+            "address": null,
+            "loyalty_points": 0,
+            "is_active": true,
+            "telegram_chat_id": null,
+            "notification_preferences": {
+              "email": true
+            },
+            "created_at": "2026-09-16T15:42:56.000000Z",
+            "updated_at": "2026-10-04T06:45:20.000000Z",
+            "deleted_at": null,
+            "notes": null,
+            "deletion_reason": null,
+            "deleted_by": null,
+            "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzdjM2FlZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+QzwvdGV4dD48L3N2Zz4="
+          },
+          "pet": {
+            "id": 145,
+            "customer_id": 5,
+            "name": "E2E Board Pet 1795027462644",
+            "species": "Dog",
+            "breed": null,
+            "birthdate": null,
+            "age": null,
+            "gender": null,
+            "image": null,
+            "birth_date": null,
+            "notes": null,
+            "status": "active",
+            "archived_at": null,
+            "archived_by": null,
+            "created_at": "2026-11-18T18:44:23.000000Z",
+            "updated_at": "2026-11-18T18:44:23.000000Z",
+            "deleted_at": null,
+            "image_url": null
+          },
+          "service": {
+            "id": 2,
+            "name": "Consultation",
+            "category": "Consultation",
+            "price": "450.00",
+            "duration": 30,
+            "is_active": true,
+            "description": "General veterinary consultation.",
+            "image_path": null,
+            "duration_minutes": 30,
+            "created_at": "2026-09-13T15:46:46.000000Z",
+            "updated_at": "2026-09-13T15:46:46.000000Z",
+            "deleted_at": null,
+            "image_url": null
+          },
+          "veterinarian": {
+            "id": 8,
+            "employee_no": "PAW-0008",
+            "original_employee_no": null,
+            "sss_no": null,
+            "philhealth_no": null,
+            "pagibig_no": null,
+            "tin": null,
+            "name": "Veterinarian",
+            "first_name": "Veterinarian",
+            "middle_name": null,
+            "last_name": "",
+            "phone": null,
+            "address": null,
+            "city": null,
+            "state": null,
+            "zip_code": null,
+            "country": null,
+            "bio": null,
+            "profile_image": null,
+            "date_of_birth": null,
+            "gender": null,
+            "emergency_contact_person": null,
+            "emergency_contact_number": null,
+            "suffix": null,
+            "username": "vet",
+            "original_username": null,
+            "email": "vet@example.com",
+            "original_email": null,
+            "email_verified_at": "2026-09-13T15:46:46.000000Z",
+            "role": "veterinary",
+            "base_salary": "32000.00",
+            "hourly_rate": "180.00",
+            "work_start_time": "08:00:00",
+            "work_end_time": "17:00:00",
+            "working_days_per_week": 5,
+            "department": "Veterinary",
+            "position": "Veterinarian",
+            "employment_date": null,
+            "employment_status": "active",
+            "is_active": true,
+            "telegram_chat_id": null,
+            "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzRkN2MwZiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+VjwvdGV4dD48L3N2Zz4=",
+            "telegram_username": null,
+            "telegram_linked_at": null,
+            "created_at": "2026-09-13T15:46:46.000000Z",
+            "updated_at": "2026-09-30T17:28:19.000000Z",
+            "deleted_at": null
+          }
+        },
+        "billing": {
+          "success": true,
+          "billing": {
+            "items": [
+              {
+                "id": 266,
+                "service_type": "veterinary",
+                "item_name_snapshot": null,
+                "item_sku_snapshot": null,
+                "pet_name_snapshot": null,
+                "service_name_snapshot": null,
+                "service_id": 88,
+                "appointment_id": null,
+                "pet_id": 145,
+                "customer_id": 5,
+                "customer_email": "customer@example.com",
+                "inventory_item_id": null,
+                "batch_id": null,
+                "batch_deductions": null,
+                "quantity_used": 1,
+                "unit": "session",
+                "usage_type": null,
+                "used_by": 4,
+                "role": null,
+                "notes": null,
+                "item_type": "base_service",
+                "description": "Consultation",
+                "unit_price": "450.00",
+                "total_price": "450.00",
+                "charge_amount": "0.00",
+                "is_billable": true,
+                "is_paid": false,
+                "created_at": "2026-11-18T19:29:50.000000Z",
+                "updated_at": "2026-11-18T19:29:50.000000Z",
+                "quantity": 1,
+                "inventory_item": null,
+                "user": {
+                  "id": 4,
+                  "employee_no": "PAW-0004",
+                  "original_employee_no": null,
+                  "sss_no": null,
+                  "philhealth_no": null,
+                  "pagibig_no": null,
+                  "tin": null,
+                  "name": "Receptionist",
+                  "first_name": "Receptionist",
+                  "middle_name": null,
+                  "last_name": "",
+                  "phone": null,
+                  "address": null,
+                  "city": null,
+                  "state": null,
+                  "zip_code": null,
+                  "country": null,
+                  "bio": null,
+                  "profile_image": null,
+                  "date_of_birth": null,
+                  "gender": null,
+                  "emergency_contact_person": null,
+                  "emergency_contact_number": null,
+                  "suffix": null,
+                  "username": "receptionist",
+                  "original_username": null,
+                  "email": "receptionist@example.com",
+                  "original_email": null,
+                  "email_verified_at": "2026-09-13T15:46:45.000000Z",
+                  "role": "receptionist",
+                  "base_salary": "32000.00",
+                  "hourly_rate": "180.00",
+                  "work_start_time": "08:00:00",
+                  "work_end_time": "17:00:00",
+                  "working_days_per_week": 5,
+                  "department": "Front Desk",
+                  "position": "Receptionist",
+                  "employment_date": null,
+                  "employment_status": "active",
+                  "is_active": true,
+                  "telegram_chat_id": null,
+                  "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Q2MzM4NCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+UjwvdGV4dD48L3N2Zz4=",
+                  "telegram_username": null,
+                  "telegram_linked_at": null,
+                  "created_at": "2026-09-13T15:46:45.000000Z",
+                  "updated_at": "2026-09-30T17:28:19.000000Z",
+                  "deleted_at": null
+                }
+              }
+            ],
+            "total_bill": 450,
+            "gross_bill": 450,
+            "discount_total": 0,
+            "total_paid": 0,
+            "balance_due": 450,
+            "has_unpaid_balance": true,
+            "base_amount": 450,
+            "additional_charges": 0,
+            "payment_status": "unpaid",
+            "invoice": {
+              "id": 10,
+              "invoice_number": "VINV-2026-00010",
+              "status": "open",
+              "total": 450,
+              "amount_paid": 0,
+              "balance_due": 450,
+              "version_hash": "22dc1512ccea392cd4632831f761130d87d987be"
+            }
+          },
+          "completion_status": {
+            "can_complete": false,
+            "balance_due": 450,
+            "message": "Service cannot be completed. Balance due: ₱450.00"
+          }
+        },
+        "success": true
       }
     }
   },
@@ -80,13 +347,7 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/customer/services",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/customer/pets",
+      "path": "/api/notifications",
       "status": 200
     },
     {
@@ -98,7 +359,13 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/notifications",
+      "path": "/api/customer/pets",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/services",
       "status": 200
     },
     {
@@ -116,13 +383,19 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/customer/pets",
+      "path": "/api/settings/public",
       "status": 200
     },
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/settings/public",
+      "path": "/api/holidays/blocked",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/pets",
       "status": 200
     },
     {
@@ -135,6 +408,18 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/chatbot/welcome",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
       "status": 200
     },
     {
@@ -146,25 +431,7 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/customer/tracking",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/holidays/blocked",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
       "path": "/api/notifications",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/settings/public",
       "status": 200
     },
     {
@@ -188,6 +455,12 @@
     {
       "source": "browser",
       "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
       "path": "/api/customer/bookings",
       "status": 200
     },
@@ -218,13 +491,19 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/veterinary/inventory-items",
+      "path": "/api/customer/bookings",
       "status": 200
     },
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/veterinary/appointments/84",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
       "status": 200
     },
     {
@@ -236,7 +515,13 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/notifications",
+      "path": "/api/veterinary/appointments/88",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/inventory-items",
       "status": 200
     },
     {
@@ -248,7 +533,7 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/veterinary/appointments/84",
+      "path": "/api/veterinary/appointments/88",
       "status": 200
     },
     {
@@ -272,7 +557,7 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/veterinary/appointments/84",
+      "path": "/api/veterinary/appointments/88",
       "status": 200
     },
     {
@@ -285,120 +570,6 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/notifications",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/pets/145/medical-records",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "POST",
-      "path": "/api/veterinary/consultations/84/start",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/appointments/84/consents",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/appointments/84/diagnostics",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/appointments/84/consents",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/appointments/84/diagnostics",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "PUT",
-      "path": "/api/veterinary/medical-records/23",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/customer/bookings",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "PUT",
-      "path": "/api/veterinary/medical-records/23",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/appointments/84",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/appointments/84",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/pets/145/medical-records",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/veterinary/pets/145/medical-records",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/notifications",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/billing/veterinary/84/summary",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
-      "path": "/api/billing/veterinary/84/summary",
       "status": 200
     },
     {
@@ -409,8 +580,116 @@
     },
     {
       "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/pets/145/medical-records",
+      "status": 200
+    },
+    {
+      "source": "browser",
       "method": "POST",
-      "path": "/api/veterinary/consultations/84/complete",
+      "path": "/api/veterinary/consultations/88/start",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/88/diagnostics",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/88/consents",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/88/diagnostics",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "PUT",
+      "path": "/api/veterinary/medical-records/26",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/88/consents",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/tracking",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "PUT",
+      "path": "/api/veterinary/medical-records/26",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/customer/bookings",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/veterinary/appointments/88",
       "status": 200
     }
   ],

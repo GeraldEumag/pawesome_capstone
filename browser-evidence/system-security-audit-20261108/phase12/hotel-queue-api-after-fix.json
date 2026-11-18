@@ -1,0 +1,37 @@
+{
+  "probe": "receptionist hotel queue after date-only serialization fix",
+  "server": {
+    "url": "http://127.0.0.1:8015",
+    "database": "pawesome_booking_audit",
+    "database_configuration": "Explicit DB_DATABASE environment on the isolated local Laravel server"
+  },
+  "request": {
+    "method": "GET",
+    "path": "/api/receptionist/boarding-requests",
+    "query": null,
+    "authenticated_role": "receptionist",
+    "http_status": 200
+  },
+  "response_summary": {
+    "store_today": "2026-11-19",
+    "total_rows": 73
+  },
+  "boarding_88": {
+    "id": 88,
+    "status": "scheduled",
+    "payment_status": "paid",
+    "workflow_stage": "on_going",
+    "check_in": "2026-11-19",
+    "check_out": "2026-11-19",
+    "room_reservation_id": 48,
+    "room_reservation_status": "scheduled",
+    "room_reservation_check_in_date": "2026-11-19",
+    "room_reservation_check_out_date": "2026-11-19",
+    "room_name": "Phase12 Board 27502386"
+  },
+  "follow_up": {
+    "phpunit": "BoardingRoomLifecycleTest::test_receptionist_queue_serializes_store_local_boarding_dates_without_utc_shift — passed, 10 assertions",
+    "frontend_unit": "bookingTabs.test.js — 2 passed",
+    "native_browser": "Phase 12.2 native boarding lifecycle — passed"
+  }
+}

@@ -1,26 +1,26 @@
 {
   "result": "PASS",
-  "appointment_id": 86,
+  "appointment_id": 90,
   "responses": [
     {
       "status": 200,
       "body": {
         "message": "Consultation finalized. The visit closes automatically once the cashier verifies payment.",
         "consultation": {
-          "id": 86,
+          "id": 90,
           "service_request_id": null,
           "customer_id": 5,
           "pet_id": 145,
           "service_id": 2,
           "veterinarian_id": 8,
           "status": "checkout",
-          "scheduled_at": "2026-11-18T11:48:48.000000Z",
+          "scheduled_at": "2026-11-18T12:31:42.000000Z",
           "started_at": null,
           "checked_in_at": null,
           "checked_in_by": null,
-          "clinical_completed_at": "2026-11-18T18:48:49.000000Z",
+          "clinical_completed_at": "2026-11-18T19:31:43.000000Z",
           "clinical_completed_by": 8,
-          "checked_out_at": "2026-11-18T18:48:49.000000Z",
+          "checked_out_at": "2026-11-18T19:31:43.000000Z",
           "checked_out_by": 8,
           "completed_at": null,
           "outcome": null,
@@ -45,14 +45,14 @@
           "cashier_remarks": null,
           "receipt_number": null,
           "reference_number": null,
-          "notes": "P12RACE_27727710",
+          "notes": "P12RACE_30302246",
           "diagnosis": "race dx",
           "treatment_notes": null,
           "prescription": null,
           "vet_remarks": null,
           "cancellation_reason": null,
-          "created_at": "2026-11-18T11:48:48.000000Z",
-          "updated_at": "2026-11-18T18:48:49.000000Z",
+          "created_at": "2026-11-18T12:31:42.000000Z",
+          "updated_at": "2026-11-18T19:31:43.000000Z",
           "reminder_sent_at": null,
           "booking_channel": "walk_in",
           "customer": {
@@ -167,13 +167,13 @@
           "billing": {
             "items": [
               {
-                "id": 257,
+                "id": 267,
                 "service_type": "veterinary",
                 "item_name_snapshot": null,
                 "item_sku_snapshot": null,
                 "pet_name_snapshot": null,
                 "service_name_snapshot": null,
-                "service_id": 86,
+                "service_id": 90,
                 "appointment_id": null,
                 "pet_id": 145,
                 "customer_id": 5,
@@ -194,8 +194,8 @@
                 "charge_amount": "0.00",
                 "is_billable": true,
                 "is_paid": false,
-                "created_at": "2026-11-18T18:48:49.000000Z",
-                "updated_at": "2026-11-18T18:48:49.000000Z",
+                "created_at": "2026-11-18T19:31:43.000000Z",
+                "updated_at": "2026-11-18T19:31:43.000000Z",
                 "quantity": 1,
                 "inventory_item": null,
                 "user": {
@@ -259,13 +259,13 @@
             "additional_charges": 0,
             "payment_status": "unpaid",
             "invoice": {
-              "id": 9,
-              "invoice_number": "VINV-2026-00009",
+              "id": 11,
+              "invoice_number": "VINV-2026-00011",
               "status": "open",
               "total": 500,
               "amount_paid": 0,
               "balance_due": 500,
-              "version_hash": "b2b04e8338ee70340e3d0c4b4e8e1675aee02e60"
+              "version_hash": "2a4ca990ff72c4b0cadb2097ff6bc9df2eee1a4f"
             }
           },
           "completion_status": {
@@ -288,20 +288,20 @@
   ],
   "after": {
     "appointment": {
-      "id": 86,
+      "id": 90,
       "service_request_id": null,
       "customer_id": 5,
       "pet_id": 145,
       "service_id": 2,
       "veterinarian_id": 8,
       "status": "checkout",
-      "scheduled_at": "2026-11-18 19:48:48",
+      "scheduled_at": "2026-11-18 20:31:42",
       "started_at": null,
       "checked_in_at": null,
       "checked_in_by": null,
-      "clinical_completed_at": "2026-11-19 02:48:49",
+      "clinical_completed_at": "2026-11-19 03:31:43",
       "clinical_completed_by": 8,
-      "checked_out_at": "2026-11-19 02:48:49",
+      "checked_out_at": "2026-11-19 03:31:43",
       "checked_out_by": 8,
       "completed_at": null,
       "outcome": null,
@@ -313,9 +313,9 @@
     },
     "records": [
       {
-        "id": 25,
+        "id": 28,
         "pet_id": 145,
-        "appointment_id": 86,
+        "appointment_id": 90,
         "veterinarian_id": 8,
         "status": "finalized",
         "chief_complaint": null,
@@ -323,10 +323,10 @@
         "treatment_plan": "rest",
         "weight_kg": null,
         "is_editable": 0,
-        "finalized_at": "2026-11-18 19:48:48",
+        "finalized_at": "2026-11-18 20:31:42",
         "finalized_by": 8,
-        "created_at": "2026-11-18 19:48:48",
-        "updated_at": "2026-11-18 19:48:48"
+        "created_at": "2026-11-18 20:31:42",
+        "updated_at": "2026-11-18 20:31:42"
       }
     ],
     "prescriptions": []
