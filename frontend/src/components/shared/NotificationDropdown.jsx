@@ -23,10 +23,13 @@ const NotificationDropdown = ({ role }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const dropdownRef = useRef(null);
   const panelRef = useRef(null);
+  const inFlightRef = useRef(false);
+  const requestSeq = useRef(0);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async ({ force = false } = {}) => {
     if (!token || !notificationRole) {
       setNotifications([]);
       setUnreadCount(0);
@@ -34,16 +37,25 @@ const NotificationDropdown = ({ role }) => {
       return;
     }
 
+    // Skip overlapping polls — a slow request must not stack up requests.
+    // Mutation handlers pass force so their refresh always runs.
+    if (inFlightRef.current && !force) return;
+    inFlightRef.current = true;
+    // Sequence guard: a slower earlier response must never overwrite
+    // fresher state (e.g. a poll started before a mark-read mutation).
+    const seq = ++requestSeq.current;
     setLoading(true);
 
     try {
-      const res = await notificationApi.getAll(notificationRole);
+      const res = await notificationApi.getAll();
+      if (seq !== requestSeq.current) return;
       setNotifications(normalizeList(res, ["notifications", "data", "records"]));
       setUnreadCount(res.unread_count || 0);
+      setError(false);
     } catch {
-      setNotifications([]);
-      setUnreadCount(0);
+      if (seq === requestSeq.current) setError(true);
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   }, [notificationRole, token]);
@@ -53,7 +65,12 @@ const NotificationDropdown = ({ role }) => {
 
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 10000);
+    const interval = setInterval(() => {
+      // Pause polling while the tab is hidden to avoid wasted traffic.
+      if (document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [fetchNotifications, notificationRole, token]);
@@ -77,7 +94,7 @@ const NotificationDropdown = ({ role }) => {
   const markAsRead = async (id) => {
     try {
       await notificationApi.markAsRead(id);
-      fetchNotifications();
+      fetchNotifications({ force: true });
     } catch {
       // Notification actions are optional and should not interrupt dashboard demos.
     }
@@ -85,8 +102,8 @@ const NotificationDropdown = ({ role }) => {
 
   const markAllAsRead = async () => {
     try {
-      await notificationApi.markAllAsRead(notificationRole);
-      fetchNotifications();
+      await notificationApi.markAllAsRead();
+      fetchNotifications({ force: true });
     } catch {
       // Notification actions are optional and should not interrupt dashboard demos.
     }
@@ -268,10 +285,25 @@ const NotificationDropdown = ({ role }) => {
             </div>
 
             <div className="pawesome-notifications-list">
-              {loading ? (
+              {loading && notifications.length === 0 ? (
                 <div className="pawesome-notification-empty">
                   <FontAwesomeIcon icon={faSpinner} spin />
                   <span>Loading notifications...</span>
+                </div>
+              ) : error ? (
+                <div className="pawesome-notification-empty">
+                  <FontAwesomeIcon icon={faExclamationTriangle} />
+                  <span>Couldn't load notifications</span>
+                  <button
+                    type="button"
+                    className="pawesome-notifications-clear"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      fetchNotifications();
+                    }}
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : notifications.length === 0 ? (
                 <div className="pawesome-notification-empty">

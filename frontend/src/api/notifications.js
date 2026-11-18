@@ -1,16 +1,9 @@
 import { apiRequest } from "./client";
 
 export const notificationApi = {
-  // Get all notifications (for role-based notifications)
-  getAll: async (role) => {
-    const url = role ? `/notifications?role=${role}` : `/notifications`;
-    return apiRequest(url);
-  },
-
-  // Get all notifications (legacy)
-  getNotifications: async (unreadOnly = false) => {
-    const params = unreadOnly ? "?unread=1" : "";
-    return apiRequest(`/notifications${params}`);
+  // Get notifications for the authenticated user (server scopes by token).
+  getAll: async () => {
+    return apiRequest("/notifications");
   },
 
   // Get unread notifications
@@ -39,9 +32,8 @@ export const notificationApi = {
   },
 
   // Mark all as read
-  markAllAsRead: async (role) => {
-    const url = role ? `/notifications/mark-all-read?role=${role}` : "/notifications/mark-all-read";
-    return apiRequest(url, {
+  markAllAsRead: async () => {
+    return apiRequest("/notifications/mark-all-read", {
       method: "POST",
     });
   },

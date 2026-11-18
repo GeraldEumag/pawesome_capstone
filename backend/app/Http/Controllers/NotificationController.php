@@ -46,6 +46,7 @@ class NotificationController extends Controller
         $unreadCount = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
 
         return response()->json([
+            'success' => true,
             'notifications' => $notifications->map(fn (Notification $notification) => $this->formatNotification($notification)),
             'count' => $unreadCount,
             'unread_count' => $unreadCount,
@@ -68,8 +69,10 @@ class NotificationController extends Controller
         $count = $notifications->count();
 
         return response()->json([
+            'success' => true,
             'notifications' => $notifications->map(fn (Notification $notification) => $this->formatNotification($notification)),
             'count' => $count,
+            'unread_count' => $count,
         ]);
     }
 
@@ -111,62 +114,29 @@ class NotificationController extends Controller
         ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Notification created successfully',
             'notification' => $notification,
         ], 201);
     }
 
-    public function bookingStatus(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'customerEmail' => 'nullable|email',
-            'customerName' => 'nullable|string|max:255',
-            'status' => 'required|string|max:50',
-            'service' => 'nullable|string|max:255',
-            'date' => 'nullable|string|max:255',
-            'message' => 'nullable|string',
-        ]);
-
-        $customer = !empty($data['customerEmail'])
-            ? User::where('email', $data['customerEmail'])->first()
-            : null;
-
-        $notification = null;
-
-        if ($customer) {
-            $notification = Notification::create([
-                'user_id' => $customer->id,
-                'title' => 'Booking status updated',
-                'message' => $data['message'] ?? 'Your booking status is now ' . $data['status'],
-                'type' => in_array($data['status'], ['approved', 'rescheduled'], true) ? 'success' : 'info',
-                'related_type' => 'booking',
-                'data' => $data,
-                'read' => false,
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => $notification
-                ? 'Booking status notification created'
-                : 'Booking status accepted, but no matching customer account was found',
-            'notification' => $notification ? $this->formatNotification($notification) : null,
-        ], 201);
-    }
-
     /**
      * Mark a specific notification as read
+     *
+     * Mutation endpoints are scoped to rows the caller owns (user_id = caller).
+     * Shared broadcast rows (user_id NULL) are read-visible via forUserOrRole
+     * on the read endpoints but must never be mutated by a single recipient.
      */
     public function markAsRead(Request $request, $id): JsonResponse
     {
         $user = $request->user();
-        $effectiveRole = $this->effectiveRole($user->role);
-        $notification = Notification::forUserOrRole($user->id, $effectiveRole)->findOrFail($id);
+        $notification = Notification::forUser($user->id)->findOrFail($id);
         $notification->markAsRead();
 
-        $unreadCount = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
+        $unreadCount = $this->unreadCountFor($user);
 
         return response()->json([
+            'success' => true,
             'message' => 'Notification marked as read',
             'unread_count' => $unreadCount,
         ]);
@@ -178,9 +148,8 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request): JsonResponse
     {
         $user = $request->user();
-        $effectiveRole = $this->effectiveRole($user->role);
 
-        Notification::forUserOrRole($user->id, $effectiveRole)
+        Notification::forUser($user->id)
             ->unread()
             ->update([
                 'read' => true,
@@ -188,6 +157,7 @@ class NotificationController extends Controller
             ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'All notifications marked as read',
             'unread_count' => 0,
         ]);
@@ -199,11 +169,11 @@ class NotificationController extends Controller
     public function clearAll(Request $request): JsonResponse
     {
         $user = $request->user();
-        $effectiveRole = $this->effectiveRole($user->role);
 
-        Notification::forUserOrRole($user->id, $effectiveRole)->delete();
+        Notification::forUser($user->id)->delete();
 
         return response()->json([
+            'success' => true,
             'message' => 'All notifications cleared',
             'unread_count' => 0,
         ]);
@@ -215,13 +185,13 @@ class NotificationController extends Controller
     public function destroy(Request $request, $id): JsonResponse
     {
         $user = $request->user();
-        $effectiveRole = $this->effectiveRole($user->role);
-        $notification = Notification::forUserOrRole($user->id, $effectiveRole)->findOrFail($id);
+        $notification = Notification::forUser($user->id)->findOrFail($id);
         $notification->delete();
 
-        $unreadCount = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
+        $unreadCount = $this->unreadCountFor($user);
 
         return response()->json([
+            'success' => true,
             'message' => 'Notification deleted',
             'unread_count' => $unreadCount,
         ]);
@@ -233,10 +203,19 @@ class NotificationController extends Controller
     public function unreadCount(Request $request): JsonResponse
     {
         $user = $request->user();
-        $effectiveRole = $this->effectiveRole($user->role);
-        $count = Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
+        $count = $this->unreadCountFor($user);
 
-        return response()->json(['unread_count' => $count]);
+        return response()->json(['success' => true, 'unread_count' => $count]);
+    }
+
+    /**
+     * Unread count across the caller's own rows plus legacy broadcast rows.
+     */
+    private function unreadCountFor(User $user): int
+    {
+        $effectiveRole = $this->effectiveRole($user->role);
+
+        return Notification::forUserOrRole($user->id, $effectiveRole)->unread()->count();
     }
 
     private function formatNotification(Notification $notification): array

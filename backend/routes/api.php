@@ -1053,7 +1053,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin/cus
     Route::get('/{id}/purchases', [CustomersController::class, 'purchases']);
 });
 
-Route::middleware(['auth.api', 'throttle:api', 'role:receptionist,admin,manager'])->post('/notifications/booking-status', [NotificationController::class, 'bookingStatus']);
 
 // Hotel Room Management Routes (Admin/Receptionist) — canonical controller
 Route::middleware(['auth.api', 'throttle:api', 'role:admin,receptionist'])->prefix('hotel-rooms')->group(function () {

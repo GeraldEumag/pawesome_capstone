@@ -41,17 +41,24 @@ intent and pickup suppresses the delivery without sending.
 
 ## Consumer layer
 
-- `NotificationDropdown` (all roles) polls `/api/notifications` every 10s;
-  unread badge from `unread_count`.
+- `NotificationDropdown` (all roles) polls `/api/notifications` every 10s —
+  paused while the tab is hidden, in-flight + stale-response guarded, with an
+  explicit error/Retry state; unread badge from `unread_count`.
 - Endpoints: `GET /api/notifications`, `GET /unread`, `GET /unread-count`,
   `POST /{id}/read`, `POST /mark-all-read`, `POST /clear-all`,
-  `DELETE /{id}` — all scoped to the authenticated user's own rows plus legacy
-  broadcast rows (`forUserOrRole`).
-- `POST /api/admin/notifications` (admin only) — manual notification.
-- `POST /api/notifications/booking-status`
-  (receptionist/admin/manager) — legacy utility endpoint; the previous frontend
-  caller was removed because it sent an incompatible payload (always 422) and
-  real status transitions already notify customers through service/model hooks.
+  `DELETE /{id}` — **reads** cover the caller's own rows plus legacy broadcast
+  rows (`forUserOrRole`); **mutations** are scoped to owned rows
+  (`forUser`) so one recipient can never flip a shared broadcast row for
+  everyone (hardened 2026-11-18).
+- `POST /api/notifications` (admin only) — manual notification.
+- `POST /api/notifications/booking-status` — **removed 2026-11-18**: it had no
+  callers and let staff inject arbitrary message text into any email-resolved
+  user's feed. Real status transitions notify customers through the service/
+  model hooks in the matrix below.
+- The duplicate `App\Http\Controllers\Api\NotificationController` (never
+  routed, but carrying unscoped route-model binding) was deleted 2026-11-18.
+- Deep-dive evidence: `docs/notification-module/` (architecture, event matrix,
+  API contract, database, security, test report, UI/UX, readiness).
 
 ## Event matrix
 
@@ -135,9 +142,10 @@ business event → email_deliveries intent (in-transaction) → COMMIT
 ## Read/unread
 
 `read` bool + `read_at` timestamp; `markAsRead`/`markAsUnread` on the model.
-`mark-all-read`, `clear-all`, and per-id `read`/`delete` are scoped to the
-caller's own notifications (`forUserOrRole` also matches legacy broadcast
-rows).
+`mark-all-read`, `clear-all`, and per-id `read`/`delete` mutate **only rows the
+caller owns** (`forUser`); legacy broadcast rows remain read-visible via
+`forUserOrRole` but are immutable (shared read-state cannot be flipped by one
+recipient).
 
 ## Retention
 
@@ -151,6 +159,12 @@ if table growth becomes an issue.
 `tests/Feature/NotificationMatrixTest.php` — 11 tests covering every matrix
 event, composite-role expansion, dedup, unauthorized-recipient exclusion,
 per-user payroll rows, read/unread, and cross-user mutation protection.
+`tests/Feature/NotificationApiTest.php` — 8 tests covering the API envelope,
+unauthenticated rejection, admin-only `store`, owner-scoped mark-all/clear-all,
+broadcast-row immutability, and the removed `booking-status` endpoint.
+`frontend/e2e/notification-module.spec.js` — 5 live-stack tests: badge,
+dropdown, click-marks-read, mark-all persistence, cross-user/unauthenticated
+rejection, and the error state.
 Email-layer coverage lives in `EmailDeliveryOutboxTest`,
 `EmailAuthFlowTest`, `EmailServiceWorkflowTest`,
 `EmailPreferencesAndTemplatesTest`, `CustomerEmailResolverTest`,

@@ -29,7 +29,7 @@ const CustomerNotifications = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const data = await apiRequest("/notifications");
+      const data = await apiRequest("/notifications?limit=50");
       setNotifications(Array.isArray(data) ? data : data.notifications || []);
       setError("");
     } catch (err) {
