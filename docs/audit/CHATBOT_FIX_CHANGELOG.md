@@ -85,3 +85,18 @@ Date: 2026-11-18 · Each item: defect → root cause → fix → verification.
 - Cashier `/cashier/transactions/search` — serves the cashier page (kept).
 - `TelegramService` + `telegram:test` command — diagnostics only, no route.
 - UI/theme, Laravel/React/MySQL conventions, unrelated completed modules.
+
+## Post-commit release-acceptance pass (re-verification at `2246acd`)
+
+- **Data fix:** `chatbot_faqs` id 13 (inactive Telegram FAQ) contained a
+  literal `\n` escape in its answer. Replaced with real newlines via a
+  one-row UPDATE — the row stays `is_active = 0` (Telegram dormant).
+  Binary-checked: 0 rows with mojibake or literal escapes remain.
+- **Re-ran every baseline suite on the committed tree:** PHPUnit 89/89,
+  `chatbot:eval` 37/37, Vitest 44/44, API base 9/9, Playwright 13/13
+  (0 retries, 5.5m), API probes 14/14, `npm run build` PASS.
+- **Live-chat smoke re-verified** with close-permission clarification:
+  customers close via `DELETE /chatbot/live-chat/{id}` (200); the staff
+  `PATCH …/close` route correctly 403s customers; post-close message 422.
+- **Gemini live probe re-verified:** `source: "ai"`, ~4.2s, grounded reply.
+- No code changes were required in this pass.

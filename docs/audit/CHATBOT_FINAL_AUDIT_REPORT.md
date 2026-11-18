@@ -136,3 +136,27 @@ within audited scope: 89/89 backend tests, 37/37 eval cases, 44/44 unit tests,
 13/13 E2E scenarios, 14/14 API probes, all security checks green, and the AI
 path verified end-to-end with graceful degradation. Proceed to capstone
 presentation; keep Telegram dormant and re-verify Gemini capacity at deploy.
+
+---
+
+## Release-acceptance re-verification (post-commit `2246acd`)
+
+All baseline results were re-confirmed against the committed tree on the
+audit environment (worker pool :8000 + 10 Laravel workers, Vite :3000):
+
+| Suite | Result |
+|---|---:|
+| PHPUnit chatbot/live-chat filter | 89/89 (386 assertions) |
+| `chatbot:eval` | 37/37 |
+| Vitest | 44/44 |
+| `chatbot-api-base.test.mjs` | 9/9 |
+| Playwright `chatbot-workflow.spec.js` | 13/13, 0 retries |
+| Live API status probes | 14/14 |
+| Gemini live probe | `source: "ai"`, ~4.2 s, grounded |
+| `npm run build` | PASS (pre-existing chunk warnings) |
+| DB integrity (orphans/status/FK/index) | clean |
+| FAQ data (binary mojibake / literal `\n`) | clean after row-13 fix |
+
+One data-level fix applied: literal `\n` escape in the inactive Telegram
+FAQ (id 13) replaced with real newlines. No code changes were needed —
+the baseline remains valid.
