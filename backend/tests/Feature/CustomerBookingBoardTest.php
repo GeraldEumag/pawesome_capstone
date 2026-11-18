@@ -143,4 +143,32 @@ class CustomerBookingBoardTest extends TestCase
         $this->assertCount(1, $this->board($me, '?service=vet')['items']);
         $this->assertCount(1, $this->board($me, '?service=grooming')['items']);
     }
+
+    public function test_unpaid_grooming_still_offers_pay_while_in_progress_and_ready_for_pickup(): void
+    {
+        $me = User::factory()->customer()->create();
+        $this->request($me, ['status' => 'in_progress']);
+        $this->request($me, ['status' => 'ready_for_pickup', 'request_date' => '2026-12-05']);
+        $this->request($me, ['status' => 'checked_in', 'request_date' => '2026-12-06']);
+
+        $items = collect($this->board($me, '?range=all')['items'])->keyBy('status');
+
+        foreach (['in_progress', 'ready_for_pickup', 'checked_in'] as $status) {
+            $this->assertContains('pay', $items[$status]['actions'], "pay missing for {$status}");
+        }
+    }
+
+    public function test_completed_or_cancelled_request_does_not_offer_pay(): void
+    {
+        $me = User::factory()->customer()->create();
+        $this->request($me, ['status' => 'completed', 'payment_status' => 'unpaid', 'request_date' => '2026-11-28']);
+        $this->request($me, ['status' => 'cancelled', 'request_date' => '2026-12-07']);
+        $this->request($me, ['status' => 'rejected', 'request_date' => '2026-12-08']);
+
+        $items = $this->board($me, '?range=all')['items'];
+
+        foreach ($items as $item) {
+            $this->assertNotContains('pay', $item['actions'], "pay offered for {$item['status']}");
+        }
+    }
 }
