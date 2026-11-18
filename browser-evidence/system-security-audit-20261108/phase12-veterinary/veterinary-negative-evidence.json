@@ -1,6 +1,6 @@
 {
   "result": "PASS",
-  "appointment_id": 89,
+  "appointment_id": 92,
   "responses": {
     "customer_start": {
       "status": 403,
@@ -9,11 +9,11 @@
         "success": false
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:37 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:36 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -25,7 +25,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "receptionist_record": {
@@ -35,11 +36,11 @@
         "success": false
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:37 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:36 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -51,7 +52,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "vettech_start": {
@@ -61,11 +63,11 @@
         "success": false
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:38 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:37 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -77,7 +79,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "customer_records": {
@@ -87,11 +90,11 @@
         "success": false
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:38 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:38 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -103,7 +106,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "complete_no_record": {
@@ -114,11 +118,11 @@
         "success": false
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:39 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:38 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -130,7 +134,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "start_status": 200,
@@ -139,16 +144,16 @@
       "body": {
         "message": "Consultation started",
         "consultation": {
-          "id": 89,
+          "id": 92,
           "service_request_id": null,
           "customer_id": 5,
-          "pet_id": 145,
+          "pet_id": 149,
           "service_id": 2,
           "veterinarian_id": 8,
           "status": "in_consultation",
-          "scheduled_at": "2026-11-18T12:31:36.000000Z",
-          "started_at": "2026-11-18T19:31:40.000000Z",
-          "checked_in_at": "2026-11-18T19:31:40.000000Z",
+          "scheduled_at": "2026-11-18T12:47:35.000000Z",
+          "started_at": "2026-11-18T19:47:38.000000Z",
+          "checked_in_at": "2026-11-18T19:47:38.000000Z",
           "checked_in_by": null,
           "clinical_completed_at": null,
           "clinical_completed_by": null,
@@ -177,14 +182,14 @@
           "cashier_remarks": null,
           "receipt_number": null,
           "reference_number": null,
-          "notes": "P12NEG_30285503",
+          "notes": "P12NEG_31252165",
           "diagnosis": null,
           "treatment_notes": null,
           "prescription": null,
           "vet_remarks": null,
           "cancellation_reason": null,
-          "created_at": "2026-11-18T12:31:36.000000Z",
-          "updated_at": "2026-11-18T19:31:40.000000Z",
+          "created_at": "2026-11-18T12:47:35.000000Z",
+          "updated_at": "2026-11-18T19:47:39.000000Z",
           "reminder_sent_at": null,
           "booking_channel": "walk_in",
           "customer": {
@@ -210,9 +215,9 @@
             "profile_photo": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzdjM2FlZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM2ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI4NCIgZm9udC13ZWlnaHQ9IjcwMCI+QzwvdGV4dD48L3N2Zz4="
           },
           "pet": {
-            "id": 145,
+            "id": 149,
             "customer_id": 5,
-            "name": "E2E Board Pet 1795027462644",
+            "name": "E2E Board Pet 1795030986284",
             "species": "Dog",
             "breed": null,
             "birthdate": null,
@@ -224,8 +229,8 @@
             "status": "active",
             "archived_at": null,
             "archived_by": null,
-            "created_at": "2026-11-18T18:44:23.000000Z",
-            "updated_at": "2026-11-18T18:44:23.000000Z",
+            "created_at": "2026-11-18T19:43:07.000000Z",
+            "updated_at": "2026-11-18T19:43:07.000000Z",
             "deleted_at": null,
             "image_url": null
           },
@@ -295,12 +300,12 @@
           }
         },
         "medical_record": {
-          "id": 27,
-          "pet_id": 145,
-          "appointment_id": 89,
+          "id": 30,
+          "pet_id": 149,
+          "appointment_id": 92,
           "veterinarian_id": 8,
-          "visit_date": "2026-11-18T19:31:40.000000Z",
-          "chief_complaint": "P12NEG_30285503",
+          "visit_date": "2026-11-18T19:47:39.000000Z",
+          "chief_complaint": "P12NEG_31252165",
           "symptoms": null,
           "physical_examination": null,
           "diagnosis": null,
@@ -321,18 +326,18 @@
           "locked_at": null,
           "locked_by": null,
           "notes": null,
-          "created_at": "2026-11-18T19:31:40.000000Z",
-          "updated_at": "2026-11-18T19:31:40.000000Z",
+          "created_at": "2026-11-18T19:47:39.000000Z",
+          "updated_at": "2026-11-18T19:47:39.000000Z",
           "deleted_at": null
         },
         "success": true
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:40 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:39 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -344,7 +349,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "start_conflict": {
@@ -354,11 +360,11 @@
         "success": false
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:41 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:40 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -370,7 +376,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     },
     "invalid_outcome": {
@@ -385,11 +392,11 @@
         "message": "Unprocessable Content"
       },
       "headers": {
-        "host": "127.0.0.1:8015",
+        "host": "127.0.0.1:8031",
         "connection": "close",
         "x-powered-by": "PHP/8.2.12",
         "cache-control": "no-cache, private",
-        "date": "Wed, 18 Nov 2026 19:31:42 GMT",
+        "date": "Wed, 18 Nov 2026 19:47:40 GMT",
         "content-type": "application/json",
         "x-ratelimit-limit": "60",
         "x-ratelimit-remaining": "59",
@@ -401,7 +408,8 @@
         "access-control-allow-origin": "*",
         "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
-        "access-control-allow-credentials": "true"
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
       }
     }
   }
