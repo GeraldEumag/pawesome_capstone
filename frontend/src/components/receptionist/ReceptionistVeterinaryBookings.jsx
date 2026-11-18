@@ -5,7 +5,6 @@ import {
   faStethoscope,
   faCalendarAlt,
   faSearch,
-  faPlus,
   faCheckCircle,
   faTimesCircle,
   faClock,
@@ -411,12 +410,6 @@ const ReceptionistVeterinaryBookings = () => {
         <div>
           <h1>Veterinary Bookings</h1>
           <p>Manage veterinary appointments and schedule consultations</p>
-        </div>
-        <div className="vet-hero-actions">
-          <button className="primary-btn" disabled>
-            <FontAwesomeIcon icon={faPlus} />
-            New Appointment
-          </button>
         </div>
       </div>
 
