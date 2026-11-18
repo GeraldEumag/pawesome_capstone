@@ -22,6 +22,10 @@ return new class extends Migration
 
     public function up(): void
     {
+        if (app()->environment('testing')) {
+            return;
+        }
+
         Artisan::call('db:seed', ['--class' => WardBedSeeder::class, '--force' => true]);
     }
 

@@ -52,7 +52,7 @@ class MedicalConfinementController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = MedicalConfinement::with(['consultation', 'customer', 'pet', 'veterinarian', 'room']);
+        $query = MedicalConfinement::with(['consultation', 'customer', 'pet', 'veterinarian', 'room', 'wardBed']);
 
         $user = $request->user();
 

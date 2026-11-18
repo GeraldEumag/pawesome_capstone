@@ -18,6 +18,7 @@ const ReceptionistLayout = () => {
     { path: "/receptionist/bookings/grooming", title: "Grooming Bookings", subtitle: "Manage grooming appointments and service scheduling." },
     { path: "/receptionist/manage-services", title: "Manage Services", subtitle: "Configure service catalog, hotel rooms, and boarding options." },
     { path: "/receptionist/walk-ins", title: "Walk-in Customers", subtitle: "Create bookings for walk-in customers with or without accounts." },
+    { path: "/receptionist/medical-confinements", title: "Medical Confinements", subtitle: "Assign ward beds, admit patients, and release after clearance and payment." },
     { path: "/receptionist/appointments-boarding", title: "Hotel Bookings", subtitle: "Manage pet hotel and boarding reservations, check-ins, and check-outs." },
     { path: "/receptionist/customers", title: "Customer Management", subtitle: "View, edit, and organize customer records and profiles." },
     { path: "/receptionist/orders", title: "Customer Orders", subtitle: "Review and approve customer store orders." },
