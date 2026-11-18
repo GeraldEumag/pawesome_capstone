@@ -332,7 +332,7 @@ class WalkInController extends Controller
                     $serviceRequest->price = $totalAmount;
                     $serviceRequest->save();
 
-                    $bookingRecord = Boarding::create([
+                    $boardingData = [
                         'service_request_id' => $serviceRequest->id,
                         'pet_id' => $petId,
                         'pet_name' => $pet->name,
@@ -342,7 +342,6 @@ class WalkInController extends Controller
                         'customer_email' => $customer->email,
                         'check_in' => $bookingData['request_date'],
                         'check_out' => $checkOutDate,
-                        'room_id' => $boardingRoom?->id,
                         'hotel_room_id' => $room?->id,
                         'boarding_type' => $bookingData['room_type'] ?? $boardingRoom?->room_type,
                         'total_amount' => $totalAmount,
@@ -351,7 +350,37 @@ class WalkInController extends Controller
                         'notes' => $bookingData['special_requests'] ?? null,
                         'stay_type' => 'hotel_boarding',
                         'booking_channel' => \App\Support\BookingChannel::WALK_IN,
-                    ]);
+                    ];
+
+                    // boardings.room_id is written only where the column
+                    // exists — same contract as BoardingController::store.
+                    if ($boardingRoom && \Illuminate\Support\Facades\Schema::hasColumn('boardings', 'room_id')) {
+                        $boardingData['room_id'] = $boardingRoom->id;
+                    }
+
+                    $bookingRecord = Boarding::create($boardingData);
+
+                    // Modern boarding_rooms bookings must also hold a
+                    // boarding_room_reservations row — it is what blocks
+                    // room availability and what the bookings board reads.
+                    if ($boardingRoom) {
+                        $reservationResult = app(\App\Services\BoardingRoomService::class)->createRoomReservation(
+                            $boardingRoom->id,
+                            'pet_hotel',
+                            $bookingRecord->id,
+                            $petId,
+                            $bookingData['request_date'],
+                            $checkOutDate,
+                            $customerId
+                        );
+
+                        if (!$reservationResult['success']) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => $reservationResult['message'],
+                            ], 422));
+                        }
+                    }
                     $bookingType = 'boarding';
                 } elseif ($serviceType === 'veterinary') {
                     // Resolve the Service ID based on service_name select option
