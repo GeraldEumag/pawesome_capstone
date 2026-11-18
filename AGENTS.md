@@ -232,6 +232,15 @@ configuration; review `docs/DEPLOYMENT.md` before using any provider settings.
   `ERR_ADDRESS_IN_USE`, and `Failed to fetch` errors in Playwright tests.
 - These are Windows TCP/IP stack issues, not application defects.
 - Mitigation: reboot, or run tests on Linux/Docker.
+- `php artisan serve` is **single-threaded** on Windows —
+  `PHP_CLI_SERVER_WORKERS` is silently ignored (needs `fork()`). Under
+  concurrent browser traffic (E2E, dashboard hydration + polls) requests
+  serialize and browser-dispatched fetches can stall in the client-side
+  connection queue. For E2E, run the worker pool instead:
+  `C:/xampp/pawesome-maintenance/php-worker-pool.js` (round-robin proxy on
+  :8000 to N `php artisan serve` workers on :8001+). Do NOT route through
+  XAMPP Apache — the project-root `.htaccess` deliberately denies all HTTP
+  access to protect `.env`/storage; do not weaken it.
 - The local PHP CLI may lack GD; use `UploadedFile::fake()->create()` or
   `createWithContent()` for upload fixtures instead of `fake()->image()`.
 - If MySQL tests report connection refused, confirm the XAMPP MySQL service is

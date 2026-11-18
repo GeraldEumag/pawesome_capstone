@@ -80,11 +80,17 @@ class ChatbotController extends Controller
         ]);
     }
 
+    /**
+     * Chat history for one user. Bounded to the most recent 500 rows so an
+     * active user can't make the admin panel load an unbounded transcript;
+     * rows are returned oldest→newest for chronological display.
+     */
     public function userHistory(User $user): JsonResponse
     {
         $history = ChatbotLog::query()
             ->where('user_id', $user->id)
-            ->oldest()
+            ->latest('id')
+            ->limit(500)
             ->get([
                 'id',
                 'intent',
@@ -93,7 +99,9 @@ class ChatbotController extends Controller
                 'user_message',
                 'bot_response',
                 'created_at',
-            ]);
+            ])
+            ->reverse()
+            ->values();
 
         return response()->json([
             'success' => true,

@@ -7,6 +7,7 @@ use App\Models\ChatbotFaq;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class ChatbotFaqController extends Controller
 {
@@ -28,6 +29,7 @@ class ChatbotFaqController extends Controller
             'answer' => 'required|string',
             'keywords' => 'nullable|array',
             'keywords.*' => 'string|max:50',
+            'category' => ['nullable', 'string', 'max:50', Rule::in(ChatbotFaq::VALID_CATEGORIES)],
             'scope' => 'nullable|string|max:100',
             'is_active' => 'nullable|boolean',
             'sort_order' => 'nullable|integer|min:0',
@@ -37,6 +39,7 @@ class ChatbotFaqController extends Controller
             'question' => $data['question'],
             'answer' => $data['answer'],
             'keywords' => $data['keywords'] ?? [],
+            'category' => $data['category'] ?? 'general',
             'scope' => $data['scope'] ?? 'general',
             'is_active' => $data['is_active'] ?? true,
             'sort_order' => $data['sort_order'] ?? 0,
@@ -57,6 +60,7 @@ class ChatbotFaqController extends Controller
             'answer' => 'required|string',
             'keywords' => 'nullable|array',
             'keywords.*' => 'string|max:50',
+            'category' => ['nullable', 'string', 'max:50', Rule::in(ChatbotFaq::VALID_CATEGORIES)],
             'scope' => 'nullable|string|max:100',
             'is_active' => 'nullable|boolean',
             'sort_order' => 'nullable|integer|min:0',
@@ -66,6 +70,7 @@ class ChatbotFaqController extends Controller
             'question' => $data['question'],
             'answer' => $data['answer'],
             'keywords' => $data['keywords'] ?? [],
+            'category' => $data['category'] ?? $faq->category ?? 'general',
             'scope' => $data['scope'] ?? 'general',
             'is_active' => $data['is_active'] ?? true,
             'sort_order' => $data['sort_order'] ?? 0,
@@ -99,7 +104,13 @@ class ChatbotFaqController extends Controller
     {
         Cache::forget('chatbot_faqs_all');
 
-        foreach (['customer', 'receptionist', 'cashier', 'inventory', 'veterinary', 'manager', 'admin', 'guest', 'general'] as $role) {
+        // Every scope value the FAQ matcher can filter by — canonical roles,
+        // composite/legacy aliases, and the guest/general buckets.
+        foreach ([
+            'customer', 'receptionist', 'cashier', 'inventory', 'veterinary',
+            'manager', 'admin', 'super_receptionist', 'super_admin',
+            'vet', 'veterinarian', 'guest', 'general', 'all',
+        ] as $role) {
             Cache::forget("chatbot_faqs_{$role}");
         }
     }

@@ -50,7 +50,7 @@ class ChatbotController extends Controller
     {
         $data = $request->validate([
             'message' => 'required|string|max:2000',
-            'channel' => 'nullable|string|max:50',
+            'channel' => 'nullable|string|max:50|in:web,telegram,eval,cli,mobile',
             'context' => 'nullable|array',
         ]);
 

@@ -50,10 +50,22 @@ const SERVICE_CATEGORIES = [
   "Other",
 ];
 
+// Keep in sync with ChatbotFaq::VALID_CATEGORIES on the backend.
+const FAQ_CATEGORIES = [
+  "general",
+  "services",
+  "pricing",
+  "booking",
+  "policies",
+  "medical",
+  "grooming",
+];
+
 const emptyFaq = {
   question: "",
   answer: "",
   keywords: "",
+  category: "general",
   scope: "general",
   is_active: true,
   sort_order: 0,
@@ -383,6 +395,7 @@ const ChatbotLogs = () => {
         question: faqForm.question.trim(),
         answer: faqForm.answer.trim(),
         keywords: keywordPayload(faqForm.keywords),
+        category: faqForm.category || "general",
         scope: faqForm.scope || "general",
         is_active: Boolean(faqForm.is_active),
         sort_order: Number(faqForm.sort_order || 0),
@@ -509,6 +522,7 @@ const ChatbotLogs = () => {
       question: faq.question || "",
       answer: faq.answer || "",
       keywords: normalizeKeywords(faq.keywords),
+      category: faq.category || "general",
       scope: faq.scope || "general",
       is_active: Boolean(faq.is_active),
       sort_order: faq.sort_order ?? 0,
@@ -1102,6 +1116,25 @@ const ChatbotLogs = () => {
                   </label>
 
                   <div className="management-row">
+                    <label>
+                      Category
+                      <select
+                        value={faqForm.category}
+                        onChange={(event) =>
+                          setFaqForm((prev) => ({
+                            ...prev,
+                            category: event.target.value,
+                          }))
+                        }
+                      >
+                        {FAQ_CATEGORIES.map((category) => (
+                          <option value={category} key={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
                     <label>
                       Scope
                       <select

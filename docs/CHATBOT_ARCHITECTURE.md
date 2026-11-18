@@ -4,6 +4,17 @@
 > Covers the four chat surfaces, the backend pipeline, data model,
 > runtime flow, capabilities, and known limitations.
 
+> **Post-audit status (2026-11-18):** the chatbot/live-chat audit changed the
+> state described below — see `docs/audit/CHATBOT_FINAL_AUDIT_REPORT.md`.
+> Removed: `ChatbotService.php` (legacy orchestrator),
+> `TelegramBotController.php` (unregistered — Telegram is a **dormant,
+> unimplemented** integration), `PortalController::chatbot`
+> (`POST /customer/chatbot`), `tests/manual/test_chatbot_debug.php`, and the
+> `transaction_lookup` widget wiring. AI provider in the audit env is
+> **Gemini** (`CHATBOT_AI_PROVIDER=gemini`, model `gemini-3.1-flash-lite`,
+> timeout 15s) with FAQ/rule fail-soft preserved. Sections below that describe
+> the removed components are retained for historical context.
+
 ---
 
 ## 1. Structure
@@ -15,7 +26,7 @@
 | Landing bot | `frontend/src/components/LandingChatbot.jsx` | `ChatbotController::publicWelcome` / `publicMessage` | Guests (no auth) |
 | Authenticated assistant | `frontend/src/components/chatbot/RoleAwareChatbot.jsx` (~1,480 lines) | `ChatbotController::welcome` / `message` | All 7 roles |
 | Live chat (human) | Inside `RoleAwareChatbot` + staff pages | `LiveChatController` | Customer ↔ receptionist/admin |
-| Telegram bot | Telegram app | `TelegramBotController` | Linked users |
+| ~~Telegram bot~~ *(dormant)* | Telegram app | ~~`TelegramBotController`~~ removed — no route | Linked users |
 
 ### 1.2 Backend layer map
 

@@ -1,29 +1,31 @@
-# Final System Audit — Pawesome Capstone B
+# Final System Audit
 
-**Date:** 2026-10-25 · **Baseline:** branch `main`, HEAD `3e75be0`, 62 modified/untracked entries (Revision B WIP — all preserved untouched). **Test env:** PHP 8.2.12, MySQL `pawesome_test` (empty fixtures, RefreshDatabase), Vite :3000 + artisan :8000 for captures.
+**Date:** 2026-11-18 · **Supersedes:** the 2026-10-25 revision-B document previously at this path (content remains in git history) · **Baseline:** HEAD `2eb0161`.
 
-## Architecture
-Laravel 12 API (`routes/api.php`, 731 route lines, `ApiTokenAuth` + role middleware), React 18/Vite SPA (9 role route files), MySQL. Email via durable `email_deliveries` outbox → `emails` queue → mailable in `SendEmailDelivery` job.
+## Gate summary (all executed this pass)
 
-## Findings & status (prior reconcile list)
-
-| # | Item | Status | Evidence |
+| Gate | Scope | Result | Evidence |
 |---|---|---|---|
-| F-01 | Inactive users obtaining API access via tokens | **FIXED** | `ApiTokenAuth.php:41` `!$user->is_active` reject; P1 test: "deactivated user token is rejected", "reactivated works again" |
-| F-02 | POS trusting client prices/totals | **FIXED** | P1 test "pos ignores manipulated price and total" — server recomputes; also "hotel booking computes total from server room rate", "service request binds price to service" |
-| F-03 | Boarding add-on inventory not wired | **FIXED** | P1: "approval deducts addon inventory once", "insufficient stock blocks approval atomically", "rejecting approved boarding restores addon stock" |
-| F-04 | Payment-reference uniqueness | **FIXED** | `PaymentReferenceGuard` + BT "payment reference cannot be reused for a different booking"; P9 live: all 4 flows → 422 |
-| F-05 | Confinement cancellation | **FIXED (uncommitted)** | `MedicalConfinementController::cancel` — locked txn, whitelist `recommended/consented/bed_assigned/approved_for_admission`, 422 stale-state, admitted must discharge |
-| F-06 | Dispensation void | **FIXED (uncommitted)** | `DispensationController::void` (line 69) + route; dedupe test "duplicate dispense within window is rejected" |
-| F-07 | Email delivery reliability | **PARTIAL** | Outbox intents dispatch verified (provider accepted); mailbox delivery BLOCKED — non-routable test domains |
-| F-08 | Duplicate POS sale on retry | **FIXED (uncommitted)** | `IdempotencyKey` middleware on `pos/transaction` + frontend key reuse; test "oversized idempotency key rejected" |
-| F-09 | Double-approve boarding | **FIXED** | Serialized pending transition; P9 concurrent test — one success, one 422 |
-| F-10 | Store checkout open | **N/A** | Intentionally disabled — `CustomerStoreController` → 410 (P1 test) |
+| A — Cross-role E2E | customer→receptionist→cashier→vet→manager on `pawesome_reports_audit` | **31 pass / 0 fail / 1 warn** | `browser-evidence/cross-role-e2e-audit/audit-report-20261118-140615.json` |
+| B — Security & RBAC | roles × modules, uploads, tokens, env | **140 pass / 0 fail**; 1 high + 3 medium = local `.env` dev values | `browser-evidence/security-rbac-audit/security-rbac-audit-20261118-141034.json` |
+| C — Database readiness | schema, FKs, indexes, constraints | **122 pass / 0 fail / 2 warn**; 3 medium design notes | `browser-evidence/database-readiness-audit/database-readiness-audit-20261118-131044.json` |
+| D — Report reconciliation | API vs independent SQL, dev DB | **50/50 pass** | `browser-evidence/report-reconciliation-audit/report-reconciliation-audit-20261118-130552.json` |
 
-## Test evidence this session
-- `php artisan test --filter='P1SecurityIntegrityTest'` → **15/15, 60 assertions** on current tree.
-- `php artisan test --filter='PaymentBookingChannelTest|PrivatePetPhotoTest|BookingSchedulingIntegrityTest|BoardingRoomLifecycleTest|VeterinaryBillingPaymentFlowTest|AuditRegressionTest|EmailAuthFlowTest'` → **98/98, 493 assertions**.
-- Mocked Playwright (after spec repairs): `revision-b-confirmed-flows` 5/5, `customer-add-pet-modal` 7/7 — no app defects.
+## Test suites
+| Suite | Result |
+|---|---|
+| phpunit (MySQL `pawesome_test`) | **1127 passed / 1 skipped (GD missing) / 0 failed** — 5594 assertions |
+| Vitest | **44/44** (9 files) |
+| Vite production build | green (chunk-size warnings only) |
+| Playwright serial (audit stack) | **15/15** — export regression 3/3, admin report charts 3/3, role smoke 9/9 |
+| `e2e_workflow_audit.py` | 7/7 reconciliations PASS |
 
-## Remaining risks
-See `REMAINING_RISKS.md`. Headlines: full 606-suite not rerun this session; mailbox delivery unproven; uncommitted WIP is not yet committed/regression-final; no load/concurrency soak testing.
+## Module coverage (executed vs documented-disabled)
+- Customer: registration→verification outbox intent, login, pets, bookings, payment proof, notifications; **customer-store checkout 410 disabled — product decision** (see FINAL_KNOWN_ISSUES).
+- Receptionist/Cashier: service approvals, boarding approve→pay→verify (+receipt+VAT), rejection path, POS — all reconcile.
+- Veterinary/vet-tech: contract holds — tech limited to intake board + check-in; clinical writes forbidden.
+- Inventory: adjust-stock semantics correct (adds via batch receiving only); `inventory:reconcile-stock` tool exists.
+- Admin/Manager: all-access staff confirmed; admin denied customer portal; payroll/attendance manager+admin only.
+
+## Defects this pass
+No new reproducible application defects found. One data-hygiene note (7 legacy paid boardings missing receipt numbers — P3, see FINAL_KNOWN_ISSUES).

@@ -88,9 +88,15 @@ class TestChatbot extends Command
         $this->info('FIX: Add these lines to your .env file:');
         $this->info('========================================');
         $this->line('CHATBOT_AI_ENABLED=true');
-        $this->line('CHATBOT_AI_PROVIDER=groq');
-        $this->line('CHATBOT_GROQ_API_KEY=gsk_YOUR_KEY_HERE   # https://console.groq.com');
-        $this->line('CHATBOT_GROQ_MODEL=openai/gpt-oss-120b');
+        if ($provider === 'gemini') {
+            $this->line('CHATBOT_AI_PROVIDER=gemini');
+            $this->line('CHATBOT_AI_API_KEY=YOUR_GEMINI_KEY_HERE   # https://ai.google.dev');
+            $this->line('CHATBOT_AI_MODEL=gemini-3.1-flash-lite');
+        } else {
+            $this->line('CHATBOT_AI_PROVIDER=groq');
+            $this->line('CHATBOT_GROQ_API_KEY=gsk_YOUR_KEY_HERE   # https://console.groq.com');
+            $this->line('CHATBOT_GROQ_MODEL=openai/gpt-oss-120b');
+        }
         $this->line('CHATBOT_HYBRID_MODE=faq_first');
         $this->newLine();
         $this->line('Then run: php artisan config:clear');

@@ -11,7 +11,6 @@ use App\Models\Pet;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\Sale;
-use App\Models\ChatbotLog;
 use App\Models\Notification;
 use App\Services\BookingAvailabilityService;
 use App\Services\FileStorageService;
@@ -646,23 +645,4 @@ class PortalController extends Controller
         return response()->json($boarding, 201);
     }
 
-    public function chatbot(Request $request)
-    {
-        $data = $request->validate([
-            'message' => 'required|string',
-            'type' => 'nullable|string',
-        ]);
-        $user = $request->user();
-
-        $log = ChatbotLog::create([
-            'user_id' => $user?->id,
-            'role' => $user?->role,
-            'channel' => 'web',
-            'message' => $data['message'],
-            'type' => $data['type'] ?? 'inquiry',
-            'user_message' => $data['message'],
-        ]);
-
-        return response()->json($log, 201);
-    }
 }

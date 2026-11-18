@@ -135,3 +135,55 @@ The older main cross-role spec uses API mutations plus browser observation; it i
 Fifteen report files now exist under docs/audit: this tracker, architecture, endpoint, role matrix, IDOR, rate limiting, database, E2E plan/results, security results, workflow integrations, regression, performance, production audit and capstone verdict. They explicitly mark partial coverage; report presence does not mean every requested scenario passed.
 
 **Audit remains in progress; readiness not established.** Important defects are reproduced/fixed with current regression evidence, but full-system security, every-workflow correctness, MySQL 8 parity and business production readiness remain unproven. No commit or push was requested or made.
+
+
+## Final release validation — 2026-11-18
+
+**Baseline:** HEAD `2eb0161` (reports remediation `21e480a` + rebase fix verified in tree). Assignment: system-wide release validation after accepted Reports baseline. All gates rerun this date; historical docs preserved.
+
+| Gate / suite | Result | Evidence |
+| --- | --- | --- |
+| Gate A cross-role E2E (audit stack :8001/`pawesome_reports_audit`) | 31 pass / 0 fail / 1 warn | `browser-evidence/cross-role-e2e-audit/audit-report-20261118-140615.json` |
+| Gate B security/RBAC | 140 pass / 0 fail; 1 high + 3 medium (local `.env` dev values only) | `browser-evidence/security-rbac-audit/security-rbac-audit-20261118-141034.json` |
+| Gate C database readiness | 122 pass / 0 fail / 2 warn | `browser-evidence/database-readiness-audit/database-readiness-audit-20261118-131044.json` |
+| Gate D report reconciliation | 50/50 PASS | `browser-evidence/report-reconciliation-audit/report-reconciliation-audit-20261118-130552.json` |
+| phpunit (MySQL `pawesome_test`) | 1127 passed / 1 skipped (GD) / 0 failed — 5594 assertions | console log, 406s |
+| Vitest | 44/44 (9 files) | console log |
+| Vite production build | green | chunk-size warnings only |
+| Playwright serial (audit :3001→:8001) | 15/15 — export regression 3/3, admin report charts 3/3, role smoke 9/9 | console log |
+| Email outbox (`pawesome_reports_audit`) | 8 accepted / 8 suppressed / 0 failed jobs; dispatch+reconcile scheduled | live SQL |
+
+**New findings this pass:** zero reproducible application defects. P3 data hygiene: 7 legacy paid boardings missing `receipt_number` (KI-01). Customer-store 410 disabled state re-verified and formally recorded (FINAL_KNOWN_ISSUES).
+
+**Deliverables:** `FINAL_SYSTEM_DISCOVERY.md`, `FINAL_SYSTEM_AUDIT.md` (supersedes 2026-10-25 doc, history in git), `FINAL_SECURITY_AUDIT.md`, `FINAL_DATABASE_INTEGRITY.md`, `FINAL_INTEGRATION_TEST_RESULTS.md`, `FINAL_PRODUCTION_READINESS.md`, `FINAL_RELEASE_CHECKLIST.md`, `FINAL_KNOWN_ISSUES.md`.
+
+**Verdict: B — TECHNICALLY READY, ENVIRONMENT VALIDATION PENDING.** Application gates all green; MySQL 8 CI run, production env values, supervised queue/scheduler, real Brevo delivery/domain auth, and deploy-edge verification remain open. MariaDB 10.4.32 lenient sql_mode is not MySQL 8 proof.
+
+
+## Infrastructure release gates — 2026-11-18 (pass 2)
+
+Scoped to remaining environment gates only; no application re-audit.
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| MySQL 8 — real engine | **VERIFIED**: MySQL Community Server **8.0.44** (winx64, `C:\xampp\mysql8`, port 3307), sql_mode `ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION`. `migrate --force` all DONE; `phpunit -c phpunit.mysql8.xml` → **1128 tests / 5594 assertions / 1 skipped (GD) / 0 failed**, 7m18s | console log; `backend/phpunit.mysql8.xml` (DB_PORT 3306→3307 only) |
+| CI config | `.github/workflows/ci.yml` verified: `mysql:8.0` service, `pawesome_test`, `migrate --force` + `artisan test` — same steps as local MySQL 8 run. GitHub Actions execution still pending push/dispatch authorization | repo file |
+| Email — webhook | `POST /api/webhooks/brevo` on audit API: wrong/missing secret → **401**; correct secret → 200 `processed:1`; `hard_bounce` → `email_suppressions` row (reason verified in `pawesome_reports_audit`) | live curl + SQL |
+| Email — SMTP | Real send via `smtp-relay.brevo.com:587` → **250 acceptance** (`SEND_OK`) to configured sender. Provider-side delivery pending `BREVO_API_KEY` (REST); SMTP key is not a REST api-key (401 verified) | tinker log |
+| Email — outbox | 8 accepted / 8 suppressed / 0 failed jobs; preference suppression verified | live SQL |
+| Prod config | Structure verified; **fix:** `backend/.env.example` `SESSION_SECURE_COOKIE` `false`→`true` | diff |
+| Deployment | `DEPLOYMENT.md` documents supervised worker (`queue:work --queue=emails,receipts,default`), cron `schedule:run`, private/public storage split, smoke checks | repo file |
+
+**New commits:** none (docs + one `.env.example` template line + `phpunit.mysql8.xml` evidence config). MySQL 8 instance is throwaway local (`C:\xampp\mysql8`, port 3307) — remove or keep per user preference.
+
+**Verdict: B — TECHNICALLY READY, ENVIRONMENT VALIDATION PENDING** retained. MySQL 8 and email-transport/webhook gates now carry real evidence; remaining items (GitHub Actions run, deployed env values, `BREVO_API_KEY`, sender domain/DNS, public webhook URL, queue/scheduler daemons, edge HTTPS) require deployment authorization and cannot be produced locally.
+
+
+### Recipient delivery confirmed — 2026-11-18 21:37
+
+User-provided Gmail inbox screenshot (`browser-evidence/email-delivery/gmail-inbox-confirmation-20261118.png`) shows the Brevo delivery test plus 8 notification types landing in **Primary** inbox (not spam): email verification, password reset, booking request, payment receipt, payslip, grooming approval, password-changed, account welcome. Outbox → SMTP relay → recipient inbox is proven end-to-end. Remaining email items are optional provider-side event verification (`BREVO_API_KEY`) and custom-domain auth (SPF/DKIM/DMARC).
+
+
+### MySQL 8 CI gate closed — 2026-11-18 21:45
+
+`git fetch` confirmed `origin/main` already contains HEAD `2eb0161`. GitHub Actions check-runs on `main`: **backend (mysql:8.0) — success, frontend — success**. Three consecutive green CI runs; latest `44308050820` (2026-11-18T12:52:16Z). Combined with local MySQL 8.0.44 strict-mode evidence, the MySQL 8 gate is fully closed. Remaining for verdict A: deployed env values, queue/scheduler daemons, public webhook URL, edge HTTPS — all deployment-authorized actions.

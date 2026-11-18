@@ -58,7 +58,7 @@ class ChatbotFaqSeeder extends Seeder
             // Pet Hotel FAQs
             [
                 'question' => 'How much does pet boarding cost?',
-                'answer' => 'Our pet hotel rates per night:\n\n🐕 Standard Kennel: ₱500\n🐕 Large Kennel: ₱800\n🐱 Cattery Suite: ₱450\n🐱 Deluxe Cattery: ₱700\n🏠 Standard Room: ₱600\n� Deluxe Suite: ₱1,200\n\nRates are shown on the booking page when you choose your dates and room.',
+                'answer' => 'Our pet hotel rates per night:\n\n🐕 Standard Kennel: ₱500\n🐕 Large Kennel: ₱800\n🐱 Cattery Suite: ₱450\n🐱 Deluxe Cattery: ₱700\n🏠 Standard Room: ₱600\n🏰 Deluxe Suite: ₱1,200\n\nRates are shown on the booking page when you choose your dates and room.',
                 'keywords' => ['price', 'cost', 'rate', 'boarding', 'hotel', 'stay', 'how much'],
                 'scope' => 'general',
                 'is_active' => true,
@@ -74,7 +74,7 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'Can I check on my pet during their stay?',
-                'answer' => 'Absolutely! You can:\n Request photos of your pet\n📞 Call us during business hours at 270020371\n💬 Ask me here anytime — I can check your boarding status live',
+                'answer' => 'Absolutely! You can:\n📸 Request photos of your pet\n📞 Call us during business hours at 270020371\n💬 Ask me here anytime — I can check your boarding status live',
                 'keywords' => ['check', 'update', 'photo', 'status', 'how is my pet'],
                 'scope' => 'general',
                 'is_active' => true,

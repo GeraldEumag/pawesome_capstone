@@ -321,6 +321,14 @@ class PremiumChatbotService
     {
         $text = strtolower(trim($message));
 
+        // Prompt-injection / data-exfiltration guard — must run before every
+        // other intent so "ignore your rules…" can never reach a live-data
+        // dump or a contact-laden fallback.
+        if (preg_match('/\b(ignore|disregard|forget|bypass|override)\b.{0,50}\b(rules?|instructions?|prompts?|guidelines?|training|programm?ing)\b/i', $text)
+            || preg_match('/\b(system prompt|jailbreak|dan mode|developer mode|show me (all|every|other|the) (customers?|users?|passwords?|credentials?|database|records?|tables?)|list (all|every|other) (customers?|users?|passwords?|records?)|dump (the )?(database|users?|customers?|tables?)|reveal your (prompt|instructions|rules|system))\b/i', $text)) {
+            return 'policy_refusal';
+        }
+
         if (preg_match('/^(hi|hello|hey|yo|good\s+(morning|afternoon|evening)|kumusta|kamusta)\b/i', $text)) {
             return 'greeting';
         }
@@ -339,7 +347,14 @@ class PremiumChatbotService
                 return 'upload_payment_help';
             }
 
-            if (preg_match('/\b(upload|proof|resibo|receipt|pay|payment|bayad|paid na ba|bayad na)\b/i', $text)) {
+            // Informational payment questions (methods/acceptance/options)
+            // must reach the FAQ/rules path — only personal status lookups
+            // should hit live payment data.
+            $paymentInfo = (bool) preg_match(
+                '/\b(payment methods?|methods? of payment|modes? of payment|accepted payments?|payment options?|ways? to pay|how (do|can|should) (i|we) pay|ano(ng)? (mga )?paraan ng (bayad|payment)|available payments?)\b/i',
+                $text
+            );
+            if (!$paymentInfo && preg_match('/\b(upload|proof|resibo|receipt|payment status|my payment|paid na ba|bayad na|nabayaran|payment.*(verif|approv|reject|pending|confirm))\b/i', $text)) {
                 return 'check_payment_status';
             }
         }
@@ -366,10 +381,14 @@ class PremiumChatbotService
 
         // 'status' alone is too broad ("store status", "status of hours") —
         // it only routes to the request-status dump when an entity word is
-        // present. Bare entity words keep the existing behavior.
+        // present. Bare entity words keep the existing behavior, but a
+        // procedural question ("how do I book…", "paano mag-appointment")
+        // is asking for guidance, not a status dump — let it fall through
+        // to the FAQ/booking path.
+        $procedural = (bool) preg_match('/\b(how do i|how can i|how to|paano|ano ang (mga )?hakbang|steps? (to|para|ng)|saan (ako |pwede |puwede ))\b/i', $text);
         $hasStatusWord = (bool) preg_match('/\bstatus\b/i', $text);
         $hasEntityWord = (bool) preg_match('/\b(request|requests|booking|bookings|appointment|appointments|order|orders|grooming|boarding|payment|bayad)\b/i', $text);
-        if ($hasStatusWord ? $hasEntityWord : (bool) preg_match('/\b(request|booking|appointment|grooming request|vet request)\b/i', $text)) {
+        if (!$procedural && ($hasStatusWord ? $hasEntityWord : (bool) preg_match('/\b(request|booking|appointment|grooming request|vet request)\b/i', $text))) {
             return str_contains($text, 'booking') || str_contains($text, 'appointment')
                 ? 'check_booking_status'
                 : 'check_request_status';
@@ -387,13 +406,22 @@ class PremiumChatbotService
             return 'system_summary';
         }
 
-        if (preg_match('/\b(contact|staff|reception|cashier|vet|manager|call|email)\b/i', $text)) {
+        // Contact-staff routing needs BOTH a reach verb and a staff/person
+        // noun — "how can I contact you" (store contact info) and "how much
+        // is a vet consult" (pricing) must not be shadowed here.
+        $reach = (bool) preg_match('/\b(contact|call|email|reach|talk|speak|message|chat|connect|follow[- ]?up)\b/i', $text);
+        $person = (bool) preg_match('/\b(staff|receptionist|cashier|veterinarian|manager|admin|agent|human|person|someone|real person|live chat|support team|front desk)\b/i', $text);
+        if ($reach && $person) {
             return 'contact_staff';
         }
 
         // 'help' / 'how do I' is the catch-all of the system intents — it must
-        // run last so it never shadows a more specific intent above.
-        if (preg_match('/\b(help|tulong|paano|what can you do|guide|how do i|how to|how can)\b/i', $text)) {
+        // run last so it never shadows a more specific intent above. It also
+        // must not fire when the question already names a concrete topic:
+        // "how can I book a grooming appointment" belongs to the
+        // FAQ/booking path, not the generic help menu.
+        $topical = (bool) preg_match('/\b(book|appointment|groom|board|hotel|room|stay|pay|payment|order|pet|service|vaccin|account|login|log ?in|register|sign ?up|price|cost|rate|magkano|hours?|open|close|locat|where|contact|email|phone|stock|product|item|food|buy|cancel|receipt|resibo|refund|schedule|reserv|checkup|consult)\b/i', $text);
+        if (!$topical && preg_match('/\b(help|tulong|paano|what can you do|guide|how do i|how to|how can)\b/i', $text)) {
             return 'help';
         }
 
@@ -418,6 +446,7 @@ class PremiumChatbotService
             'system_summary' => $this->systemSummaryResponse($role),
             'role_workflow_explanation' => $this->workflowExplanationResponse($role),
             'contact_staff' => $this->contactStaffResponse($role),
+            'policy_refusal' => $this->policyRefusalResponse($role),
             default => $this->defaultResponse($role, $message),
         };
     }
@@ -767,9 +796,26 @@ class PremiumChatbotService
     private function contactStaffResponse(string $role): array
     {
         return [
-            'message' => 'For booking or approval concerns, contact the receptionist. For payment proof or receipts, contact the cashier. For medical appointment care, contact veterinary staff. The assistant will not approve bookings, mark payments paid, or deduct inventory directly.',
+            'message' => 'You can reach our team at ' . StoreFacts::phone() . ' or ' . StoreFacts::email()
+                . ' during operating hours (' . StoreFacts::hours() . '). For booking or approval concerns, ask for the receptionist; for payment proof or receipts, the cashier; for medical appointment care, veterinary staff. You can also start a live chat with our staff from the chat widget. The assistant will not approve bookings, mark payments paid, or deduct inventory directly.',
             'actions' => $this->roleQuickActions($role),
             'source' => 'workflow_guardrail',
+        ];
+    }
+
+    /**
+     * Refusal for prompt-injection / data-exfiltration attempts. Deliberately
+     * omits contact details — the eval fixture asserts no address or email
+     * leaks in this response.
+     */
+    private function policyRefusalResponse(string $role): array
+    {
+        return [
+            'message' => "I can only help with " . StoreFacts::name() . " services and your own account — I can't share internal data, other customers' records, or act outside my role. Try asking about our services, bookings, prices, hours, or payments.",
+            'suggestions' => ['Our services', 'Book appointment', 'Operating hours'],
+            'actions' => $this->roleQuickActions($role),
+            'source' => 'policy_guardrail',
+            'confidence' => 1.0,
         ];
     }
 
@@ -952,6 +998,8 @@ class PremiumChatbotService
 
         $best = null;
         $bestRatio = 0.0;
+        $bestKw = 0;
+        $bestQ = 0;
 
         foreach ($faqs as $faq) {
             $keywords = is_array($faq->keywords) ? $faq->keywords : [];
@@ -990,9 +1038,20 @@ class PremiumChatbotService
                 count($questionWords) > 0 ? $qScore / count($questionWords) : 0
             );
 
-            if ($ratio >= 0.5 && $ratio > $bestRatio) {
-                $best = $faq;
-                $bestRatio = $ratio;
+            if ($ratio >= 0.5) {
+                // Ties are common (shared filler words like 'what is your…').
+                // Prefer the candidate whose curated keywords actually hit,
+                // then raw question-word hits, then lower sort_order.
+                $better = $ratio > $bestRatio
+                    || (abs($ratio - $bestRatio) < 1e-9 && $best !== null
+                        && ($kwScore > $bestKw || ($kwScore === $bestKw && $qScore > $bestQ)));
+
+                if ($better) {
+                    $best = $faq;
+                    $bestRatio = $ratio;
+                    $bestKw = $kwScore;
+                    $bestQ = $qScore;
+                }
             }
         }
 
@@ -1335,8 +1394,8 @@ class PremiumChatbotService
             'message' => "📍 **Find Us**\n\n" .
                 "**" . StoreFacts::name() . "**\n" .
                 StoreFacts::address() . "\n\n" .
-                "� **Open:** " . StoreFacts::hours() . "\n" .
-                "� **Phone:** " . StoreFacts::phone(),
+                "🕐 **Open:** " . StoreFacts::hours() . "\n" .
+                "📞 **Phone:** " . StoreFacts::phone(),
             'confidence' => 1.0,
         ];
     }

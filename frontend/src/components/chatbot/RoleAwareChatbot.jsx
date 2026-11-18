@@ -225,11 +225,15 @@ const RoleAwareChatbot = ({
       return;
     }
 
-    // 2. No cache — fetch welcome from API
+    // 2. No cache — fetch welcome from API. Guard against stale resolution:
+    // StrictMode remounts (and real remounts) run this effect twice — a
+    // late-resolving duplicate must not clobber messages sent meanwhile.
+    let cancelled = false;
     const loadWelcome = async () => {
       try {
         setIsBootstrapping(true);
         const data = await fetchChatbotWelcome();
+        if (cancelled) return;
         setMessages([{
           sender: "bot",
           text: data.reply || data.message || "Hi. I can help with your Pawesome workflow.",
@@ -238,12 +242,13 @@ const RoleAwareChatbot = ({
           timestamp: new Date().toISOString(),
         }]);
       } catch (err) {
-        setError(err.message || "Failed to load chatbot.");
+        if (!cancelled) setError(err.message || "Failed to load chatbot.");
       } finally {
-        setIsBootstrapping(false);
+        if (!cancelled) setIsBootstrapping(false);
       }
     };
     loadWelcome();
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Persist messages to localStorage whenever they change ─────────────────
@@ -538,17 +543,6 @@ const RoleAwareChatbot = ({
       setWorkflowState((prev) => ({ ...prev, loading: false, results: normalizeList(data, ["items", "inventory", "products", "results"]) }));
     } catch (err) {
       setWorkflowState((prev) => ({ ...prev, loading: false, error: err.message || "Failed to search inventory." }));
-    }
-  };
-
-  const submitTransactionLookupWorkflow = async (event) => {
-    event.preventDefault();
-    setWorkflowState((prev) => ({ ...prev, loading: true, error: "", results: [] }));
-    try {
-      const data = await apiRequest(`/cashier/transactions/search?q=${workflowState.form.query}`);
-      setWorkflowState((prev) => ({ ...prev, loading: false, results: normalizeList(data, ["transactions", "sales", "results"]) }));
-    } catch (err) {
-      setWorkflowState((prev) => ({ ...prev, loading: false, error: err.message || "Failed to search transactions." }));
     }
   };
 
@@ -1411,8 +1405,7 @@ const RoleAwareChatbot = ({
             workflow === "create_booking" ? "Create Booking" :
             workflow === "appointment_lookup" ? "Appointment Lookup" :
             workflow === "inventory_search" ? "Inventory Search" :
-            workflow === "hotel_booking" ? "Book Pet Hotel Stay" :
-            workflow === "transaction_lookup" ? "Transaction Lookup" : "Workflow"
+            workflow === "hotel_booking" ? "Book Pet Hotel Stay" : "Workflow"
           }
           icon={faComments}
           className="rbac-workflow-modal"
@@ -1466,15 +1459,6 @@ const RoleAwareChatbot = ({
               </form>
             )}
 
-            {workflow === "transaction_lookup" && (
-              <form className="rbac-workflow-form" onSubmit={submitTransactionLookupWorkflow}>
-                <label>Search transactions
-                  <input type="text" value={workflowState.form.query} onChange={(e) => updateWorkflowForm("query", e.target.value)} placeholder="Transaction ID, customer name, or amount" required />
-                </label>
-                <button type="submit" disabled={workflowState.loading}>{workflowState.loading ? "Searching..." : "Search"}</button>
-              </form>
-            )}
-
             {workflow === "hotel_booking" && (
               <form className="rbac-workflow-form" onSubmit={submitHotelBookingWorkflow}>
                 <label>Pet
@@ -1519,13 +1503,6 @@ const RoleAwareChatbot = ({
                         <strong>{item.pet || "Pet"} - {item.service || "Service"}</strong>
                         <span>{item.customer || "Customer"} | {item.status}</span>
                         <span>{item.scheduled_at}</span>
-                      </>
-                    ) : workflow === "transaction_lookup" ? (
-                      <>
-                        <strong>#{item.id || item.transaction_id}</strong>
-                        <span>{item.customer || "Guest"} | {item.payment_type}</span>
-                        <span>Amount: {formatCurrency(Number(item.amount || 0))}</span>
-                        <span>{item.date || item.created_at}</span>
                       </>
                     ) : (
                       <>

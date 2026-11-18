@@ -326,7 +326,6 @@ Route::middleware(['auth.api', 'throttle:api', 'role:customer'])->prefix('custom
     Route::get('boardings', [BoardingController::class, 'index']);
     Route::post('boardings', [BoardingController::class, 'store'])->middleware('verified');
     Route::get('services', [PortalController::class, 'services']);
-    Route::post('chatbot', [PortalController::class, 'chatbot']);
 
     // Customer History Routes
     Route::get('vaccinations/{id}/certificate', [\App\Http\Controllers\Veterinary\MedicalRecordController::class, 'customerVaccinationCertificate']);
