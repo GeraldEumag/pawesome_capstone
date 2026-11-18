@@ -19,6 +19,7 @@ import {
   faUserPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest, clearAuthStorage } from "../../api/client";
+import { useAuth } from "../../context/AuthContext";
 import DatePickerInput from "../../components/shared/DatePickerInput";
 import { formatDateOnly, parseDateOnly } from "../../utils/date";
 import { showSuccess, showError } from "../../utils/alert.jsx";
@@ -65,6 +66,7 @@ const STEPS = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [currentStep, setCurrentStep] = useState(1);
@@ -201,13 +203,13 @@ const Register = () => {
       const user  = getResponseUser(response);
       const token = getResponseToken(response);
       clearAuthStorage();
-      if (token) localStorage.setItem("token", token);
-      localStorage.setItem("role",        user.role         || "customer");
-      localStorage.setItem("name",        user.name         || fullName);
-      localStorage.setItem("username",    user.username     || formData.username.trim());
-      localStorage.setItem("email",       user.email        || formData.emailAddress.trim());
-      localStorage.setItem("middle_name", user.middle_name  || formData.middleName.trim());
-      localStorage.setItem("suffix",      user.suffix       || formData.suffix.trim() || "");
+      login(token, user.role || "customer", {
+        name: user.name || fullName,
+        username: user.username || formData.username.trim(),
+        email: user.email || formData.emailAddress.trim(),
+        middle_name: user.middle_name || formData.middleName.trim(),
+        suffix: user.suffix || formData.suffix.trim() || "",
+      });
 
       const serviceIntent = getServiceIntent();
       const draft = getDraft();
