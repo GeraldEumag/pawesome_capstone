@@ -29,6 +29,7 @@ class SecuritySettingsEnforcementTest extends TestCase
             'username'   => 'tcust_' . bin2hex(random_bytes(4)),
             'email'      => 'tc_' . bin2hex(random_bytes(4)) . '@example.com',
             'password'   => $password,
+            'date_of_birth' => '1990-01-01',
         ];
     }
 

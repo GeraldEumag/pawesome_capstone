@@ -46,6 +46,7 @@ class CustomerBatch1SystemTest extends TestCase
             'username' => 'batch1_new_customer',
             'email' => 'batch1.new@example.com',
             'password' => 'Password123!',
+            'date_of_birth' => '1990-01-01',
         ])
             ->assertStatus(201)
             ->assertJsonStructure(['message', 'user', 'token']);
@@ -68,9 +69,47 @@ class CustomerBatch1SystemTest extends TestCase
             'username' => 'batch1_dup_user',
             'email' => 'taken@example.com',
             'password' => 'Password123!',
+            'date_of_birth' => '1990-01-01',
         ])->assertStatus(422)->assertJsonValidationErrors(['email']);
     }
 
+    public function test_register_requires_a_date_of_birth(): void
+    {
+        $this->postJson('/api/auth/register', [
+            'name' => 'No Dob',
+            'first_name' => 'No',
+            'last_name' => 'Dob',
+            'username' => 'batch1_nodob',
+            'email' => 'batch1.nodob@example.com',
+            'password' => 'Password123!',
+        ])->assertStatus(422)->assertJsonValidationErrors(['date_of_birth']);
+    }
+
+    public function test_register_rejects_an_underage_date_of_birth(): void
+    {
+        $this->postJson('/api/auth/register', [
+            'name' => 'Too Young',
+            'first_name' => 'Too',
+            'last_name' => 'Young',
+            'username' => 'batch1_young',
+            'email' => 'batch1.young@example.com',
+            'password' => 'Password123!',
+            'date_of_birth' => now()->subYears(10)->toDateString(),
+        ])->assertStatus(422)->assertJsonValidationErrors(['date_of_birth']);
+    }
+
+    public function test_register_accepts_someone_who_just_turned_18(): void
+    {
+        $this->postJson('/api/auth/register', [
+            'name' => 'Just Adult',
+            'first_name' => 'Just',
+            'last_name' => 'Adult',
+            'username' => 'batch1_adult',
+            'email' => 'batch1.adult@example.com',
+            'password' => 'Password123!',
+            'date_of_birth' => now()->subYears(18)->toDateString(),
+        ])->assertStatus(201);
+    }
     public function test_login_accepts_email_and_username(): void
     {
         [$user] = $this->customer(true, ['email' => 'login.both@example.com', 'username' => 'batch1_login']);

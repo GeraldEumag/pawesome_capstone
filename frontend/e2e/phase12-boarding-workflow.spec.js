@@ -102,7 +102,7 @@ async function secondCustomer(request, unique) {
   const email = `phase12-other-${unique}@example.test`;
   await request.post(`${apiUrl}/auth/register`, {
     headers: { Accept: "application/json" },
-    data: { name: `Phase12 Other ${unique}`, first_name: "Phase12", last_name: `Other${unique}`, username: `p12other${unique}`, email, password: "Password123!", password_confirmation: "Password123!" },
+    data: { name: `Phase12 Other ${unique}`, first_name: "Phase12", last_name: `Other${unique}`, username: `p12other${unique}`, email, password: "Password123!", password_confirmation: "Password123!", date_of_birth: "1990-01-01" },
   });
   const login = await request.post(`${apiUrl}/auth/login`, { headers: { Accept: "application/json" }, data: { login: email, password: "Password123!" } });
   return login.ok() ? await login.json() : null;

@@ -45,6 +45,7 @@ class DeletedUserEmailReuseTest extends TestCase
             'username'   => $username,
             'email'      => $email,
             'password'   => 'Password123!',
+            'date_of_birth' => '1990-01-01',
         ];
     }
 

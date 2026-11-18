@@ -78,6 +78,7 @@ class ApiResponseEnvelopeTest extends TestCase
             'name' => '',
             'email' => 'not-an-email',
             'password' => 'x',
+            'date_of_birth' => '1990-01-01',
         ]);
 
         $res->assertStatus(422);

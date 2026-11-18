@@ -166,7 +166,7 @@ test("J1 registration validation + customer submits booking through UI", async (
   const dup = await api(request, customer, "POST", "/auth/register", {
     name: "Dup User", first_name: "Dup", last_name: "User", username: `dup${RUN.replace(/\D/g, "")}`,
     email: "customer@example.com", password: "Password123!",
-    password_confirmation: "Password123!",
+    password_confirmation: "Password123!", date_of_birth: "1990-01-01",
   });
   expect([400, 409, 422]).toContain(dup.status);
 
@@ -182,7 +182,7 @@ test("J1 registration validation + customer submits booking through UI", async (
       name: `P9 Demo ${RUN}`, first_name: "P9", last_name: `Demo${RUN}`,
       username: `p9demo${RUN.replace(/\D/g, "")}`,
       email: `p9-demo-${RUN.toLowerCase()}@example.test`,
-      password: "Password123!", password_confirmation: "Password123!",
+      password: "Password123!", password_confirmation: "Password123!", date_of_birth: "1990-01-01",
     },
     headers: { Accept: "application/json" },
   });
