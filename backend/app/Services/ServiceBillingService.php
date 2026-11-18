@@ -241,6 +241,18 @@ class ServiceBillingService
 
     public static function syncServicePaymentState(string $serviceType, int $serviceId, array $metadata = []): array
     {
+        // Lazy inpatient accrual: an open confinement's elapsed days must be
+        // billed before totals are computed, so every read/write path sees a
+        // current bill without waiting for the daily scheduler. Re-entrancy
+        // is guarded inside accrueOpenForAppointment — accrue() itself ends
+        // in this method.
+        if ($serviceType === ServiceItemUsage::SERVICE_VETERINARY) {
+            $appointment = Appointment::find($serviceId);
+            if ($appointment) {
+                ConfinementAccrualService::accrueOpenForAppointment($appointment);
+            }
+        }
+
         // A service with a persisted amount must never have its derived total
         // collapse to zero just because the itemized base row is missing.
         // Materializing it here makes every read/write path converge on the

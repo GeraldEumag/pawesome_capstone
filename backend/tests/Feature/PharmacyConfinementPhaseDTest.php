@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Appointment;
 use App\Models\Customer;
+use App\Models\HotelRoom;
 use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
 use App\Models\InventoryMonthlyAudit;
@@ -18,6 +19,7 @@ use App\Models\VisitConsent;
 use App\Models\WardBed;
 use App\Services\ConfinementAccrualService;
 use App\Services\MarService;
+use App\Services\ServiceBillingService;
 use App\Services\VaccinationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -305,6 +307,93 @@ class PharmacyConfinementPhaseDTest extends TestCase
         // Idempotent — same-day rerun adds nothing.
         $rerun = ConfinementAccrualService::accrue($confinement->fresh());
         $this->assertSame(0, $rerun['accrued_days']);
+    }
+
+    public function test_admission_day_is_billed_on_first_accrual(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $appointment = $this->makeAppointment($vet);
+        $confinement = $this->makeConfinement($appointment, [
+            'daily_rate' => 800,
+            'admitted_at' => now(),
+            'last_accrual_at' => null,
+        ]);
+
+        $result = ConfinementAccrualService::accrue($confinement);
+        $this->assertSame(1, $result['accrued_days']);
+        $this->assertSame(800.0, $result['amount']);
+        $this->assertSame(1, ServiceItemUsage::where('appointment_id', $appointment->id)
+            ->where('usage_type', 'inpatient_accrual')->count());
+    }
+
+    public function test_visit_bill_sync_lazily_accrues_inpatient_days(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $appointment = $this->makeAppointment($vet);
+        $confinement = $this->makeConfinement($appointment, [
+            'daily_rate' => 800,
+            'admitted_at' => now()->subDays(2),
+            'last_accrual_at' => null,
+        ]);
+
+        // No scheduler and no explicit accrue() — syncing the visit bill must
+        // materialize the elapsed inpatient days on its own.
+        $billing = ServiceBillingService::syncServicePaymentState('veterinary', $appointment->id);
+
+        $this->assertSame(3, ServiceItemUsage::where('appointment_id', $appointment->id)
+            ->where('usage_type', 'inpatient_accrual')->count());
+        $this->assertSame(2400.0, $billing['additional_charges']);
+
+        // Idempotent — a second sync adds nothing.
+        ServiceBillingService::syncServicePaymentState('veterinary', $appointment->id);
+        $this->assertSame(3, ServiceItemUsage::where('appointment_id', $appointment->id)
+            ->where('usage_type', 'inpatient_accrual')->count());
+    }
+
+    public function test_assign_room_copies_room_daily_rate_for_billing(): void
+    {
+        $receptionist = $this->userWithToken('receptionist');
+        $vet = $this->userWithToken('veterinary');
+        $appointment = $this->makeAppointment($vet);
+        $confinement = $this->makeConfinement($appointment, ['status' => 'recommended']);
+        $room = HotelRoom::factory()->create(['status' => 'available', 'daily_rate' => 650]);
+
+        $this->withHeaders($this->authHeader($receptionist))
+            ->postJson("/api/receptionist/medical-confinements/{$confinement->id}/assign-room", [
+                'room_id' => $room->id,
+            ])
+            ->assertOk();
+
+        $this->assertSame('650.00', $confinement->fresh()->daily_rate);
+    }
+
+    public function test_admit_leaves_accrual_anchor_unset_so_admission_day_bills(): void
+    {
+        $vet = $this->userWithToken('veterinary');
+        $appointment = $this->makeAppointment($vet);
+        $bed = WardBed::create(['name' => 'ADM-1', 'ward' => 'general', 'daily_rate' => 800]);
+        $confinement = $this->makeConfinement($appointment, [
+            'status' => 'bed_assigned',
+            'ward_bed_id' => $bed->id,
+            'daily_rate' => 800,
+            'admitted_at' => null,
+            'last_accrual_at' => null,
+        ]);
+
+        $this->withHeaders($this->authHeader($vet))
+            ->postJson("/api/veterinary/medical-confinements/{$confinement->id}/admit", [])
+            ->assertOk();
+
+        $fresh = $confinement->fresh();
+        $this->assertSame('admitted', $fresh->status);
+        $this->assertNull($fresh->last_accrual_at);
+        $this->assertNotNull($fresh->admitted_at);
+
+        // The admission day appears on the visit bill as soon as it is read.
+        $billing = ServiceBillingService::syncServicePaymentState('veterinary', $appointment->id);
+        $this->assertSame(1, ServiceItemUsage::where('appointment_id', $appointment->id)
+            ->where('usage_type', 'inpatient_accrual')->count());
+        $this->assertSame(800.0, $billing['additional_charges']);
     }
 
     // ── Release: financial clearance + manager override ────────────

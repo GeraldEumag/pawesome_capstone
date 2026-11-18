@@ -227,6 +227,7 @@ class MedicalConfinementController extends Controller
             $confinement->update([
                 'room_id' => $room->id,
                 'estimated_cost' => $request->input('estimated_cost', $confinement->estimated_cost),
+                'daily_rate' => $room->daily_rate !== null ? (float) $room->daily_rate : $confinement->daily_rate,
                 'status' => 'approved_for_admission',
             ]);
 
@@ -299,7 +300,9 @@ class MedicalConfinementController extends Controller
                 'status' => 'admitted',
                 'admitted_by' => $request->user()?->id,
                 'admitted_at' => now(),
-                'last_accrual_at' => now(),
+                // Leave last_accrual_at null: the first accrual then bills the
+                // admission day itself instead of skipping to the next day.
+                'last_accrual_at' => null,
             ]);
 
             return null;
