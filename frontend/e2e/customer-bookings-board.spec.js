@@ -5,7 +5,7 @@ const { test, expect } = require("@playwright/test");
 const { apiLogin } = require("./test-utils");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 const TAB_ORDER = ["all", "to_approve", "on_going", "ready_to_pickup", "complete", "canceled"];
 
 const authHeaders = (session) => ({ Accept: "application/json", Authorization: `Bearer ${session.token}` });

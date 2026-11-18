@@ -19,7 +19,7 @@ test.describe("Customer dashboard revisions", () => {
     const { token } = await apiLogin(request, "customer");
     let created;
     for (let attempt = 0; attempt < 4; attempt += 1) {
-      created = await request.post(`${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api/customer/pets`, {
+      created = await request.post(`${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api/customer/pets`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
         data: { name: `E2E Breed ${Date.now()}`, species: "Dog", breed: "Labrador Retriever" },
       });

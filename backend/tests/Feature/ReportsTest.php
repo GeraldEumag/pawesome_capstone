@@ -294,9 +294,9 @@ class ReportsTest extends TestCase
      */
     public function test_sales_report_excludes_cancelled_sales_from_revenue(): void
     {
-        Sale::factory()->create(['status' => 'completed', 'type' => 'sale', 'amount' => 500, 'created_at' => now()]);
-        Sale::factory()->create(['status' => 'cancelled', 'type' => 'sale', 'amount' => 900, 'created_at' => now()]);
-        Sale::factory()->create(['status' => 'completed', 'type' => 'refund', 'amount' => 300, 'created_at' => now()]);
+        Sale::factory()->create(['status' => 'completed', 'type' => 'product', 'amount' => 500, 'created_at' => now()]);
+        Sale::factory()->create(['status' => 'cancelled', 'type' => 'product', 'amount' => 900, 'created_at' => now()]);
+        Sale::factory()->create(['status' => 'completed', 'type' => 'appointment', 'amount' => 300, 'created_at' => now()]);
 
         $response = $this->getJson('/api/admin/reports/sales', $this->withAdminAuth());
 

@@ -5,7 +5,7 @@ const { test, expect } = require("@playwright/test");
 const { apiLogin } = require("./test-utils");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 
 test("a grooming booking on a later date is reachable from receptionist grooming", async ({ browser, request }) => {
   test.setTimeout(120000);

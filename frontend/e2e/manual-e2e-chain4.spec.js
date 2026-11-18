@@ -15,7 +15,7 @@ const path = require("node:path");
 const rootDir = path.resolve(__dirname, "../..");
 const auditDir = path.join(rootDir, "docs", "user-manual", "audit");
 const resultsPath = path.join(auditDir, "runtime-verification-chain4.json");
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 
 const { apiLogin } = require("./test-utils");
 const { execSync } = require("node:child_process");

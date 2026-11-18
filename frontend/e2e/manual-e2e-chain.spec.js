@@ -14,7 +14,7 @@ const shotDir = path.join(rootDir, "docs", "user-manual", "screenshots");
 const auditDir = path.join(rootDir, "docs", "user-manual", "audit");
 const resultsPath = path.join(auditDir, "runtime-verification-chain.json");
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 
 const { apiLogin } = require("./test-utils");
 

@@ -7,7 +7,7 @@ const path = require("node:path");
 const rootDir = path.resolve(__dirname, "../..");
 const evidenceDir = path.join(rootDir, "browser-evidence", "cashier-deep-link");
 const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 const PNG = fs.readFileSync(path.join(__dirname, "..", "src", "assets", "PAWESOME TEST GCASH.png"));
 
 const { apiLogin: sharedApiLogin } = require("./test-utils");

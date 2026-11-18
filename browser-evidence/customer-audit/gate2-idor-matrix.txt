@@ -1,0 +1,103 @@
+=== CONTROL: A on own resources ===
+200 | A own pet 1 | GET /customer/pets/1
+200 | A own SR 4 | GET /customer/my-requests
+200 | A own boarding 2 | GET /customer/boardings/2
+200 | A own boarding 1 | GET /customer/boardings/1
+404 | A own grooming 4 | GET /customer/grooming/4
+404 | A own pet photo | GET /files/pet-photos/1/view
+=== IDOR: B token on A resources ===
+404 | B read A pet 1 | GET /customer/pets/1
+404 | B read A pet (shared) | GET /pets/1
+422 | B update A pet 1 | PUT /customer/pets/1
+404 | B delete A pet 1 | DELETE /customer/pets/1
+422 | B archive A pet 1 | POST /customer/pets/1/archive
+404 | B unarchive A pet 1 | POST /customer/pets/1/unarchive
+404 | B medhistory A pet | GET /customer/pets/1/medical-history
+404 | B cancel A SR 4 | PATCH /customer/requests/4/cancel
+404 | B receipt A SR 4 | GET /customer/requests/4/receipt
+404 | B read A boarding 2 | GET /customer/boardings/2
+404 | B read A boardingreq 2 | GET /customer/boarding-requests/2
+404 | B read A boarding 1 | GET /customer/boardings/1
+404 | B cancel A boarding 2 | POST /customer/boardings/2/cancel
+404 | B cancel A boardingreq | POST /customer/boarding-requests/2/cancel
+404 | B carelogs A boarding | GET /customer/boarding-requests/2/care-logs
+404 | B read A grooming 4 | GET /customer/grooming/4
+404 | B A confinements list | GET /customer/medical-confinements/1
+404 | B conf carelogs | GET /customer/medical-confinements/1/care-logs
+404 | B conf notes | GET /customer/medical-confinements/1/medical-notes
+404 | B conf proof | POST /customer/medical-confinements/1/payment-proof
+403 | B pet photo A | GET /files/pet-photos/1/view
+403 | B vacc card A bd2 | GET /files/vaccination-cards/2/view
+200 | B billing A | GET /customer/billing
+404 | B receipt-status A | GET /customer/receipts/service_request/4
+404 | B submit ref on A | POST /customer/receipts/1/reference
+=== IDOR: A token on B resources (pet 6, SR 6) ===
+404 | A read B pet 6 | GET /customer/pets/6
+404 | A cancel B SR 6 | PATCH /customer/requests/6/cancel
+422 | A update B pet 6 | PUT /customer/pets/6
+=== Verified email gate: B unverified? (B is verified now; use fresh unverified later) ===
+=== Notification IDOR ===
+404 | B read A notif 39 | POST /notifications/39/read
+404 | B del A notif 39 | DELETE /notifications/39
+=== Role boundary: customer on staff prefixes ===
+403 | cust->/api/admin/dashboard | GET /admin/dashboard
+403 | cust->/api/receptionist/dashboard | GET /receptionist/dashboard
+403 | cust->/api/cashier/dashboard | GET /cashier/dashboard
+403 | cust->/api/inventory/dashboard | GET /inventory/dashboard
+403 | cust->/api/veterinary/dashboard | GET /veterinary/dashboard
+403 | cust->/api/manager/dashboard | GET /manager/dashboard
+403 | cust->/api/admin/users | GET /admin/users
+403 | cust->/api/receptionist/requests | GET /receptionist/requests
+403 | cust->/api/cashier/payment-requests | GET /cashier/payment-requests
+=== Unauthenticated ===
+401 | unauth pets | GET /customer/pets
+401 | unauth SR | GET /customer/my-requests
+
+=== FILE VIEWER AUTHZ (corrected probes) ===
+200 ct=image/png | A | /files/payment-proofs/service-request/5/view   (owner OK)
+403 | B | /files/payment-proofs/service-request/5/view                (IDOR denied)
+200 ct=image/png | A | /files/payment-proofs/service-request/8/view   (owner OK)
+403 | B | /files/payment-proofs/service-request/8/view                (IDOR denied)
+200 | A | /files/vaccination-cards/2/view                              (owner OK)
+403 | B | /files/vaccination-cards/2/view                              (IDOR denied)
+403 | A | /files/payment-receipts/{1,2}/view                           (staff-only by design — correct)
+400 | both | /files/payment-proofs/service_request/5/view              (invalid type token — correct)
+
+=== LIVE CHAT IDOR ===
+403 | B poll A session messages
+403 | B post into A session
+403 | B close A session
+200 | B own mySession (null — no session)
+
+=== VERIFIED GATE ===
+403 email_unverified | C unverified POST /customer/requests
+403 email_unverified | C unverified POST /customer/boardings
+
+=== FILE UPLOAD VALIDATION ===
+422 | PHP-content renamed .png (MIME sniff reject)
+422 | 6MB PNG (oversize reject)
+422 | MZ exe renamed .jpg (content/ext mismatch reject)
+200 | valid PNG accepted → payment_status=pending (never paid)
+
+=== PAYMENT STATE ===
+403 | B proof on A SR5 (foreign payable)
+403 | A proof on B SR6 (foreign payable)
+200 | A proof on own SR5 → pending, linked grooming#4 pending, verified_by NULL
+
+=== MASS ASSIGNMENT (DB-verified) ===
+PUT /auth/profile role:admin → 200 but users.role unchanged (ignored)
+POST /customer/pets customer_id:2 → 201 but persisted customer_id=1 (owner-derived)
+POST /customer/requests {customer_id:10,status:approved,payment_status:paid,price:0.01}
+  → 201 persisted customer_id=9, pending, unpaid, server-priced 450.00, approved_by/verified_by NULL
+POST /auth/register role:admin → user created as role=customer (role field ignored)
+
+=== IDEMPOTENCY (probe double-fire accident, DB-verified) ===
+duplicate PATCH cancel on same SR → 422 "Only pending requests can be cancelled" (clean)
+duplicate POST /customer/pets → two pet rows (acceptable — pets are master data, not transactions)
+
+=== OBSERVATIONS (non-defect) ===
+- GET /customer/grooming/{id} routes to App\Http\Controllers\GroomingController
+  (GroomingAppointment entity + ownership check) not Api\GroomingController/groomings —
+  legacy parity route; owner-safe 404; frontend does not call it.
+- PUT/POST mutations validate before ownership (422 on invalid payloads vs 404) —
+  read paths consistently 404; acceptable, no data leaked.

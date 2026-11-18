@@ -7,7 +7,7 @@ const path = require("node:path");
 const rootDir = path.resolve(__dirname, "../..");
 const evidenceDir = path.join(rootDir, "browser-evidence", "customer-my-requests-link");
 const frontendUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 
 const { apiLogin } = require("./test-utils");
 

@@ -17,7 +17,7 @@ const auditDir = path.join(rootDir, "docs", "user-manual", "audit");
 const resultsPath = path.join(auditDir, "runtime-verification-chain3.json");
 const backendLog = path.join(rootDir, "backend", "storage", "logs", "laravel.log");
 const pinFile = path.join(rootDir, ".kiosk-pin.tmp");
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 
 const { apiLogin } = require("./test-utils");
 

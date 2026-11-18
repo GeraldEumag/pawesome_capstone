@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
-const apiUrl = `${process.env.E2E_API_URL || "http://127.0.0.1:8000"}/api`;
+const apiUrl = `${(process.env.E2E_API_URL || "http://127.0.0.1:8000").replace(/\/api\/?$/, "")}/api`;
 
 test.describe('Receptionist Dashboard end-to-end', () => {
   const { loginAs, mockLoginAs, getDashboardPath, apiLogin } = require('./test-utils');

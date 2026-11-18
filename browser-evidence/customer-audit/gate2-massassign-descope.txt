@@ -1,0 +1,18 @@
+=== MASS ASSIGNMENT: profile ===
+200 | A role=admin | PUT /auth/profile
+201 | A pet customer_id | POST /customer/pets
+422 | A SR spoof fields | POST /customer/requests
+=== PAYMENT MANIPULATION ===
+422 | A proof on pending SR4 (unpaid+pending-status) | POST /customer/requests/4/payment-proof
+422 | A mark paid via PATCH status | PATCH /customer/requests/4/cancel
+422 | B proof on A SR4 | POST /customer/requests/4/payment-proof
+422 | B cancel B own SR6 (control) | PATCH /customer/requests/6/cancel
+=== DESCOPE BOUNDARY (expect 410) ===
+410 | checkout | POST /customer/store/checkout
+410 | order cancel | POST /customer/store/orders/1/cancel
+410 | order proof | POST /customer/store/orders/1/payment-proof
+200 | orders read | GET /customer/store/orders
+404 | order read | GET /customer/store/orders/1
+404 | order receipt | GET /customer/store/orders/1/receipt
+=== ROLE-BY-CREATE: register with role field ===
+422 | register role | POST /auth/register
