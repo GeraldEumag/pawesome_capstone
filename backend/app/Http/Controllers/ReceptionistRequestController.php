@@ -46,7 +46,7 @@ class ReceptionistRequestController extends Controller
     {
         $requestType = strtolower((string) $serviceRequest->request_type);
 
-        return $requestType === 'hotel' || $requestType === 'boarding';
+        return in_array($requestType, ['hotel', 'boarding', 'pet_hotel'], true);
     }
 
     private function resolveCustomer(ServiceRequest $serviceRequest): ?Customer
@@ -250,9 +250,17 @@ class ReceptionistRequestController extends Controller
         // Role-based status validation
         $user = $request->user();
         $status = 'pending'; // Default for customers
-        
+
+        // Staff may not directly approve via store — use POST approve or PATCH status
+        // after the request exists. Approved requests require linked records and
+        // attribution, which the store path does not create.
         if ($user && $user->hasRoleAccess('receptionist', 'admin')) {
             $status = $validated['status'] ?? 'scheduled'; // Default to scheduled for receptionist/admin
+            if ($status === 'approved') {
+                return response()->json([
+                    'message' => 'Direct approval via store is not allowed. Use the approve endpoint after the request is created.',
+                ], 422);
+            }
         }
 
         $requestType = $validated['request_type'] ?? $validated['service_type'] ?? 'grooming';
@@ -273,8 +281,16 @@ class ReceptionistRequestController extends Controller
 
         // Customers booking through this endpoint are online requests;
         // receptionist/admin-created requests are counter (walk-in) entries.
+        $bookingChannel = null;
         if (Schema::hasColumn('service_requests', 'booking_channel')) {
-            $createData['booking_channel'] = \App\Support\BookingChannel::forUser($user);
+            $bookingChannel = \App\Support\BookingChannel::forUser($user);
+            $createData['booking_channel'] = $bookingChannel;
+        }
+
+        // Walk-in bookings default to unpaid (no proof upload path);
+        // online bookings default to pending (proof uploaded later).
+        if (Schema::hasColumn('service_requests', 'payment_status')) {
+            $createData['payment_status'] = $bookingChannel === \App\Support\BookingChannel::WALK_IN ? 'unpaid' : 'pending';
         }
 
         if (Schema::hasColumn('service_requests', 'price')) {
@@ -606,6 +622,47 @@ class ReceptionistRequestController extends Controller
                         ServiceItemUsage::SERVICE_BOARDING,
                         (int) $boarding->id
                     );
+
+                    // Create room reservation for hotel approvals via PATCH
+                    // to match the POST approve invariant. Uses the assigned
+                    // room_id from the request or auto-assigns one if missing.
+                    $roomService = app(\App\Services\BoardingRoomService::class);
+                    $roomId = (int) ($serviceRequest->boarding_room_id ?? 0);
+                    if (!$roomId && $checkIn) {
+                        $available = $roomService->getAvailableRooms(
+                            $pet->id,
+                            $checkIn,
+                            $checkOut,
+                            $serviceRequest->room_type ?: null
+                        );
+                        if (($available['success'] ?? false) && !empty($available['rooms'][0]['id'])) {
+                            $roomId = (int) $available['rooms'][0]['id'];
+                        }
+                    }
+                    if ($roomId) {
+                        $reservationResult = $roomService->createRoomReservation(
+                            $roomId,
+                            'service_request',
+                            $serviceRequest->id,
+                            $pet->id,
+                            $checkIn,
+                            $checkOut,
+                            $customer->id
+                        );
+                        if (!($reservationResult['success'] ?? false)) {
+                            return response()->json([
+                                'message' => 'Room reservation failed: ' . ($reservationResult['message'] ?? 'unknown'),
+                            ], 422);
+                        }
+                        $assignedRoom = $reservationResult['room'] ?? \App\Models\BoardingRoom::find($roomId);
+                        if ($assignedRoom) {
+                            $serviceRequest->boarding_room_id = $assignedRoom->id;
+                            $serviceRequest->room_name = $assignedRoom->room_name;
+                            $serviceRequest->room_type = $assignedRoom->room_type;
+                            $serviceRequest->daily_rate = $assignedRoom->daily_rate;
+                            $serviceRequest->save();
+                        }
+                    }
 
                     if ($boardingTotal > 0) {
                         $requestUpdates = [];
