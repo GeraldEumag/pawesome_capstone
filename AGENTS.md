@@ -74,9 +74,11 @@ Loose root-level PHP scripts were removed from `backend/` during the F-01
 security containment (Phase 0): the repository must not carry
 HTTP-reachable password/token/mutation utilities. The retained audit and
 fixture utilities now live in `C:/xampp/pawesome-maintenance/` — outside
-the Apache document root and outside the repository. They resolve the
-backend via `PAWESOME_BACKEND` (default `C:/xampp/htdocs/Pawesome_Capstone/backend`);
-see `C:/xampp/pawesome-maintenance/README.md`.
+the Apache document root and outside the repository. They resolve paths via
+`PAWESOME_ROOT` (default `C:/xampp/htdocs/Pawesome`), `PAWESOME_BACKEND`
+(default `<root>/backend`), and `PAWESOME_API` (default
+`http://127.0.0.1:8000/api`); reports are written under
+`<root>/browser-evidence/`. See `C:/xampp/pawesome-maintenance/README.md`.
 
 ```bash
 php C:/xampp/pawesome-maintenance/pawesome_cross_role_e2e_audit.php          # Gate A: Cross-role E2E
