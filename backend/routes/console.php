@@ -8,7 +8,12 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('notifications:send-reminders')->dailyAt('08:00');
+// Hourly (not a single morning run): reminders target tomorrow's bookings and
+// are deduped by reminder_sent_at, so extra runs are no-ops while same-day
+// bookings for tomorrow still get reminded within the hour. withoutOverlapping
+// closes the check-then-set race if a manual artisan run ever coincides with
+// the scheduled one — the cache mutex serializes the send loop.
+Schedule::command('notifications:send-reminders')->hourly()->withoutOverlapping(30);
 
 // Email delivery outbox: republish missed pending intents and reconcile
 // stale processing rows (crash after possible provider acceptance).
