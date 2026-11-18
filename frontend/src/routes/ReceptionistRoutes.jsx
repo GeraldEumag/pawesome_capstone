@@ -10,6 +10,7 @@ const ReceptionistVeterinaryBookings = lazy(() => import("../components/receptio
 const ReceptionistGroomingBookings = lazy(() => import("../components/receptionist/ReceptionistGroomingBookings"));
 const ReceptionistManageServices = lazy(() => import("../components/receptionist/ReceptionistManageServices"));
 const ReceptionistWalkIns = lazy(() => import("../components/receptionist/ReceptionistWalkIns"));
+const ReceptionistConfinements = lazy(() => import("../components/receptionist/ReceptionistConfinements"));
 const CustomerManagement = lazy(() => import("../components/receptionist/ReceptionistCustomerManagement"));
 const CustomersProfile = lazy(() => import("../components/receptionist/ReceptionistCustomersProfile"));
 const ProfileSettings = lazy(() => import("../components/shared/ProfileSettings"));
@@ -58,7 +59,7 @@ const ReceptionistRoutes = () => (
 
         <Route path="chatbot" element={<ReceptionistChatbot />} />
         <Route path="live-chat" element={<LiveChatInbox />} />
-        <Route path="medical-confinements" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
+        <Route path="medical-confinements" element={<ReceptionistConfinements />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="orders" element={<Navigate to="/receptionist/bookings/hotel" replace />} />
         <Route path="history" element={<ReceptionistHistory />} />

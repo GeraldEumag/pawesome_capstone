@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             LandingPageContentSeeder::class, // Landing page CMS content
             BoardingRoomSeeder::class, // Pet Hotel boarding rooms (dog/cat/daycare)
             HotelRoomSeeder::class, // Legacy Pet Hotel rooms (receptionist Hotel Rooms tab)
+            WardBedSeeder::class, // Inpatient ward beds for medical-confinement admission + daily billing
             Attendance2027Seeder::class, // Realistic full-year 2027 attendance for payroll demos
         ]);
     }

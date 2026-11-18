@@ -8,6 +8,7 @@ import {
   FaCut,
   FaWrench,
   FaUserPlus,
+  FaBed,
   FaChevronDown,
   FaChevronUp,
   FaUser,
@@ -116,6 +117,13 @@ const ReceptionistSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
           <li className="nav-item">
             <NavLink to="/receptionist/walk-ins" onClick={handleNavClick}>
               <FaUserPlus className="nav-icon" /> Walk-ins
+            </NavLink>
+          </li>
+
+          {/* Medical Confinements */}
+          <li className="nav-item">
+            <NavLink to="/receptionist/medical-confinements" onClick={handleNavClick}>
+              <FaBed className="nav-icon" /> Confinements
             </NavLink>
           </li>
 

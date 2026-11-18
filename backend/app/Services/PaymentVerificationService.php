@@ -607,7 +607,7 @@ class PaymentVerificationService
     private function settledAmount(string $table, object $record): float
     {
         $candidates = match ($table) {
-            'medical_confinements' => ['final_amount', 'total_amount', 'amount'],
+            'medical_confinements' => ['final_amount', 'estimated_cost', 'total_amount', 'amount'],
             'service_billing_payment_requests' => ['amount_due'],
             'service_requests' => ['total_amount', 'price'],
             default => ['total_amount', 'price', 'amount'],
