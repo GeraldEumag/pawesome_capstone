@@ -48,6 +48,19 @@ class AuthController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        // A live customers row already carrying this email blocks registration
+        // only when it still belongs to a live account. Rows orphaned by
+        // pre-tombstone deletions or walk-in records are reclaimed inside the
+        // transaction — otherwise they hit the customers.email unique index
+        // and surfaced as a 500 on the deployed site.
+        $blockingCustomer = Customer::where('email', $request->email)
+            ->whereNotNull('user_id')
+            ->whereHas('user')
+            ->exists();
+        if ($blockingCustomer) {
+            return response()->json(['errors' => ['email' => ['The email has already been taken.']]], 422);
+        }
+
         $user = DB::transaction(function () use ($request) {
             $user = User::create([
                 'name' => $request->name,
@@ -71,16 +84,28 @@ class AuthController extends Controller
                 'is_active' => true,
             ]);
 
-            Customer::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'phone' => $request->phone,
-                    'address' => $request->address,
+            // Reclaim an orphaned customer record carrying this email so its
+            // history (pets, visits) follows the new account instead of
+            // colliding with the customers.email unique index.
+            $customer = Customer::where('email', $request->email)->first();
+            if ($customer) {
+                $customer->update([
+                    'user_id'   => $user->id,
+                    'name'      => $request->name,
+                    'phone'     => $request->phone,
+                    'address'   => $request->address,
                     'is_active' => true,
-                ]
-            );
+                ]);
+            } else {
+                Customer::create([
+                    'user_id'   => $user->id,
+                    'name'      => $request->name,
+                    'email'     => $request->email,
+                    'phone'     => $request->phone,
+                    'address'   => $request->address,
+                    'is_active' => true,
+                ]);
+            }
 
             return $user;
         });

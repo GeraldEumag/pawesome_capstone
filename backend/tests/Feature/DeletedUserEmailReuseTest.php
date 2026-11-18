@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -238,5 +239,72 @@ class DeletedUserEmailReuseTest extends TestCase
 
         $this->postJson('/api/auth/register', $this->registerPayload($email, 'receptgone'))
             ->assertStatus(201);
+    }
+
+    /**
+     * Deployed leftover: an account deleted BEFORE tombstoning kept a live
+     * customers row holding the email — registration hit a 500 duplicate on
+     * customers.email. The orphan must be reclaimed, not collide.
+     */
+    public function test_register_reclaims_customer_orphaned_by_pre_fix_deletion(): void
+    {
+        $email = 'orphan@gmail.com';
+        $user = User::factory()->create([
+            'role' => 'customer', 'email' => $email, 'username' => 'olduser', 'is_active' => true,
+        ]);
+        $customer = Customer::create([
+            'user_id' => $user->id, 'name' => 'OLD USER', 'email' => $email, 'is_active' => true,
+        ]);
+
+        // Post-migration state of a pre-fix deletion: tombstoned user row,
+        // live customer row still carrying the real email.
+        DB::table('users')->where('id', $user->id)->update([
+            'deleted_at'        => now(),
+            'original_email'    => $email,
+            'original_username' => 'olduser',
+            'email'             => "deleted_{$user->id}@users.invalid",
+            'username'          => "deleted_{$user->id}",
+        ]);
+
+        $this->postJson('/api/auth/register', $this->registerPayload($email, 'newuser'))
+            ->assertStatus(201);
+
+        $newUser = User::where('email', $email)->firstOrFail();
+        $customer->refresh();
+        $this->assertSame($newUser->id, $customer->user_id);
+        $this->assertSame(1, Customer::where('email', $email)->count());
+    }
+
+    /** A walk-in customer record with no live account must not block sign-up. */
+    public function test_register_reclaims_walk_in_customer_without_live_user(): void
+    {
+        $email = 'walkin@gmail.com';
+        $customer = Customer::create([
+            'user_id' => null, 'name' => 'WALK IN', 'email' => $email, 'is_active' => true,
+        ]);
+
+        $this->postJson('/api/auth/register', $this->registerPayload($email, 'walkin'))
+            ->assertStatus(201);
+
+        $newUser = User::where('email', $email)->firstOrFail();
+        $this->assertSame($newUser->id, $customer->refresh()->user_id);
+    }
+
+    /** A customer row still linked to a LIVE user keeps the email protected. */
+    public function test_register_blocked_when_email_belongs_to_live_linked_customer(): void
+    {
+        $email = 'taken@gmail.com';
+        $live = User::factory()->create([
+            'role' => 'customer', 'email' => 'other@gmail.com', 'username' => 'liveu', 'is_active' => true,
+        ]);
+        Customer::create([
+            'user_id' => $live->id, 'name' => 'LIVE', 'email' => $email, 'is_active' => true,
+        ]);
+
+        $this->postJson('/api/auth/register', $this->registerPayload($email, 'newbie'))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
+
+        $this->assertSame(0, User::where('email', $email)->count());
     }
 }
