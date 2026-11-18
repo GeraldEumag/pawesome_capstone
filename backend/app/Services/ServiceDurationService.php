@@ -63,6 +63,11 @@ class ServiceDurationService
         return Carbon::parse($dateTime, self::STORE_TIMEZONE)->setTimezone(self::STORE_TIMEZONE);
     }
 
+    public static function storeToday(): string
+    {
+        return Carbon::now(self::STORE_TIMEZONE)->toDateString();
+    }
+
     public static function isSameDayBookingClosed(string $requestedDate): bool
     {
         $now = Carbon::now(self::STORE_TIMEZONE);
