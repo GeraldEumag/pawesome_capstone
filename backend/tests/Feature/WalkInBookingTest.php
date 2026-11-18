@@ -94,7 +94,11 @@ class WalkInBookingTest extends TestCase
             'stay_type' => 'hotel_boarding',
             'booking_channel' => 'walk_in',
             'status' => 'pending',
+            // 'unpaid' — pending means a proof was submitted; the cashier
+            // queue only collects walk-ins at unpaid.
+            'payment_status' => 'unpaid',
         ]);
+        $this->assertSame('unpaid', ServiceRequest::find($serviceRequestId)->payment_status);
 
         // The room is actually held — this is what blocks availability and
         // what the bookings board reads for the room assignment.
@@ -115,6 +119,25 @@ class WalkInBookingTest extends TestCase
             ->getJson('/api/receptionist/walk-ins')
             ->assertOk()
             ->assertJsonFragment(['id' => $serviceRequestId]);
+
+        // Once the receptionist approves it, the unpaid walk-in must enter
+        // the cashier payment queue — this is the defect that hid every
+        // hotel walk-in from the payments list.
+        Boarding::whereKey($boardingId)->update(['status' => 'approved']);
+
+        $cashier = User::factory()->cashier()->create();
+        $queue = $this->withHeaders($this->authHeaders($cashier))
+            ->getJson('/api/cashier/payment-requests')
+            ->assertOk();
+
+        $this->assertContains(
+            $boardingId,
+            collect($queue->json('payments') ?? $queue->json('data') ?? $queue->json())
+                ->where('payable_type', 'boarding')
+                ->pluck('id')
+                ->all(),
+            'Approved walk-in boarding must appear in the cashier payment queue'
+        );
     }
 
     public function test_hotel_walk_in_for_new_customer_creates_account_pet_boarding_and_reservation(): void

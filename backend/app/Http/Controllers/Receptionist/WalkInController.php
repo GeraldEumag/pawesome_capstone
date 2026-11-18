@@ -250,7 +250,10 @@ class WalkInController extends Controller
                     'request_time' => $bookingData['request_time'] ?? null,
                     'notes' => $bookingData['notes'] ?? null,
                     'status' => 'pending',
-                    'payment_status' => 'pending',
+                    // 'unpaid', not 'pending' — pending means a proof was
+                    // submitted for verification; nothing was submitted yet.
+                    // The cashier queue only collects walk-ins at 'unpaid'.
+                    'payment_status' => 'unpaid',
                     'price' => 0, // Will be updated below for hotel, or on approval
                     'booking_channel' => \App\Support\BookingChannel::WALK_IN,
                 ]);
@@ -346,7 +349,7 @@ class WalkInController extends Controller
                         'boarding_type' => $bookingData['room_type'] ?? $boardingRoom?->room_type,
                         'total_amount' => $totalAmount,
                         'status' => 'pending',
-                        'payment_status' => 'pending',
+                        'payment_status' => 'unpaid',
                         'notes' => $bookingData['special_requests'] ?? null,
                         'stay_type' => 'hotel_boarding',
                         'booking_channel' => \App\Support\BookingChannel::WALK_IN,
