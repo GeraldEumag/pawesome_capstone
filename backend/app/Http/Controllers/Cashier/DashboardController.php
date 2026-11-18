@@ -130,8 +130,8 @@ class DashboardController extends Controller
 
     public function sales(Request $request)
     {
-        $perPage = (int) $request->get('per_page', 50);
-        $page    = (int) $request->get('page', 1);
+        $perPage = min(max((int) $request->get('per_page', 50), 1), 200);
+        $page    = max((int) $request->get('page', 1), 1);
 
         $query = Sale::latest();
 
@@ -152,11 +152,18 @@ class DashboardController extends Controller
 
     public function transactions(?Request $request = null)
     {
-        $perPage = $request ? (int) $request->get('per_page', 50) : 50;
+        $perPage = $request ? min((int) $request->get('per_page', 50), 500) : 50;
         $page    = $request ? (int) $request->get('page', 1) : 1;
         $search  = $request ? trim((string) $request->get('search', '')) : '';
         $method  = $request ? $request->get('method', 'all') : 'all';
         $dateFilter = $request ? $request->get('date_filter', 'all') : 'all';
+        // Explicit date-range/status filters sent by the reports UI
+        // (the backend previously accepted only date_filter/method, so
+        // from/to/status were silently ignored).
+        $from = $request ? ($request->get('from') ?: $request->get('start_date')) : null;
+        $to   = $request ? ($request->get('to') ?: $request->get('end_date')) : null;
+        $statusFilter = $request ? $request->get('status') : null;
+        $salespersonId = $request ? ($request->get('salesperson_id') ?: $request->get('cashier_id')) : null;
 
         // Get traditional sales (POS transactions)
         $sales = Sale::latest()->limit(200)->get()->map(function ($sale) {
@@ -173,6 +180,8 @@ class DashboardController extends Controller
                 'date' => $sale->created_at,
                 'created_at' => $sale->created_at,
                 'status' => $sale->status ?? 'completed',
+                'cashier_id' => $sale->cashier_id,
+                'salesperson_id' => $sale->cashier_id,
             ];
         });
 
@@ -226,7 +235,7 @@ class DashboardController extends Controller
                     'transaction_id' => $request->id,
                     'customer' => $request->customer_name ?? 'Customer',
                     'customer_name' => $request->customer_name ?? 'Customer',
-                    'amount' => $request->total_amount ?? $request->price ?? $request->service_price ?? 500,
+                    'amount' => $request->total_amount ?? $request->price ?? $request->service_price ?? 0,
                     'method' => $request->payment_method ?? 'Service Payment',
                     'payment_method' => $request->payment_method ?? 'Service Payment',
                     'type' => 'service_payment',
@@ -323,13 +332,64 @@ class DashboardController extends Controller
             })->values();
         }
 
+        // Apply explicit date range (from/to)
+        if ($from || $to) {
+            $fromDate = $from ? \Carbon\Carbon::parse($from)->startOfDay() : null;
+            $toDate = $to ? \Carbon\Carbon::parse($to)->endOfDay() : null;
+            $allTransactions = $allTransactions->filter(function ($t) use ($fromDate, $toDate) {
+                $date = \Carbon\Carbon::parse($t['date'] ?? null);
+                if (!$date) return false;
+                if ($fromDate && $date->lt($fromDate)) return false;
+                if ($toDate && $date->gt($toDate)) return false;
+                return true;
+            })->values();
+        }
+
+        // Apply status filter
+        if ($statusFilter && $statusFilter !== 'all') {
+            $allTransactions = $allTransactions->filter(function ($t) use ($statusFilter) {
+                return strtolower((string) ($t['status'] ?? '')) === strtolower((string) $statusFilter);
+            })->values();
+        }
+
+        // Apply salesperson filter (POS sales only carry a cashier)
+        if ($salespersonId && $salespersonId !== 'all') {
+            $allTransactions = $allTransactions->filter(function ($t) use ($salespersonId) {
+                return (int) ($t['cashier_id'] ?? $t['salesperson_id'] ?? 0) === (int) $salespersonId;
+            })->values();
+        }
+
         $total = $allTransactions->count();
         $offset = ($page - 1) * $perPage;
         $paginated = $allTransactions->slice($offset, $perPage)->values();
 
+        // Summary over the FULL filtered set (not the visible page), so the
+        // report cards never mistake a page slice for the whole dataset.
+        // "Sales" excludes cancelled/voided/refunded rows — those are not
+        // collected revenue.
+        $revenueRows = $allTransactions->filter(
+            fn ($t) => !in_array(strtolower((string) ($t['status'] ?? '')), ['cancelled', 'voided', 'refunded'], true)
+        );
+        $todayStr = now()->toDateString();
+        $todayRows = $revenueRows->filter(function ($t) use ($todayStr) {
+            $date = \Carbon\Carbon::parse($t['date'] ?? null);
+            return $date && $date->toDateString() === $todayStr;
+        });
+        $summary = [
+            'total_sales' => (float) $revenueRows->sum(fn ($t) => (float) ($t['amount'] ?? 0)),
+            'total_transactions' => $total,
+            'today_sales' => (float) $todayRows->sum(fn ($t) => (float) ($t['amount'] ?? 0)),
+            'today_transactions' => $todayRows->count(),
+            'refunds' => $allTransactions->filter(fn ($t) => strtolower((string) ($t['status'] ?? '')) === 'refunded')->count(),
+            'average_order_value' => $revenueRows->count() > 0
+                ? round($revenueRows->sum(fn ($t) => (float) ($t['amount'] ?? 0)) / $revenueRows->count(), 2)
+                : 0,
+        ];
+
         return response()->json([
             'transactions' => $paginated,
             'data' => $paginated,
+            'summary' => $summary,
             'salespeople' => User::whereIn('role', ['cashier', 'admin', 'manager'])
                 ->orderBy('name')
                 ->get(['id', 'name', 'role']),

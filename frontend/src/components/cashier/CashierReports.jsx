@@ -55,20 +55,25 @@ const CashierReports = () => {
     setSalespeople(reportData.salespeople || []);
     setRawTransactions(transactions);
 
-    // Calculate summary
-    const totalSales = transactions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    // Summary: prefer server-computed totals (full filtered set) — a single
+    // paginated page must never be summed and presented as the report total.
+    const s = reportData.summary || {};
     const today = new Date().toISOString().split('T')[0];
-    const todaySales = transactions
-      .filter(item => (item.date ? new Date(item.date).toISOString().split('T')[0] : '') === today)
+    const clientTotal = transactions
+      .filter(item => !['cancelled', 'voided', 'refunded'].includes(String(item.status || '').toLowerCase()))
       .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    
+    const clientToday = transactions
+      .filter(item => (item.date ? new Date(item.date).toISOString().split('T')[0] : '') === today)
+      .filter(item => !['cancelled', 'voided', 'refunded'].includes(String(item.status || '').toLowerCase()))
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
     setSummaryData({
-      totalSales,
-      totalTransactions: transactions.length,
-      todaySales,
-      todayTransactions: transactions.filter(item => (item.date ? new Date(item.date).toISOString().split('T')[0] : '') === today).length,
-      refunds: transactions.filter(item => item.status === 'refunded').length,
-      averageOrderValue: transactions.length > 0 ? totalSales / transactions.length : 0,
+      totalSales: s.total_sales ?? s.pos_sales ?? clientTotal,
+      totalTransactions: s.total_transactions ?? s.total_cashier_transactions ?? transactions.length,
+      todaySales: s.today_sales ?? clientToday,
+      todayTransactions: s.today_transactions ?? transactions.filter(item => (item.date ? new Date(item.date).toISOString().split('T')[0] : '') === today).length,
+      refunds: s.refunds ?? transactions.filter(item => item.status === 'refunded').length,
+      averageOrderValue: s.average_order_value ?? (transactions.length > 0 ? clientTotal / transactions.length : 0),
     });
 
     return transactions;

@@ -50,12 +50,17 @@ class CustomerReportController extends Controller
             $totalOrders = $orders->count();
             $totalOrderAmount = $orders->sum('total_amount');
 
-            $orderIds = $orders->pluck('id')->filter()->values();
-            $payments = $this->paymentsFor($customer, $orderIds, $start, $end)->get();
+            $payments = $this->paymentsFor($customer, $orders, $start, $end);
             $totalPayments = $payments->sum('amount');
             $paidPayments = $payments
                 ->filter(fn ($payment) => in_array($payment->status, ['completed', 'verified', 'paid'], true))
                 ->sum('amount');
+            // Outstanding balance covers order obligations only. POS
+            // payments are settled purchases, not obligations, and must
+            // never push a customer's balance negative.
+            $orderPaid = $orders
+                ->whereIn('payment_status', ['paid', 'verified', 'completed'])
+                ->sum('total_amount');
 
             $orderStatuses = $orders->groupBy('status')->map(function ($group) {
                 return [
@@ -94,7 +99,7 @@ class CustomerReportController extends Controller
                 'total_order_amount' => (float) $totalOrderAmount,
                 'total_payments' => (float) $totalPayments,
                 'paid_amount' => (float) $paidPayments,
-                'balance_amount' => (float) ($totalOrderAmount - $paidPayments),
+                'balance_amount' => (float) max(0, $totalOrderAmount - $orderPaid),
                 'order_statuses' => $orderStatuses,
                 'payment_statuses' => $paymentStatuses,
                 'service_requests' => [
@@ -143,8 +148,7 @@ class CustomerReportController extends Controller
     {
         $customer = Customer::with('pets')->findOrFail($id);
         $orders = $this->customerOrdersFor($customer)->latest('created_at')->get();
-        $paymentsByOrder = $this->paymentsFor($customer, $orders->pluck('id')->filter()->values())
-            ->get()
+        $paymentsByOrder = $this->paymentsFor($customer, $orders)
             ->groupBy('order_id');
         $serviceRequests = $this->serviceRequestsFor($customer)->latest('created_at')->get();
 
@@ -377,33 +381,57 @@ class CustomerReportController extends Controller
         return $query;
     }
 
-    private function paymentsFor(Customer $customer, $orderIds, ?Carbon $start = null, ?Carbon $end = null)
+    /**
+     * Payment rows attributable to a customer. `payments` rows are POS
+     * records linked through `payments.sale_id → sales.customer_id`
+     * (there is no payments.customer_id/order_id column). Store-order
+     * payments live on `customer_orders` itself — pass the already-fetched
+     * orders so their payment activity is represented too.
+     */
+    private function paymentsFor(Customer $customer, $orders, ?Carbon $start = null, ?Carbon $end = null)
     {
-        if (!$this->tableExists('payments')) {
-            return DB::query()->fromSub('select null as id where 1 = 0', 'payments');
-        }
+        $rows = collect();
 
-        if (!Schema::hasColumn('payments', 'customer_id') && !Schema::hasColumn('payments', 'order_id')) {
-            return DB::query()->fromSub('select null as id where 1 = 0', 'payments');
-        }
+        if ($this->tableExists('payments') && Schema::hasColumn('sales', 'customer_id')) {
+            $query = DB::table('payments')
+                ->leftJoin('sales', 'sales.id', '=', 'payments.sale_id')
+                ->where('sales.customer_id', $customer->id)
+                ->select([
+                    'payments.id',
+                    'payments.amount',
+                    'payments.status',
+                    'payments.payment_method',
+                    'payments.reference_number',
+                    'payments.paid_at',
+                    'payments.created_at',
+                ]);
 
-        $query = DB::table('payments')->where(function ($nested) use ($customer, $orderIds) {
-            if (Schema::hasColumn('payments', 'customer_id')) {
-                $nested->orWhere('customer_id', $customer->id);
+            if ($start) {
+                $query->whereDate('payments.created_at', '>=', $start);
             }
-            if (Schema::hasColumn('payments', 'order_id') && $orderIds->count() > 0) {
-                $nested->orWhereIn('order_id', $orderIds);
+            if ($end) {
+                $query->whereDate('payments.created_at', '<=', $end);
             }
-        });
 
-        if ($start) {
-            $query->whereDate('created_at', '>=', $start);
-        }
-        if ($end) {
-            $query->whereDate('created_at', '<=', $end);
+            $rows = $rows->concat($query->get());
         }
 
-        return $query;
+        // Store-order payment activity rides on the order row itself
+        // (payment_status / paid_at), not on a separate payments record.
+        foreach ($orders as $order) {
+            $rows->push((object) [
+                'id' => 'ORDER-' . $order->id,
+                'order_id' => $order->id,
+                'amount' => (float) ($order->total_amount ?? 0),
+                'status' => $order->payment_status ?? 'unpaid',
+                'payment_method' => $order->payment_method ?? null,
+                'reference_number' => $order->payment_reference ?? null,
+                'paid_at' => $order->paid_at ?? null,
+                'created_at' => $order->paid_at ?? $order->created_at,
+            ]);
+        }
+
+        return $rows;
     }
 
     private function serviceRequestsFor(Customer $customer, ?Carbon $start = null, ?Carbon $end = null)

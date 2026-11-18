@@ -17,6 +17,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { apiRequest } from "../../api/client";
 import { formatCurrency } from "../../utils/currency";
+import { formatDateOnly, parseDateOnly } from "../../utils/date";
+import DatePickerInput from "../shared/DatePickerInput";
 import StandardReportLayout from "../shared/StandardReportLayout";
 import StandardSummaryCards from "../shared/StandardSummaryCards";
 import StandardTable from "../shared/StandardTable";
@@ -73,6 +75,8 @@ const AdminLiveReport = ({
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
   const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
@@ -94,8 +98,17 @@ const AdminLiveReport = ({
       params.append("end_date", endDate);
     }
 
+    if (statusFilter && statusFilter !== "all") {
+      params.append("status", statusFilter);
+      params.append("payment_status", statusFilter);
+    }
+
+    if (searchText.trim()) {
+      params.append("search", searchText.trim());
+    }
+
     return params.toString();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, statusFilter, searchText]);
 
   const normalizeResponse = useCallback((response) => {
     const data = response?.data?.data || response?.data || response || {};
@@ -139,11 +152,24 @@ const AdminLiveReport = ({
 
   useRealTimeSync(
     () => fetchData({ silent: true }),
-    [startDate, endDate],
+    [startDate, endDate, statusFilter, searchText],
     30000
   );
 
-  const filteredRows = useMemo(() => rows, [rows]);
+  // Client-side second layer: keeps the table consistent with the active
+  // filters even for fields the backend doesn't search across.
+  const filteredRows = useMemo(() => {
+    let result = rows;
+    const needle = searchText.trim().toLowerCase();
+    if (needle) {
+      result = result.filter((row) =>
+        Object.values(row || {}).some((v) =>
+          v !== null && v !== undefined && String(v).toLowerCase().includes(needle)
+        )
+      );
+    }
+    return result;
+  }, [rows, searchText]);
 
   const cards = useMemo(() => {
     return summaryBuilder(summary).map((card) => ({
@@ -202,6 +228,46 @@ const AdminLiveReport = ({
             <p>{filteredRows.length} record(s) found from the current filters.</p>
           </div>
 
+          <div className="live-report-filters">
+            <DatePickerInput
+              selected={parseDateOnly(startDate)}
+              onChange={(d) => setStartDate(d ? formatDateOnly(d) : "")}
+              placeholderText="Start date"
+              ariaLabel="Report start date"
+              className="live-report-date"
+            />
+            <span className="live-report-range-sep">to</span>
+            <DatePickerInput
+              selected={parseDateOnly(endDate)}
+              onChange={(d) => setEndDate(d ? formatDateOnly(d) : "")}
+              placeholderText="End date"
+              ariaLabel="Report end date"
+              className="live-report-date"
+            />
+            {statusOptions.length > 0 && (
+              <select
+                className="live-report-status"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Filter by status"
+              >
+                <option value="all">All Statuses</option>
+                {statusOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            )}
+            <input
+              type="search"
+              className="live-report-search"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder={searchPlaceholder}
+              aria-label="Search report"
+            />
+          </div>
         </div>
 
         <StandardSummaryCards cards={cards} />

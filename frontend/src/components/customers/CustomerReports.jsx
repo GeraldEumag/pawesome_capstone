@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarCheck,
@@ -240,7 +239,6 @@ const normalizeBooking = (booking, index) => {
 };
 
 const CustomerReports = () => {
-  const location = useLocation();
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
 
   const [loading, setLoading] = useState(true);
@@ -264,36 +262,18 @@ const CustomerReports = () => {
       setLoading(true);
       setError("");
 
-      const isAdminReport = location.pathname.startsWith("/admin/reports/customers");
+      const [bookingsData, petsData, transactionsData, purchasesData] =
+        await Promise.all([
+          apiRequest("/customer/bookings").catch(() => []),
+          apiRequest("/customer/pets").catch(() => []),
+          apiRequest("/customer/transactions").catch(() => []),
+          apiRequest("/customer/purchases").catch(() => []),
+        ]);
 
-      if (isAdminReport) {
-        const result = await apiRequest("/admin/reports/customers");
-        const data = result?.data || result || {};
-
-        setBookings(
-          normalizeList(data.appointments || data.bookings || data.requests || [], [
-            "appointments",
-            "bookings",
-            "requests",
-          ])
-        );
-        setPets(normalizeList(data.pets || [], ["pets"]));
-        setTransactions(normalizeList(data.transactions || data.payments || [], ["transactions", "payments"]));
-        setPurchases(normalizeList(data.orders || data.purchases || [], ["orders", "purchases"]));
-      } else {
-        const [bookingsData, petsData, transactionsData, purchasesData] =
-          await Promise.all([
-            apiRequest("/customer/bookings").catch(() => []),
-            apiRequest("/customer/pets").catch(() => []),
-            apiRequest("/customer/transactions").catch(() => []),
-            apiRequest("/customer/purchases").catch(() => []),
-          ]);
-
-        setBookings(normalizeList(bookingsData, ["bookings", "appointments", "requests"]));
-        setPets(normalizeList(petsData, ["pets"]));
-        setTransactions(normalizeList(transactionsData, ["transactions", "payments"]));
-        setPurchases(normalizeList(purchasesData, ["purchases", "orders"]));
-      }
+      setBookings(normalizeList(bookingsData, ["bookings", "appointments", "requests"]));
+      setPets(normalizeList(petsData, ["pets"]));
+      setTransactions(normalizeList(transactionsData, ["transactions", "payments"]));
+      setPurchases(normalizeList(purchasesData, ["purchases", "orders"]));
 
       setLastUpdated(new Date().toLocaleString("en-PH"));
     } catch (err) {
@@ -307,7 +287,7 @@ const CustomerReports = () => {
     } finally {
       setLoading(false);
     }
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     fetchReportData();

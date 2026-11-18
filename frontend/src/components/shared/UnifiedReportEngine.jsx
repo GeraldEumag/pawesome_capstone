@@ -518,19 +518,6 @@ const UnifiedReportEngineBase = ({
     setSavedFilters((prev) => [...prev, filterConfig]);
   }, []);
   
-  // Export handlers
-  const handleExportCSV = useCallback(() => {
-    exportToCSV(data, columns, exportFilename);
-  }, [data, columns, exportFilename]);
-  
-  const handleExportPDF = useCallback(() => {
-    exportToPDF(data, columns, exportTitle, exportFilename);
-  }, [data, columns, exportTitle, exportFilename]);
-  
-  const handleExportExcel = useCallback(() => {
-    exportToExcel(data, columns, exportFilename);
-  }, [data, columns, exportFilename]);
-  
   // Filter data
   const filteredData = useMemo(() => {
     let result = [...data];
@@ -583,7 +570,21 @@ const UnifiedReportEngineBase = ({
     
     return result;
   }, [data, appliedFilters, appliedDateRange, columns, customFilters]);
-  
+
+  // Export handlers — exports must match what the user sees: the
+  // filtered dataset, never the unfiltered source.
+  const handleExportCSV = useCallback(() => {
+    exportToCSV(filteredData, columns, exportFilename);
+  }, [filteredData, columns, exportFilename]);
+
+  const handleExportPDF = useCallback(() => {
+    exportToPDF(filteredData, columns, exportTitle, exportFilename);
+  }, [filteredData, columns, exportTitle, exportFilename]);
+
+  const handleExportExcel = useCallback(() => {
+    exportToExcel(filteredData, columns, exportFilename);
+  }, [filteredData, columns, exportFilename]);
+
   // Export actions
   const exportActions = exportEnabled ? (
     <>

@@ -288,6 +288,69 @@ class ReportsTest extends TestCase
         $this->assertSame(0, $response->json('data.summary.total_orders'));
     }
 
+    /**
+     * Regression R-01: cancelled/voided/refund sales are not revenue and
+     * must not inflate the sales report totals.
+     */
+    public function test_sales_report_excludes_cancelled_sales_from_revenue(): void
+    {
+        Sale::factory()->create(['status' => 'completed', 'type' => 'sale', 'amount' => 500, 'created_at' => now()]);
+        Sale::factory()->create(['status' => 'cancelled', 'type' => 'sale', 'amount' => 900, 'created_at' => now()]);
+        Sale::factory()->create(['status' => 'completed', 'type' => 'refund', 'amount' => 300, 'created_at' => now()]);
+
+        $response = $this->getJson('/api/admin/reports/sales', $this->withAdminAuth());
+
+        $response->assertOk()->assertJsonPath('success', true);
+        $this->assertSame(500.0, (float) $response->json('data.summary.total_revenue'));
+    }
+
+    /** Regression R-20: malformed or reversed date ranges must 422, not silently ignore. */
+    public function test_report_endpoints_validate_date_params(): void
+    {
+        $response = $this->getJson(
+            '/api/admin/reports/sales?from=not-a-date&to=2026-11-19',
+            $this->withAdminAuth()
+        );
+        $response->assertStatus(422)->assertJsonPath('success', false);
+
+        $reversed = $this->getJson(
+            '/api/admin/reports/sales?from=2026-11-19&to=2026-11-01',
+            $this->withAdminAuth()
+        );
+        $reversed->assertStatus(422)->assertJsonPath('success', false);
+    }
+
+    /** Regression R-21: row-limit parameter must be capped server-side. */
+    public function test_sales_report_limit_is_capped(): void
+    {
+        Sale::factory()->count(3)->create(['status' => 'completed', 'amount' => 100, 'created_at' => now()]);
+
+        $response = $this->getJson('/api/admin/reports/sales?limit=99999', $this->withAdminAuth());
+        $response->assertOk();
+        $this->assertLessThanOrEqual(2000, count($response->json('data.sales') ?? []));
+    }
+
+    /** Report endpoints must reject unauthenticated requests. */
+    public function test_report_endpoints_require_authentication(): void
+    {
+        foreach (['/api/admin/reports/sales', '/api/admin/reports/overview', '/api/admin/reports/cashier'] as $url) {
+            $response = $this->getJson($url);
+            $this->assertContains($response->status(), [401, 403], "{$url} allowed unauthenticated access");
+        }
+    }
+
+    /** A non-admin role must not reach admin reports. */
+    public function test_customer_role_cannot_read_admin_reports(): void
+    {
+        $customer = User::factory()->create(['role' => 'customer', 'email' => 'cust@test.com']);
+        $token = $customer->createToken('t')->plainTextToken;
+
+        $response = $this->getJson('/api/admin/reports/sales', [
+            'Authorization' => 'Bearer ' . $token,
+        ]);
+        $this->assertContains($response->status(), [401, 403]);
+    }
+
     // ============================================
     // HELPER METHOD
     // ============================================

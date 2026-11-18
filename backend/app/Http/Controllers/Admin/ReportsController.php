@@ -23,6 +23,10 @@ class ReportsController extends Controller
 {
     public function sales(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         try {
             $query = $this->dateRange(DB::table('sales'), $request, 'sales.created_at');
 
@@ -52,14 +56,28 @@ class ReportsController extends Controller
                     DB::raw('DATE(sales.created_at) as date'),
                 ])
                 ->latest('sales.created_at')
-                ->limit($request->integer('limit', 500))
+                ->limit(min(max($request->integer('limit', 500), 1), 2000))
                 ->get();
 
             $trend = $rows->groupBy('date')->map(fn ($group, $date) => [
                 'date' => $date,
-                'revenue' => (float) $group->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
+                'revenue' => (float) $group
+                    ->filter(fn ($sale) =>
+                        !in_array($sale->status, ['voided', 'cancelled'], true)
+                        && !in_array($sale->type, ['refund', 'multi_payment', 'appointment'], true)
+                    )
+                    ->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
                 'orders' => $group->count(),
             ])->values();
+
+            // Revenue-eligible rows only: voided/cancelled sales and
+            // non-revenue row types (refunds, split-payment mirrors, and
+            // legacy 'appointment' rows whose revenue is owned by the
+            // appointments paid source) must not inflate the total.
+            $revenueRows = $rows->filter(fn ($sale) =>
+                !in_array($sale->status, ['voided', 'cancelled'], true)
+                && !in_array($sale->type, ['refund', 'multi_payment', 'appointment'], true)
+            );
 
             $message = null;
             if ($rows->isEmpty()) {
@@ -70,7 +88,7 @@ class ReportsController extends Controller
                 'success' => true,
                 'data' => [
                     'summary' => [
-                        'total_revenue' => (float) $rows->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
+                        'total_revenue' => (float) $revenueRows->sum(fn ($sale) => (float) ($sale->amount ?? $sale->total_amount ?? 0)),
                         'total_orders' => $rows->count(),
                         'completed_orders' => $rows->where('status', 'completed')->count(),
                         'pending_orders' => $rows->where('status', 'pending')->count(),
@@ -157,16 +175,22 @@ class ReportsController extends Controller
 
     public function overview(Request $request)
     {
-        // Real 7-day revenue trend for the chart
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
+        // Real 7-day revenue trend for the chart — same unified revenue
+        // definition as the summary KPI (all paid sources, voided/cancelled
+        // and non-revenue sale rows excluded).
+        $dailyMap = (new RevenueService())->daily(Carbon::now()->subDays(6), Carbon::now());
         $revenueTrend = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $dayRevenue = (float) Sale::whereDate('created_at', $date)->sum('amount') ?? 0;
-            $dayOrders = Sale::whereDate('created_at', $date)->count();
+            $day = $dailyMap[$date->format('Y-m-d')] ?? ['revenue' => 0, 'count' => 0];
             $revenueTrend[] = [
                 'date' => $date->format('M d'),
-                'revenue' => $dayRevenue,
-                'orders' => $dayOrders,
+                'revenue' => (float) $day['revenue'],
+                'orders' => (int) $day['count'],
             ];
         }
 
@@ -197,6 +221,10 @@ class ReportsController extends Controller
 
     public function cashier(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $orders = $this->customerOrdersBase($request);
         $boardingPayments = $this->paymentRowsFromTable($request, 'boardings', 'boarding', 'Boarding');
         $confinementPayments = $this->paymentRowsFromTable($request, 'medical_confinements', 'medical_confinement', 'Medical Confinement');
@@ -248,10 +276,12 @@ class ReportsController extends Controller
             ->get();
 
         $posRevenue = $this->dateRange(DB::table('sales'), $request)
-            ->whereNotIn('type', ['refund', 'multi_payment'])
+            ->whereNotIn('type', ['refund', 'multi_payment', 'appointment'])
             ->whereNotIn('status', ['voided', 'cancelled'])
             ->sum('amount');
         $salesRows = $this->salesRows($request);
+        // Full-set status counts — not derived from the 250-row page slice.
+        $paymentCounts = $this->paymentStatusCounts($request);
 
         $message = null;
         if ($paymentRows->isEmpty() && $rows->isEmpty()) {
@@ -264,17 +294,17 @@ class ReportsController extends Controller
                 'total_revenue' => $this->unifiedRevenue($request),
                 'total_cashier_transactions' => $this->dateRange(DB::table('sales'), $request)->count(),
                 'pos_sales' => (float) $posRevenue,
-                'pending_payment_proofs' => $paymentRows->where('payment_status', 'pending')->count(),
-                'verified_payments' => $paymentRows->whereIn('payment_status', ['paid', 'completed', 'verified'])->count(),
-                'rejected_payments' => $paymentRows->where('payment_status', 'rejected')->count(),
-                'receipt_count' => $paymentRows->filter(fn ($row) => !empty($row->receipt_number))->count(),
+                'pending_payment_proofs' => $paymentCounts['pending'],
+                'verified_payments' => $paymentCounts['verified'],
+                'rejected_payments' => $paymentCounts['rejected'],
+                'receipt_count' => $paymentCounts['receipts'],
             ],
             'data' => [
                 'summary' => [
                     'total_revenue' => $this->unifiedRevenue($request),
                     'paid_orders' => (clone $orders)->where('payment_status', 'paid')->count(),
-                    'pending_payment_proofs' => $paymentRows->where('payment_status', 'pending')->count(),
-                    'rejected_payment_proofs' => $paymentRows->where('payment_status', 'rejected')->count(),
+                    'pending_payment_proofs' => $paymentCounts['pending'],
+                    'rejected_payment_proofs' => $paymentCounts['rejected'],
                     'refunds' => $this->tableExists('payments')
                         ? $this->dateRange(DB::table('payments')->where('status', 'refunded'), $request)->count()
                         : 0,
@@ -298,6 +328,10 @@ class ReportsController extends Controller
 
     public function inventory(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $items = $this->inventoryItemsBase($request);
         $logs = $this->inventoryLogsBase($request)
             ->leftJoin('inventory_items', 'inventory_items.id', '=', 'inventory_logs.inventory_item_id')
@@ -348,6 +382,10 @@ class ReportsController extends Controller
 
     public function manager(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -391,8 +429,8 @@ class ReportsController extends Controller
             'employee_name' => $record->user?->name ?? $record->employee?->name ?? 'Unknown Employee',
             'employee_id' => $record->user_id ?? $record->employee_id,
             'person_type' => $record->employee_id ? 'employee' : 'account',
-            'employee_no' => $record->user?->employee_no ?? $record->employee?->employee_no,
-            'department' => $record->user?->department ?? $record->employee?->department ?? 'Unassigned',
+            'employee_no' => $record->employee?->employee_no ?? $record->user?->employee_no,
+            'department' => $record->department ?? $record->user?->department ?? $record->employee?->department ?? 'Unassigned',
             'role' => $record->user?->role ?? $record->employee?->position ?? 'Staff',
             'date' => $record->date,
             'status' => $record->status,
@@ -723,6 +761,10 @@ class ReportsController extends Controller
 
     public function veterinary(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $appointments = $this->appointmentsBase($request);
         $completed = (clone $appointments)->where('status', 'completed')->count();
         $total = (clone $appointments)->count();
@@ -747,13 +789,20 @@ class ReportsController extends Controller
                     'pets_under_observation' => (clone $confinements)->whereIn('status', ['admitted', 'under_observation', 'under_treatment'])->count(),
                     'ready_for_discharge' => (clone $confinements)->where('status', 'ready_for_discharge')->count(),
                     'medical_progress_notes' => $this->tableExists('medical_progress_notes') ? $this->dateRange(DB::table('medical_progress_notes'), $request)->count() : 0,
-                    'total_revenue' => (float) (clone $appointments)->where('status', 'completed')->sum('price'),
+                    // Collected appointment revenue — same paid-source
+                    // definition as RevenueService (payment_status paid/
+                    // verified/completed over COALESCE(total_amount, price)).
+                    'total_revenue' => (float) (clone $appointments)
+                        ->whereIn('payment_status', ['paid', 'verified', 'completed'])
+                        ->sum(DB::raw('COALESCE(total_amount, price)')),
                     'completion_rate' => $total > 0 ? round(($completed / $total) * 100, 2) : 0,
                 ],
                 'appointments' => $this->appointmentRows($request),
                 'medical_confinements' => (clone $confinements)->latest('created_at')->limit(250)->get(),
                 'service_breakdown' => $serviceBreakdown,
-                'monthly_revenue' => (float) (clone $appointments)->where('status', 'completed')->sum('price'),
+                'monthly_revenue' => (float) (clone $appointments)
+                    ->whereIn('payment_status', ['paid', 'verified', 'completed'])
+                    ->sum(DB::raw('COALESCE(total_amount, price)')),
                 'monthly_completed' => $completed,
                 'period' => $this->periodLabel($request),
             ],
@@ -766,6 +815,10 @@ class ReportsController extends Controller
 
     public function customers(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $customers = $this->customersBase($request);
         $customerUsers = $this->customerUsersBase($request);
 
@@ -792,6 +845,10 @@ class ReportsController extends Controller
 
     public function reception(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $serviceRequests = $this->serviceRequestsBase($request)->latest('created_at')->limit(250)->get();
         $customerOrders = $this->customerOrdersBase($request)->latest('created_at')->limit(250)->get();
 
@@ -825,6 +882,10 @@ class ReportsController extends Controller
 
     public function payments(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $payments = collect();
 
         if ($this->tableExists('payments')) {
@@ -930,23 +991,24 @@ class ReportsController extends Controller
 
         $payments = $payments->sortByDesc('created_at')->values();
 
+        // `total_amount` is collected money only (paid/verified/completed);
+        // `listed_amount` covers every listed row including unpaid/rejected
+        // so the KPI card never presents uncollected billings as revenue.
+        $paidStatuses = ['paid', 'completed', 'verified'];
+        $summary = [
+            'total_payments' => $payments->count(),
+            'total_amount' => (float) $payments->whereIn('status', $paidStatuses)->sum(fn ($payment) => (float) $payment->amount),
+            'listed_amount' => (float) $payments->sum(fn ($payment) => (float) $payment->amount),
+            'paid' => $payments->whereIn('status', $paidStatuses)->count(),
+            'pending' => $payments->where('status', 'pending')->count(),
+            'rejected' => $payments->where('status', 'rejected')->count(),
+        ];
+
         return response()->json([
             'success' => true,
-            'summary' => [
-                'total_payments' => $payments->count(),
-                'total_amount' => (float) $payments->sum(fn ($payment) => (float) $payment->amount),
-                'paid' => $payments->whereIn('status', ['paid', 'completed', 'verified'])->count(),
-                'pending' => $payments->where('status', 'pending')->count(),
-                'rejected' => $payments->where('status', 'rejected')->count(),
-            ],
+            'summary' => $summary,
             'data' => [
-                'summary' => [
-                    'total_payments' => $payments->count(),
-                    'total_amount' => (float) $payments->sum(fn ($payment) => (float) $payment->amount),
-                    'paid' => $payments->whereIn('status', ['paid', 'completed', 'verified'])->count(),
-                    'pending' => $payments->where('status', 'pending')->count(),
-                    'rejected' => $payments->where('status', 'rejected')->count(),
-                ],
+                'summary' => $summary,
                 'payments' => $payments,
                 'generated_at' => now()->toIso8601String(),
             ],
@@ -963,6 +1025,10 @@ class ReportsController extends Controller
 
     public function orders(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $orders = $this->customerOrdersBase($request)
             ->select([
                 'customer_orders.*',
@@ -1005,10 +1071,14 @@ class ReportsController extends Controller
 
         $orders = $orders->sortByDesc('created_at')->values();
 
-        // Real revenue trend grouped by order date
+        // Real revenue trend grouped by order date — collected revenue only
+        // (unpaid and cancelled orders are counted in `orders` but never
+        // summed into `revenue`).
         $trend = $orders->groupBy('date')->map(fn ($group, $date) => [
             'date' => $date,
-            'revenue' => (float) $group->sum(fn ($order) => (float) ($order->total_amount ?? 0)),
+            'revenue' => (float) $group
+                ->whereIn('payment_status', ['paid', 'completed', 'verified'])
+                ->sum(fn ($order) => (float) ($order->total_amount ?? 0)),
             'orders' => $group->count(),
         ])->sortKeys()->values();
 
@@ -1031,23 +1101,17 @@ class ReportsController extends Controller
 
     public function serviceRequests(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $requests = collect();
 
         if ($this->tableExists('service_requests')) {
             // A request fulfilled through a linked appointment, grooming, or
             // boarding record is reported there — skip the request row so a
             // single booking is not counted twice (mirrors RevenueService).
-            $serviceRequestsQuery = $this->serviceRequestsBase($request);
-            foreach (['boardings', 'groomings', 'appointments'] as $linked) {
-                if (Schema::hasTable($linked) && Schema::hasColumn($linked, 'service_request_id')) {
-                    $serviceRequestsQuery->whereNotExists(function ($sub) use ($linked) {
-                        $sub->select(DB::raw(1))
-                            ->from($linked)
-                            ->whereColumn("$linked.service_request_id", 'service_requests.id');
-                    });
-                }
-            }
-            $requests = $requests->concat($serviceRequestsQuery
+            $requests = $requests->concat($this->dedupedServiceRequestsBase($request)
                 ->select([
                     'service_requests.id',
                     DB::raw('COALESCE(service_requests.service_type, service_requests.request_type, "service") as service_type'),
@@ -1113,6 +1177,32 @@ class ReportsController extends Controller
             $requests = $requests->concat($boardings);
         }
 
+        if ($this->tableExists('groomings')) {
+            // Grooming bookings are their own billing record — the linked
+            // service_request is deduped above, so they must be listed here
+            // or every grooming service disappears from the report.
+            $groomings = $this->dateRange(DB::table('groomings'), $request, 'groomings.created_at')
+                ->leftJoin('pets', 'pets.id', '=', 'groomings.pet_id')
+                ->leftJoin('customers', 'customers.id', '=', 'groomings.customer_id')
+                ->select([
+                    'groomings.id',
+                    DB::raw('"grooming" as service_type'),
+                    DB::raw('COALESCE(groomings.service, "Grooming Service") as service_name'),
+                    DB::raw('customers.name as customer_name'),
+                    DB::raw('customers.email as customer_email'),
+                    DB::raw('pets.name as pet_name'),
+                    'groomings.status',
+                    DB::raw($this->columnSelect('groomings', 'payment_status', 'NULL', 'payment_status')),
+                    'groomings.created_at',
+                    DB::raw($this->firstAvailableColumn('groomings', ['total_amount', 'amount', 'price'], '0') . ' as amount'),
+                    DB::raw('"grooming" as source'),
+                ])
+                ->latest('groomings.created_at')
+                ->limit(500)
+                ->get();
+            $requests = $requests->concat($groomings);
+        }
+
         if ($this->tableExists('medical_confinements')) {
             $confinements = $this->medicalConfinementsBase($request)
                 ->select([
@@ -1125,7 +1215,7 @@ class ReportsController extends Controller
                     'medical_confinements.status',
                     'medical_confinements.payment_status',
                     'medical_confinements.created_at',
-                    DB::raw($this->firstAvailableColumn('medical_confinements', ['total_amount', 'amount', 'price'], '0') . ' as amount'),
+                    DB::raw($this->firstAvailableColumn('medical_confinements', ['final_amount', 'estimated_cost', 'total_amount'], '0') . ' as amount'),
                     DB::raw('"medical_confinement" as source'),
                 ])
                 ->latest('medical_confinements.created_at')
@@ -1169,6 +1259,10 @@ class ReportsController extends Controller
 
     public function logistics(Request $request)
     {
+        if ($error = $this->validateReportParams($request)) {
+            return $error;
+        }
+
         $candidateTables = ['shipments', 'deliveries', 'logistics'];
         $table = collect($candidateTables)->first(fn ($candidate) => $this->tableExists($candidate));
         $shipments = collect();
@@ -1205,12 +1299,25 @@ class ReportsController extends Controller
         $boardings = $this->boardingsBase($request);
         $confinements = $this->medicalConfinementsBase($request);
 
+        // Service requests fulfilled through a linked operational record are
+        // counted at that record level (mirrors RevenueService / the service
+        // report). `dedupedServiceRequestsBase` excludes linked requests so a
+        // single booking is never counted twice; groomings are added back
+        // because they are their own billing record.
+        $dedupedServiceRequests = $this->dedupedServiceRequestsBase($request);
+        $groomingsCount = $this->tableExists('groomings')
+            ? $this->dateRange(DB::table('groomings'), $request, 'groomings.created_at')->count()
+            : 0;
+        $completedGroomingsCount = $this->tableExists('groomings')
+            ? $this->dateRange(DB::table('groomings'), $request, 'groomings.created_at')->where('status', 'completed')->count()
+            : 0;
+
         return [
             'total_customers' => Customer::count(),
             'total_users' => User::count(),
             'active_customers' => $this->activeCustomerCount($request),
             'total_orders' => (clone $orders)->count(),
-            'total_services' => (clone $serviceRequests)->count() + (clone $appointments)->count() + (clone $boardings)->count() + (clone $confinements)->count(),
+            'total_services' => (clone $dedupedServiceRequests)->count() + (clone $appointments)->count() + (clone $boardings)->count() + (clone $confinements)->count() + $groomingsCount,
             'total_payments' => $this->paymentRows($request)->count(),
             'total_revenue' => $this->unifiedRevenue($request),
             'pending_approvals' => $this->customerOrdersBase($request)->where('status', 'pending')->count()
@@ -1223,9 +1330,10 @@ class ReportsController extends Controller
                 + $confinementPayments->where('payment_status', 'pending')->count(),
             'low_stock_items' => $this->lowStockCount($request),
             'completed_services' => $this->appointmentsBase($request)->where('status', 'completed')->count()
-                + $this->serviceRequestsBase($request)->where('status', 'completed')->count()
+                + (clone $dedupedServiceRequests)->where('status', 'completed')->count()
                 + $this->boardingsBase($request)->whereIn('status', ['completed', 'checked_out'])->count()
-                + $this->medicalConfinementsBase($request)->whereIn('status', ['completed', 'discharged'])->count(),
+                + $this->medicalConfinementsBase($request)->whereIn('status', ['completed', 'discharged'])->count()
+                + $completedGroomingsCount,
             'active_appointments' => $this->appointmentsBase($request)->whereIn('status', \App\Support\VeterinaryStatus::QUEUE)->count(),
             'active_boarding_stays' => $this->boardingsBase($request)->whereIn('status', ['checked_in', 'in_care'])->count(),
             'active_medical_confinements' => $this->medicalConfinementsBase($request)->whereIn('status', ['admitted', 'under_observation', 'under_treatment'])->count(),
@@ -1324,6 +1432,53 @@ class ReportsController extends Controller
             ->latest("$table.created_at")
             ->limit(500)
             ->get();
+    }
+
+    /**
+     * Full-set status counts for the cashier payment-verification sources
+     * (orders, boardings, confinements). Counts run in SQL with the same
+     * filters as paymentRowsFromTable so the KPI cards are never derived
+     * from a LIMIT-capped subset.
+     */
+    private function paymentStatusCounts(Request $request): array
+    {
+        $counts = ['pending' => 0, 'verified' => 0, 'rejected' => 0, 'receipts' => 0];
+
+        foreach (['customer_orders', 'boardings', 'medical_confinements'] as $table) {
+            if (!$this->tableExists($table) || !Schema::hasColumn($table, 'payment_status')) {
+                continue;
+            }
+
+            $base = $this->dateRange(DB::table($table), $request, "$table.created_at");
+
+            $paymentStatus = $request->query('payment_status') ?: $request->query('status');
+            if ($paymentStatus && $paymentStatus !== 'all') {
+                $base->where("$table.payment_status", $paymentStatus);
+            }
+
+            $search = trim((string) $request->query('search', ''));
+            if ($search !== '') {
+                $base->where(function ($nested) use ($search, $table) {
+                    foreach (['customer_name', 'customer_email', 'pet_name', 'receipt_number', 'payment_reference'] as $column) {
+                        if (Schema::hasColumn($table, $column)) {
+                            $nested->orWhere("$table.$column", 'like', "%$search%");
+                        }
+                    }
+                });
+            }
+
+            $counts['pending'] += (clone $base)->where("$table.payment_status", 'pending')->count();
+            $counts['verified'] += (clone $base)->whereIn("$table.payment_status", ['paid', 'completed', 'verified'])->count();
+            $counts['rejected'] += (clone $base)->where("$table.payment_status", 'rejected')->count();
+            if (Schema::hasColumn($table, 'receipt_number')) {
+                $counts['receipts'] += (clone $base)
+                    ->whereNotNull("$table.receipt_number")
+                    ->where("$table.receipt_number", '!=', '')
+                    ->count();
+            }
+        }
+
+        return $counts;
     }
 
     private function boardingsBase(Request $request): Builder
@@ -1426,6 +1581,26 @@ class ReportsController extends Controller
                     }
                 }
             });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Service requests NOT fulfilled through a linked boarding, grooming,
+     * or appointment record — those are reported at the linked record level.
+     */
+    private function dedupedServiceRequestsBase(Request $request): Builder
+    {
+        $query = $this->serviceRequestsBase($request);
+        foreach (['boardings', 'groomings', 'appointments'] as $linked) {
+            if (Schema::hasTable($linked) && Schema::hasColumn($linked, 'service_request_id')) {
+                $query->whereNotExists(function ($sub) use ($linked) {
+                    $sub->select(DB::raw(1))
+                        ->from($linked)
+                        ->whereColumn("$linked.service_request_id", 'service_requests.id');
+                });
+            }
         }
 
         return $query;
@@ -1816,6 +1991,36 @@ class ReportsController extends Controller
         return $row?->brand;
     }
 
+    /**
+     * Validate shared report query params. Returns a 422 response when a
+     * caller supplies a malformed date or a reversed range — previously
+     * these were silently ignored and produced misleading data.
+     */
+    private function validateReportParams(Request $request)
+    {
+        $from = $request->query('from') ?: $request->query('start_date') ?: $request->query('startDate');
+        $to = $request->query('to') ?: $request->query('end_date') ?: $request->query('endDate');
+        $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
+
+        foreach (['from' => $from, 'to' => $to] as $name => $value) {
+            if ($value !== null && $value !== '' && !preg_match($datePattern, $value)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Invalid {$name} date. Expected format: YYYY-MM-DD.",
+                ], 422);
+            }
+        }
+
+        if ($from && $to && Carbon::parse($from)->gt(Carbon::parse($to))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid date range: start date is after end date.',
+            ], 422);
+        }
+
+        return null;
+    }
+
     private function applyDateRange(Builder $query, Request $request, string $column): void
     {
         $from = $request->query('from') ?: $request->query('start_date') ?: $request->query('startDate');
@@ -2061,9 +2266,16 @@ class ReportsController extends Controller
             $pendingApprovals += DB::table('approvals')->where('status', 'pending')->count();
         }
         
-        // ACCURATE low stock items
-        $lowStockItems = InventoryItem::whereRaw('stock <= reorder_level')->count();
-        $criticalStockItems = InventoryItem::whereRaw('stock <= reorder_level / 2')->count();
+        // ACCURATE low stock items — same canonical definition used by the
+        // summary/inventory reports: not archived, stock>0, stock<=reorder.
+        $lowStockItems = InventoryItem::whereNull('archived_at')
+            ->whereRaw('stock <= reorder_level')
+            ->where('stock', '>', 0)
+            ->count();
+        $criticalStockItems = InventoryItem::whereNull('archived_at')
+            ->whereRaw('stock <= reorder_level / 2')
+            ->where('stock', '>', 0)
+            ->count();
 
         // Revenue trend (last 30 days, all paid sources)
         $dailyMap = $revenueService->daily(Carbon::now()->subDays(29), Carbon::now());
@@ -2245,11 +2457,13 @@ class ReportsController extends Controller
      */
     public function customerSegmentation(Request $request)
     {
+        // Monetary value must be COLLECTED spend — unpaid orders inflate
+        // VIP/loyal thresholds if they're summed as spend.
         $customers = Customer::with(['orders'])->get()->map(fn($c) => [
             'id' => $c->id,
             'name' => $c->name,
             'email' => $c->email,
-            'total_spent' => (float) $c->orders->sum('total_amount'),
+            'total_spent' => (float) $c->orders->where('payment_status', 'paid')->sum('total_amount'),
             'orders' => $c->orders->count(),
             'last_order_date' => $c->orders->max('created_at'),
             'days_since_order' => $c->orders->max('created_at') ? Carbon::parse($c->orders->max('created_at'))->diffInDays(now()) : 999,
@@ -2315,6 +2529,9 @@ class ReportsController extends Controller
             'services' => 'Service Requests',
             'boarding' => 'Hotel Boarding',
             'confinement' => 'Medical Confinement',
+            'veterinary' => 'Veterinary',
+            'grooming' => 'Grooming',
+            'partial_settlements' => 'Partial Settlements',
         ];
         $categoryBreakdown = [];
         foreach ($sourceLabels as $key => $label) {
@@ -2551,8 +2768,11 @@ class ReportsController extends Controller
             ];
         }
 
-        // ACCURATE category/type breakdown from real sales data
+        // ACCURATE category/type breakdown from real sales data — only
+        // revenue-eligible sale rows (same exclusions as RevenueService).
         $categoryData = Sale::whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotIn('type', ['refund', 'multi_payment', 'appointment'])
+            ->whereNotIn('status', ['voided', 'cancelled'])
             ->select('type', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total'))
             ->whereNotNull('type')
             ->groupBy('type')
@@ -2562,8 +2782,9 @@ class ReportsController extends Controller
                 // Calculate growth vs previous period
                 $prevPeriodStart = $startDate->copy()->subDays($endDate->diffInDays($startDate));
                 $prevPeriodEnd = $startDate->copy()->subDay();
-                
+
                 $prevRevenue = Sale::where('type', $item->type)
+                    ->whereNotIn('status', ['voided', 'cancelled'])
                     ->whereBetween('created_at', [$prevPeriodStart, $prevPeriodEnd])
                     ->sum('amount') ?? 0;
                 
@@ -2584,6 +2805,9 @@ class ReportsController extends Controller
             'services' => 'Service Requests',
             'boarding' => 'Hotel Boarding',
             'confinement' => 'Medical Confinement',
+            'veterinary' => 'Veterinary',
+            'grooming' => 'Grooming',
+            'partial_settlements' => 'Partial Settlements',
         ];
         $extraSources = collect($sourceLabels)
             ->map(fn ($label, $key) => [
@@ -2596,22 +2820,29 @@ class ReportsController extends Controller
             ->values();
         $categoryData = $categoryData->concat($extraSources)->sortByDesc('value')->values();
 
-        // ACCURATE hourly sales pattern (if sales have time data)
+        // ACCURATE hourly sales pattern (if sales have time data) —
+        // revenue-eligible rows only, bucketed into 2-hour bands so
+        // odd-hour sales are counted, not silently dropped.
         $hourlyData = [];
         $dbDriver = DB::getDriverName();
-        
+
+        $salesScope = fn ($query) => $query
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotIn('type', ['refund', 'multi_payment', 'appointment'])
+            ->whereNotIn('status', ['voided', 'cancelled']);
+
         if ($dbDriver === 'sqlite') {
-            $hourlySales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                ->select(DB::raw('CAST(strftime("%H", created_at) AS INTEGER) as hour'), DB::raw('SUM(amount) as sales'), DB::raw('COUNT(DISTINCT customer_id) as customers'))
+            $hourlySales = $salesScope(Sale::query())
+                ->select(DB::raw('(CAST(strftime("%H", created_at) AS INTEGER) / 2) * 2 as hour'), DB::raw('SUM(amount) as sales'), DB::raw('COUNT(DISTINCT customer_id) as customers'))
                 ->groupBy('hour')
                 ->get();
         } else {
-            $hourlySales = Sale::whereBetween('created_at', [$startDate, $endDate])
-                ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('SUM(amount) as sales'), DB::raw('COUNT(DISTINCT customer_id) as customers'))
+            $hourlySales = $salesScope(Sale::query())
+                ->select(DB::raw('FLOOR(HOUR(created_at) / 2) * 2 as hour'), DB::raw('SUM(amount) as sales'), DB::raw('COUNT(DISTINCT customer_id) as customers'))
                 ->groupBy('hour')
                 ->get();
         }
-        
+
         // Fill all 24 hours
         for ($hour = 0; $hour < 24; $hour += 2) { // Every 2 hours
             $hourData = $hourlySales->firstWhere('hour', $hour);
@@ -2748,15 +2979,15 @@ class ReportsController extends Controller
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
         $staffData = $staffUsers->map(function ($user) use ($hasStaffIdColumn, $thirtyDaysAgo) {
-            // 1. Sales revenue by staff (last 30 days)
+            // 1. Sales revenue by staff (last 30 days) — collected sales
+            // only (cancelled/voided/refund rows are not revenue).
+            $revenueQuery = fn () => Sale::where('created_at', '>=', $thirtyDaysAgo)
+                ->whereNotIn('type', ['refund', 'multi_payment', 'appointment'])
+                ->whereNotIn('status', ['voided', 'cancelled']);
             if ($hasStaffIdColumn) {
-                $revenue = (float) Sale::where('staff_id', $user->id)
-                    ->where('created_at', '>=', $thirtyDaysAgo)
-                    ->sum('amount') ?? 0;
+                $revenue = (float) $revenueQuery()->where('staff_id', $user->id)->sum('amount') ?? 0;
             } elseif (Schema::hasColumn('sales', 'cashier_id')) {
-                $revenue = (float) Sale::where('cashier_id', $user->id)
-                    ->where('created_at', '>=', $thirtyDaysAgo)
-                    ->sum('amount') ?? 0;
+                $revenue = (float) $revenueQuery()->where('cashier_id', $user->id)->sum('amount') ?? 0;
             } else {
                 $revenue = 0;
             }

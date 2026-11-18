@@ -586,6 +586,38 @@
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.live-report-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.live-report-filters .paws-datepicker-wrap {
+  min-width: 150px;
+}
+
+.live-report-range-sep {
+  color: var(--report-muted);
+  font-weight: 700;
+}
+
+.live-report-status,
+.live-report-search {
+  height: 2.6rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--report-border);
+  border-radius: 0.75rem;
+  background: var(--report-surface);
+  color: var(--report-heading);
+  font-weight: 650;
+}
+
+.live-report-search {
+  min-width: 220px;
 }
 
 .report-panel-heading {
