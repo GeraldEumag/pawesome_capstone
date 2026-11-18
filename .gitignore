@@ -89,3 +89,7 @@ playwright-report/
 
 # Manual PDF/DOCX build intermediates (regenerated)
 docs/user-manual/.manual-*
+
+# Local data dumps and capstone packaging artifacts (never commit)
+backups/
+capstone-deliverables/

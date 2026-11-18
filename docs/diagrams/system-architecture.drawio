@@ -1,0 +1,177 @@
+<mxfile host="app.diagrams.net" agent="Devin">
+  <diagram name="System Architecture" id="pawesome-sys-arch">
+    <mxGraphModel dx="1493" dy="1826" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1240" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="band-actors" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fontSize=10;align=left;spacingLeft=6;" value="USERS / ACTORS" vertex="1">
+          <mxGeometry height="130" width="880" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="customer" parent="1" style="shape=actor;whiteSpace=wrap;html=1;fontSize=11;" value="Customer / Pet Owner" vertex="1">
+          <mxGeometry height="75" width="120" x="80" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-group" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=10;fontStyle=2;" value="Staff Roles" vertex="1">
+          <mxGeometry height="85" width="660" x="250" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="role-receptionist" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Receptionist" vertex="1">
+          <mxGeometry height="40" width="95" x="262" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="role-cashier" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Cashier" vertex="1">
+          <mxGeometry height="40" width="95" x="365" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="role-inventory" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Inventory Staff" vertex="1">
+          <mxGeometry height="40" width="95" x="468" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="role-vet" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Veterinary Staff" vertex="1">
+          <mxGeometry height="40" width="95" x="571" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="role-manager" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Manager" vertex="1">
+          <mxGeometry height="40" width="95" x="674" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="role-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Admin" vertex="1">
+          <mxGeometry height="40" width="95" x="777" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="internet" parent="1" style="shape=cloud;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;" value="INTERNET&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;HTTPS / TLS&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="440" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;" value="React 18 + Vite SPA (Vercel)&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Customer Portal · Role-Based Staff Dashboards&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="560" x="240" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;fontSize=10;fontStyle=1;align=left;spacingLeft=6;" value="LARAVEL 12 API — APPLICATION TIER (Railway)" vertex="1">
+          <mxGeometry height="400" width="860" x="60" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="middleware" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=10;fontStyle=1;" value="API Middleware — Sanctum Token Auth · RBAC · Email-Verified Gate · CORS" vertex="1">
+          <mxGeometry height="38" width="820" x="80" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="rowlabel-1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontStyle=2;" value="Reservation Domain" vertex="1">
+          <mxGeometry height="16" width="200" x="80" y="432" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-vet" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Veterinary Service&lt;br&gt;Management" vertex="1">
+          <mxGeometry height="60" width="195" x="80" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-grooming" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Grooming Service&lt;br&gt;Management" vertex="1">
+          <mxGeometry height="60" width="195" x="290" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-hotel" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Pet Hotel / Boarding&lt;br&gt;Reservation Management" vertex="1">
+          <mxGeometry height="60" width="195" x="500" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-customer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Customer &amp; Pet&lt;br&gt;Management" vertex="1">
+          <mxGeometry height="60" width="190" x="710" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="rowlabel-2" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontStyle=2;" value="Commerce &amp; Support" vertex="1">
+          <mxGeometry height="16" width="200" x="80" y="522" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-pos" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Point of Sale (POS) &amp;&lt;br&gt;Payment Management" vertex="1">
+          <mxGeometry height="60" width="195" x="80" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-inventory" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Inventory &amp; Supply&lt;br&gt;Monitoring" vertex="1">
+          <mxGeometry height="60" width="195" x="290" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-reports" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Reports&lt;br&gt;Management" vertex="1">
+          <mxGeometry height="60" width="195" x="500" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-chatbot" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Chatbot Assistance&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;FAQ Knowledge Base + AI Engine&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="190" x="710" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="rowlabel-3" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=9;fontStyle=2;" value="Platform Services" vertex="1">
+          <mxGeometry height="16" width="200" x="80" y="612" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-auth" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Authentication &amp;&lt;br&gt;User Access" vertex="1">
+          <mxGeometry height="60" width="195" x="80" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-notify" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Notifications /&lt;br&gt;Email Outbox" vertex="1">
+          <mxGeometry height="60" width="195" x="290" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-admin" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;" value="Administration &amp;&lt;br&gt;Security" vertex="1">
+          <mxGeometry height="60" width="195" x="500" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="mod-queue" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;dashed=1;" value="Queue Worker + Scheduler&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;dispatches Email Outbox · receipts · housekeeping&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="190" x="710" y="630" as="geometry" />
+        </mxCell>
+        <mxCell id="band-data" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fontSize=10;align=left;spacingLeft=6;" value="DATA TIER" vertex="1">
+          <mxGeometry height="105" width="860" x="60" y="785" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fontSize=11;fontStyle=1;" value="MySQL Database" vertex="1">
+          <mxGeometry height="70" width="220" x="140" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="storage" parent="1" style="shape=folder;whiteSpace=wrap;html=1;fontSize=10;fontStyle=1;tabPosition=left;" value="File / Object Storage&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;private: payment proofs · pet photos&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;public: inventory images&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="300" x="480" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="band-external" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;fontSize=10;align=left;spacingLeft=6;" value="EXTERNAL SERVICES" vertex="1">
+          <mxGeometry height="300" width="250" x="950" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="telegram" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontStyle=1;" value="Telegram Bot API&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;customer chat channel&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="210" x="970" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="llm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontStyle=1;" value="Groq / Gemini&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;LLM API (chatbot reasoning)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="210" x="970" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="brevo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontStyle=1;" value="Brevo&lt;br&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Transactional Email API&lt;/font&gt;" vertex="1">
+          <mxGeometry height="55" width="210" x="970" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=8;fontSize=9;" value="&lt;b&gt;Legend / Notes&lt;/b&gt;&lt;br&gt;• super_receptionist = composite role (receptionist + cashier + inventory)&lt;br&gt;• admin = all staff modules; blocked from customer portal&lt;br&gt;• Solid arrow = synchronous request (HTTPS / SQL)&lt;br&gt;• Dashed arrow = asynchronous / channel&lt;br&gt;• Module rows are peers — all calls pass through the API middleware" vertex="1">
+          <mxGeometry height="190" width="250" x="950" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="caption" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontStyle=2;" value="Figure X. Layered System Architecture of the Web-Based Management Information System with Chatbot-Driven Veterinary and Hotel Services Reservation for Pawesome Retreat Inc." vertex="1">
+          <mxGeometry height="50" width="880" x="60" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="customer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="internet" value="portal + chat">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="148" />
+              <mxPoint x="480" y="148" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="staff-group" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="internet" value="HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="internet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="frontend" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="frontend" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="middleware" value="REST / JSON · Bearer token">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="api" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.35;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="mysql" value="SQL · Eloquent ORM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="api" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.65;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="storage" value="upload / serve files">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="mod-notify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="brevo" value="HTTPS API (email)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="387" y="715" />
+              <mxPoint x="915" y="715" />
+              <mxPoint x="915" y="617" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="mod-chatbot" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="llm" value="LLM request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="935" y="570" />
+              <mxPoint x="935" y="517" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="telegram" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;startArrow=block;startFill=1;" target="mod-chatbot" value="webhook (HTTPS)">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="945" y="417" />
+              <mxPoint x="945" y="585" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="customer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="telegram" value="Telegram chat">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="5" />
+              <mxPoint x="1075" y="5" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
