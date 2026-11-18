@@ -1,20 +1,20 @@
 {
-  "startedAt": "2026-11-05T13:57:13.448Z",
-  "completedAt": "2026-11-05T13:57:47.643Z",
+  "startedAt": "2026-11-18T11:08:53.857Z",
+  "completedAt": "2026-11-18T11:09:31.615Z",
   "workflows": [
     {
       "name": "My Leave self-service",
       "status": "VERIFIED",
       "httpStatus": 201,
       "ownerMatchesAuthenticatedUser": true,
-      "leaveId": 48
+      "leaveId": 51
     },
     {
       "name": "Attendance live baseline",
       "status": "NOT_REPRODUCED",
       "route": "/manager/attendance",
       "httpStatus": 200,
-      "resultCount": 5,
+      "resultCount": 0,
       "managerStatus": 200,
       "adminStatus": 200,
       "customerStatus": 403,
@@ -23,13 +23,13 @@
     {
       "name": "Reasoned service, hotel-room, and holiday deletion",
       "status": "VERIFIED",
-      "serviceId": 96,
+      "serviceId": 99,
       "serviceDeleteStatus": 200,
       "serviceReasonPresent": true,
-      "hotelRoomId": 23,
+      "hotelRoomId": 25,
       "hotelRoomDeleteStatus": 200,
       "hotelRoomReasonPresent": true,
-      "holidayId": 29,
+      "holidayId": 30,
       "holidayDeleteStatus": 200,
       "holidayReasonPresent": true,
       "holidayActiveAfterArchive": false
@@ -37,7 +37,7 @@
     {
       "name": "Live Supplier CRUD and responsive layout",
       "status": "VERIFIED",
-      "supplierId": 33,
+      "supplierId": 35,
       "createStatus": 201,
       "updateStatus": 200,
       "emptyStateShown": false,
@@ -265,7 +265,7 @@
     {
       "source": "browser",
       "method": "DELETE",
-      "path": "/api/receptionist/services/96",
+      "path": "/api/receptionist/services/99",
       "status": 200
     },
     {
@@ -283,7 +283,7 @@
     {
       "source": "browser",
       "method": "DELETE",
-      "path": "/api/receptionist/boarding-rooms/23",
+      "path": "/api/receptionist/boarding-rooms/25",
       "status": 200
     },
     {
@@ -331,7 +331,7 @@
     {
       "source": "browser",
       "method": "DELETE",
-      "path": "/api/manager/holidays/29",
+      "path": "/api/manager/holidays/30",
       "status": 200
     },
     {
@@ -409,12 +409,6 @@
     {
       "source": "browser",
       "method": "GET",
-      "path": "/api/inventory/suppliers",
-      "status": 200
-    },
-    {
-      "source": "browser",
-      "method": "GET",
       "path": "/api/settings/public",
       "status": 200
     },
@@ -440,12 +434,18 @@
       "source": "browser",
       "method": "GET",
       "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
       "status": 200
     },
     {
       "source": "browser",
       "method": "PUT",
-      "path": "/api/inventory/suppliers/33",
+      "path": "/api/inventory/suppliers/35",
       "status": 200
     },
     {

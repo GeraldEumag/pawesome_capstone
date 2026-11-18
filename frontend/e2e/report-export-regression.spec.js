@@ -127,7 +127,8 @@ test.describe('Report export regression coverage', () => {
     expect(csv).toContain('Estimated Variance Value');
     expect(csv).toContain('Test Kibble');
     expect(csv).toContain('Counting Error');
-    expect(csv).toContain('-24');
+    // Currency-formatted: variance -2 × unit cost 12 → "-₱24.00".
+    expect(csv).toMatch(/-₱?24\.00|-24\.00/);
 
     const excelEvent = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export Excel' }).click();

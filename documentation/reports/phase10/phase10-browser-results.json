@@ -3,7 +3,7 @@
     "backendUrl": "http://127.0.0.1:8000",
     "frontendUrl": "http://127.0.0.1:3000",
     "browserPreview": "http://127.0.0.1:64422",
-    "testDate": "2026-11-05T14:04:55.595Z",
+    "testDate": "2026-11-18T11:22:42.297Z",
     "tester": "Codex automated Playwright"
   },
   "roles": [
@@ -47,12 +47,12 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "LOAD CUSTOMER PAYMENTS ERROR: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchPayments (http://127.0.0.1:3000/src/components/customers/CustomerPayments.jsx:90:28)",
+          "text": "Customer notifications fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx:47:20)",
           "url": "http://127.0.0.1:3000/customer/notifications"
         },
         {
           "type": "error",
-          "text": "LOAD CUSTOMER PAYMENTS ERROR: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchPayments (http://127.0.0.1:3000/src/components/customers/CustomerPayments.jsx:90:28)",
+          "text": "LOAD CUSTOMER PAYMENTS ERROR: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchPayments (http://127.0.0.1:3000/src/components/customers/CustomerPayments.jsx:83:30)",
           "url": "http://127.0.0.1:3000/customer/notifications"
         },
         {
@@ -62,7 +62,7 @@
         },
         {
           "type": "error",
-          "text": "Customer notifications fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchNotifications (http://127.0.0.1:3000/src/components/customers/CustomerNotifications.jsx:47:20)",
+          "text": "LOAD CUSTOMER PAYMENTS ERROR: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchPayments (http://127.0.0.1:3000/src/components/customers/CustomerPayments.jsx:83:30)",
           "url": "http://127.0.0.1:3000/customer/notifications"
         }
       ],
@@ -84,14 +84,35 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+          "url": "http://localhost:8000/api/customer/pets",
           "page": "http://127.0.0.1:3000/customer/pets",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+          "url": "http://localhost:8000/api/customer/pets/archived",
+          "page": "http://127.0.0.1:3000/customer/pets",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/pets",
+          "page": "http://127.0.0.1:3000/customer/pets",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/tracking",
+          "page": "http://127.0.0.1:3000/customer/pets",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/pets/archived",
           "page": "http://127.0.0.1:3000/customer/pets",
           "failure": "net::ERR_ABORTED"
         },
@@ -105,14 +126,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/customer/store/orders",
-          "page": "http://127.0.0.1:3000/customer/notifications",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/customer/store/orders",
+          "url": "http://localhost:8000/api/customer/tracking",
           "page": "http://127.0.0.1:3000/customer/notifications",
           "failure": "net::ERR_ABORTED"
         },
@@ -126,7 +140,42 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=customer",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/my-requests?email=customer%40example.com",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
           "url": "http://localhost:8000/api/notifications",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customer/my-requests?email=customer%40example.com",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/customer/notifications",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
           "page": "http://127.0.0.1:3000/customer/notifications",
           "failure": "net::ERR_ABORTED"
         }
@@ -175,12 +224,12 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/receptionist/ReceptionistReports.jsx:147:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/receptionist/ReceptionistReports.jsx:147:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:685:7",
           "url": "http://127.0.0.1:3000/receptionist/reports"
         },
         {
           "type": "error",
-          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/receptionist/ReceptionistReports.jsx:147:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/receptionist/ReceptionistReports.jsx:147:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:685:7",
           "url": "http://127.0.0.1:3000/receptionist/reports"
         }
       ],
@@ -209,6 +258,34 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=receptionist",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
           "url": "http://localhost:8000/api/receptionist/boarding-rooms",
           "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
           "failure": "net::ERR_ABORTED"
@@ -217,13 +294,6 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/notifications?role=receptionist",
-          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
           "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
           "failure": "net::ERR_ABORTED"
         },
@@ -244,7 +314,14 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=receptionist",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
           "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
           "failure": "net::ERR_ABORTED"
         },
@@ -258,28 +335,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/receptionist/boarding-rooms",
-          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/receptionist/boarding-requests",
-          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/receptionist/boarding-requests",
-          "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/receptionist/appointments",
+          "url": "http://localhost:8000/api/settings/public",
           "page": "http://127.0.0.1:3000/receptionist/reports",
           "failure": "net::ERR_ABORTED"
         },
@@ -293,7 +349,21 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/customers",
+          "url": "http://localhost:8000/api/receptionist/boarding-requests",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=receptionist",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/reports/live",
           "page": "http://127.0.0.1:3000/receptionist/reports",
           "failure": "net::ERR_ABORTED"
         },
@@ -314,7 +384,28 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/receptionist/reports/live",
+          "url": "http://localhost:8000/api/receptionist/appointments",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customers",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/receptionist/appointments",
+          "page": "http://127.0.0.1:3000/receptionist/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/customers",
           "page": "http://127.0.0.1:3000/receptionist/reports",
           "failure": "net::ERR_ABORTED"
         },
@@ -370,12 +461,22 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "Failed to load payment requests: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/hooks/usePaymentApprovals.jsx:33:20",
+          "text": "Failed to load payment requests: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/hooks/usePaymentApprovals.jsx:34:20",
           "url": "http://127.0.0.1:3000/cashier/payment-verification"
         },
         {
           "type": "error",
-          "text": "Failed to load last cashier info: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Promise.all (index 1)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:205:39",
+          "text": "Failed to load payment requests: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/hooks/usePaymentApprovals.jsx:34:20",
+          "url": "http://127.0.0.1:3000/cashier/payment-verification"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load last cashier info: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Promise.all (index 0)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierDashboard.jsx:205:39",
+          "url": "http://127.0.0.1:3000/cashier/reports"
+        },
+        {
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierReports.jsx:60:22\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:685:7",
           "url": "http://127.0.0.1:3000/cashier/reports"
         },
         {
@@ -385,12 +486,7 @@
         },
         {
           "type": "error",
-          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierReports.jsx:60:22\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
-          "url": "http://127.0.0.1:3000/cashier/reports"
-        },
-        {
-          "type": "error",
-          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierReports.jsx:60:22\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:684:7",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/cashier/CashierReports.jsx:60:22\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:685:7",
           "url": "http://127.0.0.1:3000/cashier/reports"
         }
       ],
@@ -412,7 +508,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "url": "http://localhost:8000/api/cashier/customers",
           "page": "http://127.0.0.1:3000/cashier",
           "failure": "net::ERR_ABORTED"
         },
@@ -420,6 +516,13 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/cashier/pos/services",
+          "page": "http://127.0.0.1:3000/cashier",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
           "page": "http://127.0.0.1:3000/cashier",
           "failure": "net::ERR_ABORTED"
         },
@@ -440,14 +543,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/cashier/customers",
-          "page": "http://127.0.0.1:3000/cashier",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/cashier/customers",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
           "page": "http://127.0.0.1:3000/cashier",
           "failure": "net::ERR_ABORTED"
         },
@@ -461,20 +557,6 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/settings/public",
-          "page": "http://127.0.0.1:3000/cashier/pos",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/settings/public",
-          "page": "http://127.0.0.1:3000/cashier/pos",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
           "url": "http://localhost:8000/api/cashier/customers",
           "page": "http://127.0.0.1:3000/cashier/pos",
           "failure": "net::ERR_ABORTED"
@@ -482,14 +564,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/cashier/customers",
-          "page": "http://127.0.0.1:3000/cashier/pos",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "url": "http://localhost:8000/api/cashier/pos/services",
           "page": "http://127.0.0.1:3000/cashier/pos",
           "failure": "net::ERR_ABORTED"
         },
@@ -497,6 +572,34 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/cashier/inventory/sellable",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
+          "page": "http://127.0.0.1:3000/cashier/pos",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
           "page": "http://127.0.0.1:3000/cashier/pos",
           "failure": "net::ERR_ABORTED"
         },
@@ -517,15 +620,8 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/cashier/payment-requests",
-          "page": "http://127.0.0.1:3000/cashier/payment-verification",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
           "url": "http://localhost:8000/api/cashier/inventory/sellable",
-          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "page": "http://127.0.0.1:3000/cashier/pos",
           "failure": "net::ERR_ABORTED"
         },
         {
@@ -545,7 +641,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/cashier/customers",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
           "page": "http://127.0.0.1:3000/cashier/payment-verification",
           "failure": "net::ERR_ABORTED"
         },
@@ -553,6 +649,20 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/payment-requests",
           "page": "http://127.0.0.1:3000/cashier/payment-verification",
           "failure": "net::ERR_ABORTED"
         },
@@ -573,14 +683,42 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/cashier/shift-report/last",
-          "page": "http://127.0.0.1:3000/cashier/reports",
+          "url": "http://localhost:8000/api/cashier/inventory/sellable",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/pos/services",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/inventory/sellable",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/customers",
+          "page": "http://127.0.0.1:3000/cashier/payment-verification",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/cashier/handover/last",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/transactions?page=1&per_page=25",
           "page": "http://127.0.0.1:3000/cashier/reports",
           "failure": "net::ERR_ABORTED"
         },
@@ -595,6 +733,55 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/handover/last",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=cashier",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/settings/public",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/shift-report/last",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=cashier",
+          "page": "http://127.0.0.1:3000/cashier/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/chatbot/welcome",
           "page": "http://127.0.0.1:3000/cashier/reports",
           "failure": "net::ERR_ABORTED"
         },
@@ -616,20 +803,6 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/cashier/shift-report/last",
-          "page": "http://127.0.0.1:3000/cashier/reports",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/notifications?role=cashier",
-          "page": "http://127.0.0.1:3000/cashier/reports",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
           "page": "http://127.0.0.1:3000/cashier/reports",
           "failure": "net::ERR_ABORTED"
         }
@@ -678,12 +851,22 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "Failed to load monthly audit: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getOrCreateMonthlyAudit (http://127.0.0.1:3000/src/api/inventory.jsx:621:14)\n    at async fetchAuditItems (http://127.0.0.1:3000/src/components/inventory/MonthlyInventoryAudit.jsx:114:19)",
+          "text": "Failed to fetch live inventory report data: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getReports (http://127.0.0.1:3000/src/api/inventory.jsx:383:14)\n    at async http://127.0.0.1:3000/src/components/inventory/InventoryReports.jsx:75:97",
           "url": "http://127.0.0.1:3000/inventory/monthly-audit"
         },
         {
           "type": "error",
-          "text": "Failed to load monthly audit: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getOrCreateMonthlyAudit (http://127.0.0.1:3000/src/api/inventory.jsx:621:14)\n    at async fetchAuditItems (http://127.0.0.1:3000/src/components/inventory/MonthlyInventoryAudit.jsx:114:19)",
+          "text": "Failed to fetch live inventory report data: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getReports (http://127.0.0.1:3000/src/api/inventory.jsx:383:14)\n    at async http://127.0.0.1:3000/src/components/inventory/InventoryReports.jsx:75:97",
+          "url": "http://127.0.0.1:3000/inventory/monthly-audit"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load monthly audit: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getOrCreateMonthlyAudit (http://127.0.0.1:3000/src/api/inventory.jsx:623:14)\n    at async fetchAuditItems (http://127.0.0.1:3000/src/components/inventory/MonthlyInventoryAudit.jsx:115:19)",
+          "url": "http://127.0.0.1:3000/inventory/monthly-audit"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load monthly audit: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async Object.getOrCreateMonthlyAudit (http://127.0.0.1:3000/src/api/inventory.jsx:623:14)\n    at async fetchAuditItems (http://127.0.0.1:3000/src/components/inventory/MonthlyInventoryAudit.jsx:115:19)",
           "url": "http://127.0.0.1:3000/inventory/monthly-audit"
         }
       ],
@@ -705,6 +888,20 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
+          "url": "http://localhost:8000/api/inventory/dashboard",
+          "page": "http://127.0.0.1:3000/inventory",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/chatbot/welcome",
+          "page": "http://127.0.0.1:3000/inventory",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
           "url": "http://localhost:8000/api/chatbot/welcome",
           "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
@@ -719,13 +916,6 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/chatbot/welcome",
-          "page": "http://127.0.0.1:3000/inventory",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
           "url": "http://localhost:8000/api/inventory/dashboard",
           "page": "http://127.0.0.1:3000/inventory",
           "failure": "net::ERR_ABORTED"
@@ -733,8 +923,29 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/inventory/dashboard",
-          "page": "http://127.0.0.1:3000/inventory",
+          "url": "http://localhost:8000/api/inventory/reports",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/inventory/reports",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/inventory/items",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/inventory/logs",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
           "failure": "net::ERR_ABORTED"
         },
         {
@@ -748,6 +959,20 @@
           "status": "REQUEST_FAILED",
           "method": "GET",
           "url": "http://localhost:8000/api/inventory/monthly-audit?month=2026-11",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/inventory/items/archived",
+          "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/inventory/logs",
           "page": "http://127.0.0.1:3000/inventory/monthly-audit",
           "failure": "net::ERR_ABORTED"
         }
@@ -795,24 +1020,24 @@
       "blankPages": [],
       "consoleErrors": [
         {
-          "type": "warning",
-          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
-          "url": "http://127.0.0.1:3000/veterinary/reports"
+          "type": "error",
+          "text": "Failed to fetch customers: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/veterinary/VetCustomerProfiles.jsx:173:22",
+          "url": "http://127.0.0.1:3000/veterinary/customer-profiles"
         },
         {
-          "type": "warning",
-          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
-          "url": "http://127.0.0.1:3000/veterinary/reports"
+          "type": "error",
+          "text": "Failed to fetch customers: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/veterinary/VetCustomerProfiles.jsx:173:22",
+          "url": "http://127.0.0.1:3000/veterinary/customer-profiles"
         },
         {
-          "type": "warning",
-          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
-          "url": "http://127.0.0.1:3000/veterinary/reports"
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/veterinary/VetReports.jsx:84:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:685:7",
+          "url": "http://127.0.0.1:3000/veterinary/customer-profiles"
         },
         {
-          "type": "warning",
-          "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(300) or minHeight(200) or use aspect(undefined) to control the\n       height and width.",
-          "url": "http://127.0.0.1:3000/veterinary/reports"
+          "type": "error",
+          "text": "Report fetch error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/veterinary/VetReports.jsx:84:20\n    at async http://127.0.0.1:3000/src/components/shared/UnifiedReportEngine.jsx:685:7",
+          "url": "http://127.0.0.1:3000/veterinary/customer-profiles"
         }
       ],
       "networkErrors": [
@@ -856,6 +1081,55 @@
           "method": "GET",
           "url": "http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500",
           "page": "http://127.0.0.1:3000/veterinary/reports",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/reports?start_date=2026-11-01&from=2026-11-01&end_date=2026-11-30&to=2026-11-30",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/patients",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/patients",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled%2Cno_show",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/boardings/current-boarders",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/reports?start_date=2026-11-01&from=2026-11-01&end_date=2026-11-30&to=2026-11-30",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled%2Cno_show",
+          "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
           "failure": "net::ERR_ABORTED"
         }
       ],
@@ -933,7 +1207,126 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/manager/attendance?date=2026-11-05",
+          "url": "http://localhost:8000/api/manager/attendance?date=2026-11-18",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/payments",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/sales",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/history",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/inventory",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/customers",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/staff",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/customers",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/staff",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/history?page=1&per_page=25",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/notifications?role=manager",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/live",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/services",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/veterinary-services",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/payments",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/live",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/services",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/inventory",
           "page": "http://127.0.0.1:3000/manager/history",
           "failure": "net::ERR_ABORTED"
         },
@@ -954,56 +1347,7 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/manager/reports/customers",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/reports/services",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
           "url": "http://localhost:8000/api/manager/reports/inventory",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/staff",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/reports/inventory",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/reports/live",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/reports/customers",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/staff",
           "page": "http://127.0.0.1:3000/manager/history",
           "failure": "net::ERR_ABORTED"
         },
@@ -1017,21 +1361,21 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/manager/reports/services",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
-          "url": "http://localhost:8000/api/manager/history?page=1&per_page=25",
-          "page": "http://127.0.0.1:3000/manager/history",
-          "failure": "net::ERR_ABORTED"
-        },
-        {
-          "status": "REQUEST_FAILED",
-          "method": "GET",
           "url": "http://localhost:8000/api/manager/reports/payroll",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/dashboard",
+          "page": "http://127.0.0.1:3000/manager/history",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/manager/reports/services",
           "page": "http://127.0.0.1:3000/manager/history",
           "failure": "net::ERR_ABORTED"
         },
@@ -1087,12 +1431,27 @@
       "consoleErrors": [
         {
           "type": "error",
-          "text": "Error fetching settings: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchSettings (http://127.0.0.1:3000/src/components/admin/AdminSettings.jsx:139:20)",
+          "text": "Executive Dashboard API Error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/admin/reports/ExecutiveDashboard.jsx:196:24",
           "url": "http://127.0.0.1:3000/admin/settings"
         },
         {
           "type": "error",
-          "text": "Error fetching settings: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchSettings (http://127.0.0.1:3000/src/components/admin/AdminSettings.jsx:139:20)",
+          "text": "Error fetching settings: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchSettings (http://127.0.0.1:3000/src/components/admin/AdminSettings.jsx:133:20)",
+          "url": "http://127.0.0.1:3000/admin/settings"
+        },
+        {
+          "type": "error",
+          "text": "Error fetching settings: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchSettings (http://127.0.0.1:3000/src/components/admin/AdminSettings.jsx:133:20)",
+          "url": "http://127.0.0.1:3000/admin/settings"
+        },
+        {
+          "type": "error",
+          "text": "Executive Dashboard API Error: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async http://127.0.0.1:3000/src/components/admin/reports/ExecutiveDashboard.jsx:196:24",
+          "url": "http://127.0.0.1:3000/admin/settings"
+        },
+        {
+          "type": "error",
+          "text": "Failed to fetch users: Error: Cannot reach the server right now. Please check your connection and try again.\n    at apiRequest (http://127.0.0.1:3000/src/api/client.js:161:13)\n    at async fetchUsers (http://127.0.0.1:3000/src/components/admin/ManageUsers.jsx:159:20)",
           "url": "http://127.0.0.1:3000/admin/settings"
         }
       ],
@@ -1114,7 +1473,28 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/reports/cashier",
+          "url": "http://localhost:8000/api/inventory/logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/activity-logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/reports/executive?from=2026-11-18&to=2026-11-18",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/activity-logs",
           "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
@@ -1142,14 +1522,21 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/login-logs",
+          "url": "http://localhost:8000/api/admin/appointments",
           "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/appointments",
+          "url": "http://localhost:8000/api/admin/settings",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/reports/executive?from=2026-11-18&to=2026-11-18",
           "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
@@ -1170,21 +1557,35 @@
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/settings",
+          "url": "http://localhost:8000/api/admin/chatbot/logs",
           "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/admin/activity-logs",
+          "url": "http://localhost:8000/api/admin/login-logs",
           "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         },
         {
           "status": "REQUEST_FAILED",
           "method": "GET",
-          "url": "http://localhost:8000/api/inventory/logs",
+          "url": "http://localhost:8000/api/admin/users?page=1&per_page=25&sort=created_at&direction=desc",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/login-logs",
+          "page": "http://127.0.0.1:3000/admin/settings",
+          "failure": "net::ERR_ABORTED"
+        },
+        {
+          "status": "REQUEST_FAILED",
+          "method": "GET",
+          "url": "http://localhost:8000/api/admin/reports/cashier",
           "page": "http://127.0.0.1:3000/admin/settings",
           "failure": "net::ERR_ABORTED"
         }
@@ -1250,7 +1651,7 @@
       "module": "customer",
       "page": "http://127.0.0.1:3000/customer/pets",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+      "routeFile": "http://localhost:8000/api/customer/pets",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1259,7 +1660,34 @@
       "module": "customer",
       "page": "http://127.0.0.1:3000/customer/pets",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/files/pet-photos/1/view?t=1792255082",
+      "routeFile": "http://localhost:8000/api/customer/pets/archived",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/pets",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/tracking",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/pets",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/pets/archived",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1277,16 +1705,7 @@
       "module": "customer",
       "page": "http://127.0.0.1:3000/customer/notifications",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/customer/store/orders",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "customer",
-      "page": "http://127.0.0.1:3000/customer/notifications",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/customer/store/orders",
+      "routeFile": "http://localhost:8000/api/customer/tracking",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1304,7 +1723,52 @@
       "module": "customer",
       "page": "http://127.0.0.1:3000/customer/notifications",
       "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=customer",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/my-requests?email=customer%40example.com",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/notifications",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/customer/my-requests?email=customer%40example.com",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "customer",
+      "page": "http://127.0.0.1:3000/customer/notifications",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1340,6 +1804,42 @@
       "module": "receptionist",
       "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
       "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=receptionist",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
@@ -1350,15 +1850,6 @@
       "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/notifications?role=receptionist",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1385,33 +1876,6 @@
       "module": "receptionist",
       "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=receptionist",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
-      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
@@ -1420,6 +1884,78 @@
       "severity": "Low",
       "module": "receptionist",
       "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/bookings/hotel",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-rooms",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=receptionist",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/customer-orders",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1439,7 +1975,16 @@
       "module": "receptionist",
       "page": "http://127.0.0.1:3000/receptionist/reports",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/reports/live",
+      "routeFile": "http://localhost:8000/api/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "receptionist",
+      "page": "http://127.0.0.1:3000/receptionist/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/receptionist/appointments",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1463,33 +2008,6 @@
     },
     {
       "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/reports",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/boarding-requests",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/reports",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/reports/live",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "receptionist",
-      "page": "http://127.0.0.1:3000/receptionist/reports",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/receptionist/customer-orders",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
       "module": "cashier",
       "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
@@ -1511,7 +2029,7 @@
       "module": "cashier",
       "page": "http://127.0.0.1:3000/cashier",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1521,6 +2039,15 @@
       "page": "http://127.0.0.1:3000/cashier",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/cashier/pos/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1547,16 +2074,7 @@
       "module": "cashier",
       "page": "http://127.0.0.1:3000/cashier",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/customers",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1574,24 +2092,6 @@
       "module": "cashier",
       "page": "http://127.0.0.1:3000/cashier/pos",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/pos",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/pos",
-      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/cashier/customers",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
@@ -1601,16 +2101,7 @@
       "module": "cashier",
       "page": "http://127.0.0.1:3000/cashier/pos",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/customers",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/pos",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "routeFile": "http://localhost:8000/api/cashier/pos/services",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1620,6 +2111,42 @@
       "page": "http://127.0.0.1:3000/cashier/pos",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/pos",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1644,16 +2171,7 @@
     {
       "severity": "Low",
       "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/payment-verification",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "page": "http://127.0.0.1:3000/cashier/pos",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
       "fixApplied": "Classified as navigation-cancelled background request",
@@ -1682,7 +2200,7 @@
       "module": "cashier",
       "page": "http://127.0.0.1:3000/cashier/payment-verification",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/customers",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1692,6 +2210,24 @@
       "page": "http://127.0.0.1:3000/cashier/payment-verification",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/payment-requests",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1716,9 +2252,36 @@
     {
       "severity": "Low",
       "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/reports",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/shift-report/last",
+      "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/pos/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/inventory/sellable",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/payment-verification",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/customers",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1728,6 +2291,15 @@
       "page": "http://127.0.0.1:3000/cashier/reports",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/cashier/handover/last",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/transactions?page=1&per_page=25",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1746,6 +2318,69 @@
       "page": "http://127.0.0.1:3000/cashier/reports",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/handover/last",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=cashier",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/settings/public",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/shift-report/last",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=cashier",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "cashier",
+      "page": "http://127.0.0.1:3000/cashier/reports",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/chatbot/welcome",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1778,19 +2413,10 @@
     },
     {
       "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/reports",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/login",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/notifications?role=cashier",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "cashier",
-      "page": "http://127.0.0.1:3000/cashier/reports",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/cashier/transactions?from=2026-11-01&to=2026-11-30",
+      "routeFile": "http://localhost:8000/api/settings/public",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1806,9 +2432,18 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://127.0.0.1:3000/login",
+      "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/settings/public",
+      "routeFile": "http://localhost:8000/api/inventory/dashboard",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/inventory",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/chatbot/welcome",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1835,15 +2470,6 @@
       "module": "inventory",
       "page": "http://127.0.0.1:3000/inventory",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/chatbot/welcome",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "inventory",
-      "page": "http://127.0.0.1:3000/inventory",
-      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/inventory/dashboard",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
@@ -1851,9 +2477,36 @@
     {
       "severity": "Low",
       "module": "inventory",
-      "page": "http://127.0.0.1:3000/inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/dashboard",
+      "routeFile": "http://localhost:8000/api/inventory/reports",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/inventory/reports",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/inventory/items",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/inventory/logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1872,6 +2525,24 @@
       "page": "http://127.0.0.1:3000/inventory/monthly-audit",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/inventory/monthly-audit?month=2026-11",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/inventory/items/archived",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "inventory",
+      "page": "http://127.0.0.1:3000/inventory/monthly-audit",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/inventory/logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1926,6 +2597,69 @@
       "page": "http://127.0.0.1:3000/veterinary/reports",
       "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/reports?start_date=2026-11-01&from=2026-11-01&end_date=2026-11-30&to=2026-11-30",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/patients",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/patients",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled%2Cno_show",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/boardings/current-boarders",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/reports?start_date=2026-11-01&from=2026-11-01&end_date=2026-11-30&to=2026-11-30",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "veterinary",
+      "page": "http://127.0.0.1:3000/veterinary/customer-profiles",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/veterinary/history?page=1&per_page=25&status=completed%2Ccancelled%2Cno_show",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1970,7 +2704,160 @@
       "module": "manager",
       "page": "http://127.0.0.1:3000/manager/history",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/attendance?date=2026-11-05",
+      "routeFile": "http://localhost:8000/api/manager/attendance?date=2026-11-18",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/payments",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/sales",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/history",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/inventory",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/staff",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/customers",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/staff",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/history?page=1&per_page=25",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/notifications?role=manager",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/veterinary-services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/payments",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/live",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/services",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/inventory",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -1997,70 +2884,7 @@
       "module": "manager",
       "page": "http://127.0.0.1:3000/manager/history",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/reports/customers",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/reports/services",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/manager/reports/inventory",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/staff",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/reports/inventory",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/reports/live",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/reports/customers",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/staff",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2078,25 +2902,25 @@
       "module": "manager",
       "page": "http://127.0.0.1:3000/manager/history",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/reports/services",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/manager/history?page=1&per_page=25",
-      "fixApplied": "Classified as navigation-cancelled background request",
-      "status": "Observed"
-    },
-    {
-      "severity": "Low",
-      "module": "manager",
-      "page": "http://127.0.0.1:3000/manager/history",
-      "error": "GET REQUEST_FAILED",
       "routeFile": "http://localhost:8000/api/manager/reports/payroll",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/dashboard",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "manager",
+      "page": "http://127.0.0.1:3000/manager/history",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/manager/reports/services",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2132,7 +2956,34 @@
       "module": "admin",
       "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/reports/cashier",
+      "routeFile": "http://localhost:8000/api/inventory/logs",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/activity-logs",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/reports/executive?from=2026-11-18&to=2026-11-18",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/activity-logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2168,7 +3019,7 @@
       "module": "admin",
       "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/login-logs",
+      "routeFile": "http://localhost:8000/api/admin/appointments",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2177,7 +3028,16 @@
       "module": "admin",
       "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/appointments",
+      "routeFile": "http://localhost:8000/api/admin/settings",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/reports/executive?from=2026-11-18&to=2026-11-18",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2204,7 +3064,7 @@
       "module": "admin",
       "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/settings",
+      "routeFile": "http://localhost:8000/api/admin/chatbot/logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2213,7 +3073,7 @@
       "module": "admin",
       "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/admin/activity-logs",
+      "routeFile": "http://localhost:8000/api/admin/login-logs",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     },
@@ -2222,7 +3082,25 @@
       "module": "admin",
       "page": "http://127.0.0.1:3000/admin/settings",
       "error": "GET REQUEST_FAILED",
-      "routeFile": "http://localhost:8000/api/inventory/logs",
+      "routeFile": "http://localhost:8000/api/admin/users?page=1&per_page=25&sort=created_at&direction=desc",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/login-logs",
+      "fixApplied": "Classified as navigation-cancelled background request",
+      "status": "Observed"
+    },
+    {
+      "severity": "Low",
+      "module": "admin",
+      "page": "http://127.0.0.1:3000/admin/settings",
+      "error": "GET REQUEST_FAILED",
+      "routeFile": "http://localhost:8000/api/admin/reports/cashier",
       "fixApplied": "Classified as navigation-cancelled background request",
       "status": "Observed"
     }

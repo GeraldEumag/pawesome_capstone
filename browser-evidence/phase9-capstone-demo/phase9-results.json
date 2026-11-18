@@ -1,68 +1,68 @@
 {
-  "startedAt": "2026-11-05T14:13:36.187Z",
-  "stamp": "P9-16187",
+  "startedAt": "2026-11-18T11:29:24.635Z",
+  "stamp": "P9-64635",
   "legs": [
     {
-      "name": "P9 Demo Antiseptic P9-16187",
-      "at": "2026-11-05T14:13:36.458Z",
-      "itemId": 879,
+      "name": "P9 Demo Antiseptic P9-64635",
+      "at": "2026-11-18T11:29:25.116Z",
+      "itemId": 880,
       "stock": 10
     },
     {
       "name": "customer.submit",
-      "at": "2026-11-05T14:13:42.514Z",
-      "requestId": 637,
+      "at": "2026-11-18T11:29:29.637Z",
+      "requestId": 685,
       "uiShot": "01-customer-submitted.png"
     },
     {
       "name": "receptionist.approve",
-      "at": "2026-11-05T14:13:43.702Z",
-      "requestId": 637,
-      "appointmentId": 128,
+      "at": "2026-11-18T11:29:33.318Z",
+      "requestId": 685,
+      "appointmentId": 137,
       "vetId": 7,
       "uiShot": "02-receptionist-approved.png"
     },
     {
       "name": "customer.payment_proof",
-      "at": "2026-11-05T14:13:52.208Z",
-      "requestId": 637,
-      "reference": "GCASH-P9-16187"
+      "at": "2026-11-18T11:29:42.759Z",
+      "requestId": 685,
+      "reference": "GCASH-P9-64635"
     },
     {
       "name": "cashier.verify_service_request",
-      "at": "2026-11-05T14:13:55.489Z",
-      "requestId": 637,
-      "receipt": "SR-REC-20261105141354-637",
+      "at": "2026-11-18T11:29:48.313Z",
+      "requestId": 685,
+      "receipt": "SR-REC-20261118112946-685",
       "uiShot": "03-cashier-verified.png"
     },
     {
       "name": "veterinary.start_and_usage",
-      "at": "2026-11-05T14:14:01.306Z",
-      "appointmentId": 128,
-      "medicalRecordId": 51,
-      "itemId": 879,
-      "itemName": "P9 Demo Antiseptic P9-16187",
+      "at": "2026-11-18T11:29:59.182Z",
+      "appointmentId": 137,
+      "medicalRecordId": 55,
+      "itemId": 880,
+      "itemName": "P9 Demo Antiseptic P9-64635",
       "beforeStock": 10,
       "uiShot": "04-vet-in-progress.png"
     },
     {
       "name": "cashier.settle_items",
-      "at": "2026-11-05T14:14:02.016Z",
-      "appointmentId": 128,
+      "at": "2026-11-18T11:30:01.633Z",
+      "appointmentId": 137,
       "itemIds": [
-        564
+        592
       ],
-      "reference": "COUNTER-P9-16187"
+      "reference": "COUNTER-P9-64635"
     },
     {
       "name": "veterinary.auto_complete",
-      "at": "2026-11-05T14:14:04.744Z",
-      "appointmentId": 128
+      "at": "2026-11-18T11:30:05.941Z",
+      "appointmentId": 137
     },
     {
       "name": "inventory.stock_verified",
-      "at": "2026-11-05T14:14:06.524Z",
-      "itemId": 879,
+      "at": "2026-11-18T11:30:08.603Z",
+      "itemId": 880,
       "beforeStock": 10,
       "afterStock": 9,
       "hasUsageLog": false,
@@ -73,29 +73,29 @@
     },
     {
       "name": "customer.final_state",
-      "at": "2026-11-05T14:14:09.167Z",
-      "requestId": 637,
+      "at": "2026-11-18T11:30:13.668Z",
+      "requestId": 685,
       "status": "approved",
       "paymentStatus": "paid",
-      "receipt": "SR-REC-20261105141354-637",
+      "receipt": "SR-REC-20261118112946-685",
       "uiShot": "07-customer-paid.png"
     },
     {
       "name": "manager.reports",
-      "at": "2026-11-05T14:14:10.262Z",
+      "at": "2026-11-18T11:30:16.527Z",
       "status": 200,
       "uiShot": "08-manager-reports.png"
     },
     {
       "name": "admin.audit",
-      "at": "2026-11-05T14:14:11.707Z",
+      "at": "2026-11-18T11:30:19.595Z",
       "sawWorkflowEntries": true,
       "uiShot": "09-admin-dashboard.png"
     }
   ],
   "status": "PASSED",
-  "consumableItemId": 879,
-  "requestId": 637,
-  "appointmentId": 128,
-  "srReceipt": "SR-REC-20261105141354-637"
+  "consumableItemId": 880,
+  "requestId": 685,
+  "appointmentId": 137,
+  "srReceipt": "SR-REC-20261118112946-685"
 }

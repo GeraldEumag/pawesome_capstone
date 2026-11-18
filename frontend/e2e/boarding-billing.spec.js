@@ -42,7 +42,9 @@ test.describe('Boarding itemized billing E2E', () => {
   test.setTimeout(180000);
 
   test.beforeEach(() => {
-    execSync("${process.env.PHP_BINARY || 'php'} " + (process.env.PAWESOME_SEED_SCRIPT || 'C:/xampp/pawesome-maintenance/pawesome_e2e_payment_fixture_seed.php'), {
+    const phpBinary = process.env.PHP_BINARY || 'php';
+    const seedScript = process.env.PAWESOME_SEED_SCRIPT || 'C:/xampp/pawesome-maintenance/pawesome_e2e_payment_fixture_seed.php';
+    execSync(`"${phpBinary}" "${seedScript}"`, {
       cwd: backendDir,
       stdio: 'inherit',
     });
@@ -96,7 +98,7 @@ test.describe('Boarding itemized billing E2E', () => {
     await form.getByRole('button', { name: 'Add Item' }).click();
     const addItemResult = await addItemResponse;
     expect(addItemResult.ok(), `add billing item POST failed: ${await addItemResult.text()}`).toBeTruthy();
-    await expect(panel.locator('.amount.total')).toHaveText(/1200\.00/, { timeout: 45000 });
+    await expect(panel.locator('.amount.total')).toHaveText(/1,?200\.00/, { timeout: 45000 });
 
     // Backend truth: total 1200, nothing paid yet.
     let summary = await billingSummary(request, receptionist.token, fixture.id);

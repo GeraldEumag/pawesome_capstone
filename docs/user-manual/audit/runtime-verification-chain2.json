@@ -2,42 +2,42 @@
   "walk-in-create": {
     "status": "VERIFIED",
     "note": "Walk-in SR-184 (prior run)",
-    "at": "2026-11-05T13:59:29.748Z"
+    "at": "2026-11-18T11:11:41.943Z"
   },
   "walk-in-counter-cash": {
     "status": "VERIFIED",
     "note": "SR-184 already settled as cash; receipt=on file (DB: service_requests.receipt_number)",
-    "at": "2026-11-05T13:59:29.948Z"
+    "at": "2026-11-18T11:11:42.225Z"
   },
   "pos-sale": {
     "status": "VERIFIED",
-    "note": "POS sale #110 processed: 1x Nail Trimming @150 cash 200",
-    "at": "2026-11-05T13:59:30.201Z"
+    "note": "POS sale #118 processed: 1x Nail Trimming @150 cash 200",
+    "at": "2026-11-18T11:11:42.527Z"
   },
   "pos-void": {
     "status": "VERIFIED",
-    "note": "Void of sale #110: HTTP 200 {\"success\":true,\"message\":\"Transaction voided successfully\",\"transaction_id\":110}",
-    "at": "2026-11-05T13:59:30.420Z"
+    "note": "Void of sale #118: HTTP 200 {\"success\":true,\"message\":\"Transaction voided successfully\",\"transaction_id\":118}",
+    "at": "2026-11-18T11:11:42.781Z"
   },
   "proof-rejection": {
     "status": "VERIFIED",
     "note": "SR-52 proof already rejected by cashier (prior run); payment_status=rejected",
-    "at": "2026-11-05T13:59:30.691Z"
+    "at": "2026-11-18T11:11:43.106Z"
   },
   "consult-start": {
     "status": "VERIFIED",
     "note": "Appointment 9 already completed (prior run)",
-    "at": "2026-11-05T13:59:31.448Z"
+    "at": "2026-11-18T11:11:43.989Z"
   },
   "consult-complete": {
     "status": "VERIFIED",
     "note": "Appointment 9 status=checkout",
-    "at": "2026-11-05T13:59:31.448Z"
+    "at": "2026-11-18T11:11:43.989Z"
   },
   "admin-create-user": {
     "status": "VERIFIED",
-    "note": "User 983 (e2e-manual-1793887171470@example.test) created role=receptionist; welcome intent is created transactionally (delivery not provable locally)",
-    "at": "2026-11-05T13:59:32.399Z"
+    "note": "User 1000 (e2e-manual-1795000303996@example.test) created role=receptionist; welcome intent is created transactionally (delivery not provable locally)",
+    "at": "2026-11-18T11:11:45.025Z"
   },
   "hotel-boarding": {
     "status": "VERIFIED",
@@ -46,17 +46,17 @@
   },
   "hotel-booking-create": {
     "status": "VERIFIED",
-    "note": "Boarding 135 created w/ vaccination card (prior run)",
-    "at": "2026-11-05T13:59:33.802Z"
+    "note": "Boarding 153 created w/ vaccination card (room 1, 2026-12-01)",
+    "at": "2026-11-18T11:11:45.914Z"
   },
   "vax-verify": {
     "status": "VERIFIED",
-    "note": "Boarding 135 vaccination_card_verified_at=2026-11-05T13:16:19.000000Z",
-    "at": "2026-11-05T13:59:33.802Z"
+    "note": "Vax verify HTTP 200",
+    "at": "2026-11-18T11:11:46.148Z"
   },
   "hotel-approve": {
     "status": "VERIFIED",
-    "note": "Boarding 135 status=approved (approved_at=2026-11-05T13:16:19.000000Z)",
-    "at": "2026-11-05T13:59:33.802Z"
+    "note": "Boarding 153 approve: HTTP 200 {\"message\":\"Boarding request approved and inventory deducted\",\"boarding\":{\"id\":153,\"service_request_id\":null,\"pet_id\":1444,\"pet_name\":\"E2E Chain2 Pet 1795000301375\",\"pet_type\":\"Dog\",\"pet_breed\":null,\"",
+    "at": "2026-11-18T11:11:46.541Z"
   }
 }

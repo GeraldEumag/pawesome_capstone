@@ -1,47 +1,47 @@
 {
   "chain-target": {
     "status": "TESTED",
-    "note": "Target service request SR-624 (Standard Grooming, status=pending, payment=unpaid)",
-    "at": "2026-11-05T13:58:57.990Z"
+    "note": "Target service request SR-676 (Standard Grooming, status=pending, payment=unpaid)",
+    "at": "2026-11-18T11:10:48.311Z"
   },
   "customer-payment-proof": {
     "status": "VERIFIED",
-    "note": "Proof uploaded for SR-624 (ref E2E-MANUAL-1793887137990)",
-    "at": "2026-11-05T13:59:06.177Z"
+    "note": "Proof uploaded for SR-676 (ref E2E-MANUAL-1795000248311)",
+    "at": "2026-11-18T11:11:15.679Z"
   },
   "receptionist-approve": {
     "status": "VERIFIED",
-    "note": "Receptionist approved SR-624",
-    "at": "2026-11-05T13:59:06.496Z"
+    "note": "Receptionist approved SR-676",
+    "at": "2026-11-18T11:11:16.079Z"
   },
   "cashier-queue-entry": {
     "status": "VERIFIED",
-    "note": "Queue entry payable_type=service_request id=624 amount=350",
-    "at": "2026-11-05T13:59:12.530Z"
+    "note": "Queue entry payable_type=service_request id=676 amount=350",
+    "at": "2026-11-18T11:11:22.837Z"
   },
   "cashier-verify": {
     "status": "VERIFIED",
-    "note": "Cashier verified SR-624; receipt=SR-REC-20261105135912-624",
-    "at": "2026-11-05T13:59:12.899Z"
+    "note": "Cashier verified SR-676; receipt=SR-REC-20261118111123-676",
+    "at": "2026-11-18T11:11:23.266Z"
   },
   "customer-paid-state": {
     "status": "VERIFIED",
-    "note": "SR-624 after verify: payment_status=paid receipt=undefined",
-    "at": "2026-11-05T13:59:13.164Z"
+    "note": "SR-676 after verify: payment_status=paid receipt=undefined",
+    "at": "2026-11-18T11:11:23.561Z"
   },
   "edge-to-edge-chain": {
     "status": "VERIFIED",
-    "note": "SR-624: book -> proof -> approve -> queue -> verify -> paid",
-    "at": "2026-11-05T13:59:20.887Z"
+    "note": "SR-676: book -> proof -> approve -> queue -> verify -> paid",
+    "at": "2026-11-18T11:11:32.898Z"
   },
   "inventory-adjust": {
     "status": "VERIFIED",
     "note": "Item 147 stock 50 -> 49 -> 50; two manual_adjustment log entries created",
-    "at": "2026-11-05T13:59:21.752Z"
+    "at": "2026-11-18T11:11:33.910Z"
   },
   "vet-appointment-chain": {
     "status": "VERIFIED",
-    "note": "Vet SR-626 approved w/ veterinarian 7; appointments page shows the record",
-    "at": "2026-11-05T13:59:29.138Z"
+    "note": "Vet SR-678 approved w/ veterinarian 7; appointments page shows the record",
+    "at": "2026-11-18T11:11:41.243Z"
   }
 }

@@ -1,27 +1,27 @@
 {
   "correction-approve": {
     "status": "VERIFIED",
-    "note": "Correction 25 filed -> approve HTTP 200 {\"success\":true,\"data\":{\"id\":25,\"user_id\":987,\"attendance_id\":52,\"date\":\"2026-11-03T00:00:00.000000Z\",\"requested_check_in\":\"08:00:00\",\"requested_check_out\":null,\"reason\":\"E2E manual audit correction (",
-    "at": "2026-11-05T13:59:51.453Z"
+    "note": "Correction 27 filed -> approve HTTP 200 {\"success\":true,\"data\":{\"id\":27,\"user_id\":1004,\"attendance_id\":56,\"date\":\"2026-11-16T00:00:00.000000Z\",\"requested_check_in\":\"08:00:00\",\"requested_check_out\":null,\"reason\":\"E2E manual audit correction ",
+    "at": "2026-11-18T11:12:09.705Z"
   },
   "leave-self-file-approve": {
     "status": "VERIFIED",
-    "note": "Leave 50 self-filed + approved; sick_leave remaining 15 -> 13",
-    "at": "2026-11-05T13:59:50.621Z"
+    "note": "Leave 53 self-filed + approved; sick_leave remaining 15 -> 13",
+    "at": "2026-11-18T11:12:08.815Z"
   },
   "kiosk-clock-in": {
     "status": "VERIFIED",
-    "note": "Punch Late check-in recorded for E2E MANUAL FIXTURE.; attendance row {\"id\":53,\"check_in\":\"13:59:53\",\"check_out\":null,\"status\":\"late\"}",
-    "at": "2026-11-05T13:59:53.971Z"
+    "note": "Punch Late check-in recorded for E2E MANUAL FIXTURE.; attendance row {\"id\":57,\"check_in\":\"11:12:11\",\"check_out\":null,\"status\":\"late\"}",
+    "at": "2026-11-18T11:12:12.527Z"
   },
   "dayoffs-unauthorized": {
     "status": "VERIFIED",
     "note": "cashier PUT day-offs -> HTTP 403",
-    "at": "2026-11-05T13:59:51.636Z"
+    "at": "2026-11-18T11:12:09.905Z"
   },
   "dayoffs-contract": {
     "status": "VERIFIED",
     "note": "Clear-all -> 200 + 0 rows; invalid/duplicate -> 422; re-set -> [0,6]",
-    "at": "2026-11-05T13:59:53.309Z"
+    "at": "2026-11-18T11:12:11.785Z"
   }
 }

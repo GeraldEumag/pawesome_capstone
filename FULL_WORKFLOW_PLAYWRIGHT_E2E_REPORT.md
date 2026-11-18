@@ -2,8 +2,8 @@
 
 Status: **PASSED**
 
-Started: 2026-11-05T14:02:21.573Z
-Completed: 2026-11-05T14:04:05.732Z
+Started: 2026-11-18T11:18:01.960Z
+Completed: 2026-11-18T11:20:28.476Z
 Frontend: http://localhost:3000
 Backend API: http://127.0.0.1:8000/api
 
@@ -18,12 +18,12 @@ Backend API: http://127.0.0.1:8000/api
 | Login for veterinary | PASS | vet@example.com |
 | Login for manager | PASS | manager@example.com |
 | Login for admin | PASS | admin@example.com |
-| Customer creates booking/request/order | PASS | service_request #628 |
-| Receptionist approves or schedules | PASS | service_request #628 |
-| Customer uploads payment proof | PASS | service_request #628 |
-| Cashier verifies/rejects payment | PASS | verified service_request #628 |
+| Customer creates booking/request/order | PASS | service_request #680 |
+| Receptionist approves or schedules | PASS | service_request #680 |
+| Customer uploads payment proof | PASS | service_request #680 |
+| Cashier verifies/rejects payment | PASS | verified service_request #680 |
 | Inventory stock/log check | PASS | inventory item #274 |
-| Veterinary appointment status update | PASS | vet appointment #125 started via /veterinary/consultations/{id}/start (direct scheduled -> completed is rejected by the backend) |
+| Veterinary appointment status update | PASS | vet appointment #135 started via /veterinary/consultations/{id}/start (direct scheduled -> completed is rejected by the backend) |
 | Manager/Admin reports visibility | PASS | manager and admin overview reports loaded |
 
 ## Evidence Screenshots
@@ -50,9 +50,9 @@ Backend API: http://127.0.0.1:8000/api
 
 ```json
 {
-  "petId": 1415,
-  "serviceRequestId": 628,
-  "vetAppointmentId": 125
+  "petId": 1445,
+  "serviceRequestId": 680,
+  "vetAppointmentId": 135
 }
 ```
 

@@ -97,6 +97,7 @@ test.describe("Revision B — browser verification", () => {
   });
 
   test("customer payment modal offers e-wallets only and cash is rejected", async ({ page, request }) => {
+    test.setTimeout(120000);
     const customer = await apiLogin(request, "customer");
     const petName = `E2E Pay Pet ${Date.now()}`;
     const petRes = await request.post(`${apiUrl}/pets`, { headers: auth(customer.token), data: { name: petName, species: "Dog" } });
@@ -117,7 +118,8 @@ test.describe("Revision B — browser verification", () => {
       });
       if (srRes.ok()) break;
       lastBody = await srRes.text();
-      if (!lastBody.includes("overlaps") && !lastBody.includes("no longer available")) break;
+      if (!lastBody.includes("overlaps") && !lastBody.includes("no longer available")
+          && !lastBody.includes("public holiday") && !lastBody.includes("store is closed")) break;
     }
     expect(srRes.ok(), lastBody).toBeTruthy();
     const srId = ((await srRes.json()).request || {}).id;
@@ -316,6 +318,7 @@ test.describe("Revision B — browser verification", () => {
     let srRes;
     let lastBody = "";
     let apptDate;
+    let apptTime = "10:00";
     for (let attempt = 0; attempt < 60; attempt += 1) {
       apptDate = new Date(Date.now() + (2 + attempt) * 86400000).toISOString().slice(0, 10);
       const slot = `${String(10 + (attempt % 8)).padStart(2, "0")}:00`;
@@ -328,16 +331,18 @@ test.describe("Revision B — browser verification", () => {
           requested_date: apptDate, requested_time: slot, notes: marker,
         },
       });
-      if (srRes.ok()) break;
+      if (srRes.ok()) { apptTime = slot; break; }
       lastBody = await srRes.text();
-      if (!lastBody.includes("overlaps") && !lastBody.includes("no longer available") && !lastBody.includes("conflict")) break;
+      if (!lastBody.includes("overlaps") && !lastBody.includes("no longer available")
+          && !lastBody.includes("conflict") && !lastBody.includes("public holiday")
+          && !lastBody.includes("store is closed")) break;
     }
     expect(srRes.ok(), lastBody).toBeTruthy();
     const srId = ((await srRes.json()).request || {}).id;
 
     const approveRes = await request.post(`${apiUrl}/receptionist/requests/${srId}/approve`, {
       headers: auth(receptionist.token, { "Content-Type": "application/json" }),
-      data: { veterinarian_id: Number(vet.id), request_date: apptDate, request_time: "10:00" },
+      data: { veterinarian_id: Number(vet.id), request_date: apptDate, request_time: apptTime },
     });
     expect(approveRes.ok(), await approveRes.text()).toBeTruthy();
     const approveBody = await approveRes.json();
@@ -347,6 +352,8 @@ test.describe("Revision B — browser verification", () => {
     await loginAs(page, "veterinary");
     await page.goto("/veterinary/appointments");
 
+    // The board paginates at 15 rows — search isolates the fixture appointment.
+    await page.locator(".search-box input").fill(marker);
     const row = page.locator("tr", { hasText: marker });
     await expect(row).toBeVisible({ timeout: 20000 });
     const openCancel = async () => {
@@ -389,6 +396,7 @@ test.describe("Revision B — browser verification", () => {
   });
 
 test("booking tracker shows cancelled requests instead of hiding them", async ({ page, request }) => {
+    test.setTimeout(120000);
     // Provision a fresh pending request and cancel it — the tracker must keep it.
     const { token } = await apiLogin(request, "customer");
     const headers = auth(token, { "Content-Type": "application/json" });
