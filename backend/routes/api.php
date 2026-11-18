@@ -954,6 +954,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:veterinary,vet'])->prefix('
     Route::post('diagnostics/{id}/cancel', [DiagnosticOrderController::class, 'cancel']);
     
     // Medical Confinement actions
+    Route::get('ward-beds', [MedicalConfinementController::class, 'wardBeds']);
+    Route::post('medical-confinements/{id}/assign-bed', [MedicalConfinementController::class, 'assignBed']);
+    Route::post('medical-confinements/{id}/admit', [MedicalConfinementController::class, 'admit']);
     Route::post('medical-confinements/{id}/progress-notes', [MedicalConfinementController::class, 'addProgressNote']);
     Route::get('medical-confinements/{id}/progress-notes', [MedicalConfinementController::class, 'progressNotes']);
     Route::post('medical-confinements/{id}/mark-under-observation', [MedicalConfinementController::class, 'markUnderObservation']);
