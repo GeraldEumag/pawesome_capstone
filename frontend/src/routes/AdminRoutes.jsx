@@ -16,6 +16,7 @@ const LiveChatInbox = lazy(() => import("../components/live-chat/LiveChatInbox")
 const AdminSettings = lazy(() => import("../components/admin/AdminSettings"));
 const AdminLandingPageEditor = lazy(() => import("../components/admin/AdminLandingPageEditor"));
 const LoginHistory = lazy(() => import("../components/admin/LoginHistory"));
+const EmailDeliveries = lazy(() => import("../components/admin/EmailDeliveries"));
 const PayrollReports = lazy(() => import("../components/admin/PayrollReports"));
 const EmployeeDirectory = lazy(() => import("../components/shared/EmployeeDirectory"));
 
@@ -117,6 +118,7 @@ const AdminRoutes = () => (
         <Route path="landing-page" element={<AdminLandingPageEditor />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="history/logins" element={<LoginHistory />} />
+        <Route path="email-deliveries" element={<EmailDeliveries />} />
         <Route path="reports/payroll" element={<ReportRoute><PayrollReports /></ReportRoute>} />
 
       </Route>

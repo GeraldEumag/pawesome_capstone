@@ -56,10 +56,10 @@ const ForgotPassword = () => {
       setResetTokenSent(true);
       setToken("");
       setMessage(
-        "If the email address is associated with an account, a password reset link has been sent to that email. Click the link in the email — or paste the token below — to set a new password."
+        "If the email address is associated with an account, a password reset link has been queued for sending. Check your Inbox and Spam folder — click the link in the email, or paste the token below, to set a new password."
       );
       showSuccess(
-        "If the email address is associated with an account, a reset link has been sent to your email."
+        "If the email address is associated with an account, a reset link has been queued for sending."
       );
     } catch (err) {
       setError(err.message || "Failed to request password reset.");

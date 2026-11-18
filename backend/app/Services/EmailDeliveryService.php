@@ -7,6 +7,7 @@ use App\Mail\CustomerNotificationMail;
 use App\Mail\PaymentReceiptMail;
 use App\Models\Customer;
 use App\Models\EmailDelivery;
+use App\Models\EmailSuppression;
 use App\Models\SystemSetting;
 use App\Support\EmailContent;
 use Illuminate\Contracts\Mail\Mailable;
@@ -133,27 +134,43 @@ class EmailDeliveryService
             return $this->finish($delivery, EmailDelivery::STATUS_EXPIRED, 'expired');
         }
 
-        if ($this->isSuppressed($delivery)) {
+        // Recipient-level suppression (hard bounce, complaint, provider
+        // block, manual) applies to every send; reason scoping lives in
+        // EmailSuppression::blocks so spam complaints still allow auth mail.
+        if (EmailSuppression::blocks($delivery->recipient_fingerprint, $delivery->event_key)
+            || $this->isSuppressed($delivery)) {
             return $this->finish($delivery, EmailDelivery::STATUS_SUPPRESSED, 'suppressed');
         }
 
         try {
             [$mailable, $recipient] = $this->hydrate($delivery);
+            $uuid = $delivery->uuid;
+            // Brevo echoes X-Mailin-custom back in webhook events — carries
+            // the delivery identity so outcomes correlate without guessing.
+            $mailable->withSymfonyMessage(function ($message) use ($uuid) {
+                $message->getHeaders()->addTextHeader('X-Mailin-custom', $uuid);
+            });
             $sent = Mail::to($recipient)->sendNow($mailable);
         } catch (\Throwable $e) {
             return $this->handleFailure($delivery, $e);
         }
 
+        // Guard: a webhook can theoretically land between provider
+        // acceptance and this update — record acceptance metadata, but
+        // never overwrite a terminal status the provider already reported.
         $delivery->update([
-            'status' => EmailDelivery::STATUS_ACCEPTED,
-            'provider_status' => EmailDelivery::STATUS_ACCEPTED,
+            'provider_status' => $delivery->provider_status ?? EmailDelivery::STATUS_ACCEPTED,
             'provider_message_id' => $this->extractMessageId($sent),
-            'accepted_at' => now(),
+            'accepted_at' => $delivery->accepted_at ?? now(),
             'locked_at' => null,
             'locked_by' => null,
             'failure_class' => null,
             'failure_code' => null,
         ]);
+
+        EmailDelivery::whereKey($delivery->id)
+            ->whereNotIn('status', EmailDelivery::TERMINAL_STATUSES)
+            ->update(['status' => EmailDelivery::STATUS_ACCEPTED]);
 
         return 'accepted';
     }
@@ -310,6 +327,41 @@ class EmailDeliveryService
             'suppression' => $suppression,
             'dispatch' => $context['dispatch'] ?? true,
         ]);
+    }
+
+    /**
+     * Apply a provider webhook event to a delivery. The latest event name
+     * always lands on provider_status; the durable status only transitions
+     * for non-terminal deliveries, so a late or replayed event can never
+     * regress a finished row. Returns the resulting durable status.
+     */
+    public function recordProviderEvent(EmailDelivery $delivery, string $event): string
+    {
+        $updates = ['provider_status' => $event];
+
+        if (!$delivery->isTerminal()) {
+            $terminal = fn (string $status) => [
+                'status' => $status,
+                'finished_at' => now(),
+                'locked_at' => null,
+                'locked_by' => null,
+            ];
+
+            $updates += match ($event) {
+                'delivered' => $terminal(EmailDelivery::STATUS_DELIVERED)
+                    + ['delivered_at' => now()],
+                'hard_bounce', 'invalid_email' => $terminal(EmailDelivery::STATUS_BOUNCED),
+                'spam' => $terminal(EmailDelivery::STATUS_COMPLAINT),
+                'blocked' => $terminal(EmailDelivery::STATUS_BLOCKED),
+                'error' => $terminal(EmailDelivery::STATUS_FAILED),
+                'soft_bounce', 'deferred' => ['status' => EmailDelivery::STATUS_DEFERRED],
+                default => [],
+            };
+        }
+
+        $delivery->update($updates);
+
+        return $delivery->status;
     }
 
     /**

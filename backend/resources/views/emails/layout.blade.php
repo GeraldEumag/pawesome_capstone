@@ -89,6 +89,9 @@
                             <p style="margin:0 0 6px 0;font-size:12px;color:#6b7280;">
                                 This is an automated notification from Pawesome. Please do not reply directly to this email.
                             </p>
+                            <p style="margin:0 0 6px 0;font-size:12px;color:#9ca3af;">
+                                {{ config('mail.physical_address') }}
+                            </p>
                             <p style="margin:0;font-size:12px;color:#9ca3af;">
                                 &copy; {{ date('Y') }} Pawesome Retreat Inc. All rights reserved.
                             </p>

@@ -83,6 +83,11 @@ Route::middleware('throttle:api')
 Route::middleware('throttle:api')
     ->get('/landing-page', [LandingPageContentController::class, 'showPublic']);
 
+// Brevo transactional webhook — authenticates via the shared
+// X-Pawesome-Webhook-Secret header / ?secret= token, not app auth.
+Route::post('/webhooks/brevo', [\App\Http\Controllers\Webhooks\BrevoWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');
+
 // Public attendance kiosk — unlocked by the shared kiosk PIN
 // (X-Kiosk-Pin header / pin body) or by a valid staff bearer token.
 Route::post('/kiosk/verify', [\App\Http\Controllers\KioskController::class, 'verify'])
@@ -148,6 +153,12 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth.api', 'throttle:api', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'overview']);
+
+    // Email outbox observability + suppression release
+    Route::get('email-deliveries', [\App\Http\Controllers\Admin\EmailDeliveryController::class, 'index']);
+    Route::get('email-deliveries/{id}', [\App\Http\Controllers\Admin\EmailDeliveryController::class, 'show']);
+    Route::get('email-suppressions', [\App\Http\Controllers\Admin\EmailDeliveryController::class, 'suppressions']);
+    Route::delete('email-suppressions/{id}', [\App\Http\Controllers\Admin\EmailDeliveryController::class, 'releaseSuppression']);
 
     Route::get('users', [UserController::class, 'index']);
     Route::post('users', [UserController::class, 'store']);

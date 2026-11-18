@@ -15,11 +15,19 @@ const VerifyEmail = () => {
   const [message, setMessage] = useState(
     token && email
       ? "Verifying your email..."
-      : "Please verify your email to continue booking. Check your inbox for the link or enter your email to resend it."
+      : "Please verify your email to continue booking. Check your Inbox and Spam folder for the link, or enter your email to resend it."
   );
   const [emailInput, setEmailInput] = useState(email || "");
   const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const didVerify = useRef(false);
+
+  // Mirrors the backend 60-second per-account resend cooldown.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = window.setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldown]);
 
   useEffect(() => {
     if (token && email && !didVerify.current) {
@@ -56,8 +64,12 @@ const VerifyEmail = () => {
         body: JSON.stringify({ email: emailInput.trim() }),
       });
       setStatus("resent");
-      setMessage(res.message || "A new verification link has been sent.");
-      showSuccess(res.message || "Verification email sent.");
+      setCooldown(60);
+      setMessage(
+        res.message ||
+          "A new verification link has been queued for sending. Please check your Inbox and Spam folder."
+      );
+      showSuccess("Verification email queued for sending.");
     } catch (err) {
       showError(err.message || "Failed to resend verification email.");
     } finally {
@@ -103,9 +115,13 @@ const VerifyEmail = () => {
                 <button
                   type="submit"
                   className="register-primary-btn"
-                  disabled={resending || status === "verifying"}
+                  disabled={resending || status === "verifying" || cooldown > 0}
                 >
-                  {resending ? "Sending..." : "Resend verification email"}
+                  {resending
+                    ? "Sending..."
+                    : cooldown > 0
+                    ? `Resend available in ${cooldown}s`
+                    : "Resend verification email"}
                 </button>
               </form>
             )}

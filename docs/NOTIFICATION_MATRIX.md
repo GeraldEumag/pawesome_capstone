@@ -109,6 +109,22 @@ business event → email_deliveries intent (in-transaction) → COMMIT
   failure classes) is tracked separately from provider outcome
   (`provider_status`, `delivered_at`) — queued ≠ sent ≠ provider-accepted ≠
   inbox-delivered.
+- **Provider events (webhook):** `POST /api/webhooks/brevo` consumes Brevo
+  transactional events (`delivered`, `hard_bounce`, `invalid_email`,
+  `soft_bounce`, `deferred`, `blocked`, `spam`, `error`). Authenticated by
+  the `X-Pawesome-Webhook-Secret` shared header (`BREVO_WEBHOOK_SECRET`);
+  correlates via the `X-Mailin-custom` uuid stamped at send time, falling
+  back to `message-id`. Terminal statuses never regress; `delivered` is set
+  only by a `delivered` event.
+- **Recipient suppression (`email_suppressions`):** hard bounce, invalid
+  recipient, provider block, or spam complaint writes a fingerprint-keyed
+  suppression row (no plaintext address). `hard_bounce`/`invalid_email`/
+  `blocked`/`manual` suppress all sends including auth; `spam` suppresses
+  non-`auth.*` sends only. Admin release via
+  `DELETE /api/admin/email-suppressions/{id}`.
+- **Observability:** `GET /api/admin/email-deliveries[/id]` +
+  `GET /api/admin/email-suppressions` (admin role) power the Admin →
+  Monitoring → Email Deliveries page.
 - **Operator commands:** `email-deliveries:dispatch` (every minute),
   `email-deliveries:reconcile` (every ten minutes, crash recovery),
   `email-deliveries:retry {id}` (manual).
@@ -138,4 +154,5 @@ per-user payroll rows, read/unread, and cross-user mutation protection.
 Email-layer coverage lives in `EmailDeliveryOutboxTest`,
 `EmailAuthFlowTest`, `EmailServiceWorkflowTest`,
 `EmailPreferencesAndTemplatesTest`, `CustomerEmailResolverTest`,
+`BrevoWebhookTest`, `EmailSuppressionTest`,
 `PaymentReceiptOutboxTest`, and `PaymentSettlementTest`.

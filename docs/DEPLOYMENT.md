@@ -97,6 +97,9 @@ Use distinct values and credentials for staging and production:
 | `AWS_PUBLIC_URL` | Verified public custom-domain URL for the public bucket |
 | `PRIVATE_STORAGE_ROOT`, `PUBLIC_STORAGE_ROOT` | Optional key prefix inside each bucket; leave empty for bucket root. Local filesystem paths are never used as S3 keys. |
 | `MAIL_MAILER`, `BREVO_API_KEY`, `BREVO_DOMAIN`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Use Brevo HTTPS API; keep the REST API key in backend service secrets and use a verified sender |
+| `BREVO_WEBHOOK_SECRET` | Shared secret for `POST /api/webhooks/brevo`; configure the same value as the `X-Pawesome-Webhook-Secret` custom header in Brevo → Transactional → Webhooks (requires a publicly reachable API URL). Without it the endpoint refuses requests and `delivered`/`bounced`/`complaint` outcomes are never recorded. |
+| `MAIL_REPLY_TO_ADDRESS`, `MAIL_REPLY_TO_NAME` | Optional global Reply-To on every outgoing email; use a monitored mailbox |
+| `MAIL_PHYSICAL_ADDRESS` | Postal address in the email footer (anti-spam legitimacy) |
 | `CHATBOT_AI_ENABLED`, `CHATBOT_AI_API_KEY`, `CHATBOT_AI_MODEL`, `CHATBOT_AI_BASE_URL` | Optional chatbot integration, server-side only; use separate staging and production keys |
 | `OPENROUTER_API_KEY`, optional `OPENROUTER_API_KEYS`, `OPENROUTER_MODEL` | Receipt-scanner vision provider; store the key only in backend service secrets. Free-only default: `openrouter/free`. |
 | `RECEIPT_READER_API_KEY`, optional `RECEIPT_READER_API_KEYS`, `RECEIPT_READER_MODEL` | Optional Gemini receipt reader, enabled via `RECEIPT_SCANNER_CHAIN=gemini`; backend service secrets only. |

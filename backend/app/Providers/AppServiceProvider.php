@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -37,5 +39,9 @@ class AppServiceProvider extends ServiceProvider
                 $config['key'] ?? '',
             ));
         });
+
+        // Global Reply-To for every outgoing message (mailables that set
+        // their own keep precedence — see the listener).
+        Event::listen(MessageSending::class, \App\Listeners\ApplyMailReplyTo::class);
     }
 }

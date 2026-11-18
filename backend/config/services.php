@@ -18,6 +18,13 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
+    'brevo' => [
+        // Shared secret authenticating POST /api/webhooks/brevo — Brevo
+        // webhooks carry no HMAC, so this is sent as the
+        // X-Pawesome-Webhook-Secret custom header (see .env.example).
+        'webhook_secret' => env('BREVO_WEBHOOK_SECRET'),
+    ],
+
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],

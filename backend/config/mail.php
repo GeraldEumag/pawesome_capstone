@@ -123,4 +123,32 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Global "Reply-To" Address
+    |--------------------------------------------------------------------------
+    |
+    | Applied to every outgoing message that does not set its own Reply-To
+    | (see App\Listeners\ApplyMailReplyTo). Use a monitored mailbox — never
+    | an address on a domain you cannot read.
+    |
+    */
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS'),
+        'name' => env('MAIL_REPLY_TO_NAME', env('APP_NAME', 'Laravel')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Physical Mailing Address
+    |--------------------------------------------------------------------------
+    |
+    | Shown in the email footer — a real postal address is an anti-spam
+    | legitimacy signal expected by major mailbox providers.
+    |
+    */
+
+    'physical_address' => env('MAIL_PHYSICAL_ADDRESS', 'Aldana Street San Isidro Village, Las Piñas, Philippines, 1740'),
+
 ];

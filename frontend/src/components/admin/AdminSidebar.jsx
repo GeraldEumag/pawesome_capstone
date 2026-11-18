@@ -9,6 +9,7 @@ import {
   faHistory,
   faKey,
   faComments,
+  faEnvelope,
   faChartBar,
   faMoneyBillWave,
   faCog,
@@ -48,6 +49,7 @@ const NAV_SECTIONS = [
       { to: "/admin/history/logins", label: "Login History", icon: faKey },
       { to: "/admin/chatbot", label: "Chatbot Logs", icon: faComments },
       { to: "/admin/live-chat", label: "Live Chat", icon: faComments },
+      { to: "/admin/email-deliveries", label: "Email Deliveries", icon: faEnvelope },
     ],
   },
   {
