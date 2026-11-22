@@ -40,6 +40,7 @@ class EmailAuthFlowTest extends TestCase
             'username' => 'testcustomer',
             'email' => 'customer@example.com',
             'password' => 'Password123!',
+            'date_of_birth' => '1990-01-01',
         ], $overrides);
     }
 

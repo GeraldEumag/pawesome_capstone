@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\MedicalConfinement;
 use App\Models\ServiceItemUsage;
+use App\Support\ConfinementStatusMap;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -17,6 +18,15 @@ use Illuminate\Support\Facades\DB;
  */
 class ConfinementAccrualService
 {
+    private const IN_CARE_STATUSES = [
+        'admitted',
+        'under_care',
+        'ready_for_discharge',
+        // legacy (pre-Phase-D rows)
+        'under_observation',
+        'under_treatment',
+    ];
+
     /**
      * Accrue due daily charges for all open confinements. Returns per-
      * confinement results. Idempotent per day via last_accrual_at.
@@ -26,7 +36,7 @@ class ConfinementAccrualService
         $results = [];
         // ready_for_discharge pets still occupy the bed, so they keep accruing
         // until release() runs its final catch-up accrual.
-        $open = MedicalConfinement::whereIn('status', ['admitted', 'under_care', 'ready_for_discharge'])
+        $open = MedicalConfinement::whereIn('status', self::IN_CARE_STATUSES)
             ->whereNotNull('consultation_id')
             ->get();
 
@@ -44,8 +54,40 @@ class ConfinementAccrualService
     }
 
     /**
-     * Accrue one confinement. Adds one usage row per fully elapsed day since
-     * last_accrual_at (or admitted_at); zero when nothing is due.
+     * Accrue the open confinements linked to one visit. Called lazily from
+     * billing reads so a running bill always reflects elapsed inpatient
+     * days without waiting for the daily scheduler. Re-entrancy-guarded:
+     * accrue() ends in syncServicePaymentState(), which calls back here.
+     */
+    public static function accrueOpenForAppointment(Appointment $appointment): void
+    {
+        static $depth = 0;
+        if ($depth > 0) {
+            return;
+        }
+        $depth++;
+        try {
+            $open = MedicalConfinement::where('consultation_id', $appointment->id)
+                ->whereIn('status', self::IN_CARE_STATUSES)
+                ->get();
+            foreach ($open as $confinement) {
+                try {
+                    self::accrue($confinement);
+                } catch (\Throwable $e) {
+                    // Isolate failures — one bad confinement must not break
+                    // the billing read that triggered this accrual.
+                }
+            }
+        } finally {
+            $depth--;
+        }
+    }
+
+    /**
+     * Accrue one confinement. Adds one usage row per billable calendar day
+     * since the last billed date; zero when nothing is due. The first
+     * accrual after admission bills the admission day itself — a same-day
+     * stay still owes one day of care.
      */
     public static function accrue(MedicalConfinement $confinement): array
     {
@@ -53,17 +95,25 @@ class ConfinementAccrualService
             $locked = MedicalConfinement::where('id', $confinement->id)->lockForUpdate()->firstOrFail();
             // ready_for_discharge is included so release()'s final catch-up
             // accrual actually bills the trailing days before discharge.
-            if (!in_array($locked->status, ['admitted', 'under_care', 'ready_for_discharge'], true)) {
+            if (!in_array(ConfinementStatusMap::forward((string) $locked->status), ['admitted', 'under_care', 'ready_for_discharge'], true)) {
                 return ['accrued_days' => 0, 'amount' => 0.0];
             }
 
-            $rate = (float) ($locked->daily_rate ?? $locked->wardBed?->daily_rate ?? 0);
+            $rate = (float) ($locked->daily_rate
+                ?? $locked->wardBed?->daily_rate
+                ?? $locked->room?->daily_rate
+                ?? 0);
             if ($rate <= 0 || !$locked->consultation_id) {
                 return ['accrued_days' => 0, 'amount' => 0.0];
             }
 
             $anchor = $locked->last_accrual_at ?? $locked->admitted_at ?? $locked->created_at;
-            $daysDue = (int) $anchor->copy()->startOfDay()->diffInDays(now()->startOfDay());
+            // With no prior accrual the stay bills from the admission date;
+            // afterwards each run bills the new calendar days since then.
+            $firstBillable = $locked->last_accrual_at
+                ? $locked->last_accrual_at->copy()->startOfDay()->addDay()
+                : $anchor->copy()->startOfDay();
+            $daysDue = (int) $firstBillable->diffInDays(now()->startOfDay()) + 1;
             if ($daysDue <= 0) {
                 return ['accrued_days' => 0, 'amount' => 0.0];
             }
@@ -74,8 +124,8 @@ class ConfinementAccrualService
             }
 
             $total = 0.0;
-            for ($day = 1; $day <= $daysDue; $day++) {
-                $dayDate = $anchor->copy()->startOfDay()->addDays($day)->toDateString();
+            for ($day = 0; $day < $daysDue; $day++) {
+                $dayDate = $firstBillable->copy()->addDays($day)->toDateString();
                 ServiceItemUsage::create([
                     'service_type' => ServiceItemUsage::SERVICE_VETERINARY,
                     'service_id' => $appointment->id,

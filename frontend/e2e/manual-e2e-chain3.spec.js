@@ -92,7 +92,7 @@ test("auth: register -> verify-email -> forgot/reset -> login", async ({ request
   const regRes = await request.post(`${apiUrl}/auth/register`, {
     data: {
       name: "E2E Reg Tester", first_name: "E2E", last_name: "Regtester",
-      username: `e2e_reg_${stamp}`, email, password: pw, phone: "09123456789",
+      username: `e2e_reg_${stamp}`, email, password: pw, phone: "09123456789", date_of_birth: "1990-01-01",
     },
   });
   const regBody = await regRes.json().catch(() => ({}));
@@ -127,7 +127,7 @@ test("auth: register -> verify-email -> forgot/reset -> login", async ({ request
   const reg2 = await request.post(`${apiUrl}/auth/register`, {
     data: {
       name: "E2E Unverified", first_name: "E2E", last_name: "Unverified",
-      username: `e2e_unv_${stamp}`, email: email2, password: pw,
+      username: `e2e_unv_${stamp}`, email: email2, password: pw, date_of_birth: "1990-01-01",
     },
   });
   expect(reg2.ok(), `register2: ${await reg2.text()}`).toBeTruthy();

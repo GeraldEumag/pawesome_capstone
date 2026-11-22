@@ -38,7 +38,8 @@ class AuthController extends Controller
             'city' => 'sometimes|nullable|string|max:255',
             'state' => 'sometimes|nullable|string|max:255',
             'zip_code' => 'sometimes|nullable|string|max:20',
-            'date_of_birth' => 'sometimes|nullable|date',
+            // Self-registered accounts must be at least 18 years old.
+            'date_of_birth' => ['required', 'date', 'before_or_equal:' . now()->subYears(18)->toDateString()],
             'gender' => 'sometimes|nullable|string|in:male,female,other',
             'emergency_contact_person' => 'sometimes|nullable|string|max:255',
             'emergency_contact_number' => 'sometimes|nullable|regex:/^09[0-9]{9}$/',

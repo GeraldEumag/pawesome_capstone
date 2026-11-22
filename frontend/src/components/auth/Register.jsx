@@ -8,7 +8,6 @@ import {
   faCheckCircle,
   faEye,
   faEyeSlash,
-  faFileContract,
   faHeartPulse,
   faIdCard,
   faLock,
@@ -40,7 +39,6 @@ const INITIAL_FORM = {
   confirmPassword: "",
   emergencyContactPerson: "",
   emergencyContactNumber: "",
-  termsAccepted: false,
 };
 
 const SUFFIX_OPTIONS = [
@@ -63,6 +61,13 @@ const STEPS = [
   { id: 2, title: "Account",   subtitle: "Login credentials",  icon: faLock },
   { id: 3, title: "Emergency", subtitle: "Backup contact",     icon: faHeartPulse },
 ];
+
+/** Latest acceptable birthdate — registrants must be at least 18 years old. */
+const adultMaxBirthdate = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 18);
+  return d;
+};
 
 const Register = () => {
   const navigate = useNavigate();
@@ -123,6 +128,9 @@ const Register = () => {
   const getStepErrors = (step = currentStep) => {
     const errors = {};
     if (step === 1) {
+      if (!formData.dateOfBirth)                          errors.dateOfBirth    = "Date of birth is required.";
+      else if (formData.dateOfBirth > formatDateOnly(adultMaxBirthdate()))
+                                                         errors.dateOfBirth    = "You must be at least 18 years old to register.";
       if (!formData.firstName.trim())    errors.firstName    = "First name is required.";
       if (!formData.lastName.trim())     errors.lastName     = "Last name is required.";
       if (!formData.emailAddress.trim()) errors.emailAddress = "Email address is required.";
@@ -144,7 +152,6 @@ const Register = () => {
     if (step === 3) {
       if (formData.emergencyContactNumber.trim() && !/^09\d{9}$/.test(formData.emergencyContactNumber.trim()))
         errors.emergencyContactNumber = "Enter all nine digits after the fixed 09 prefix.";
-      if (!formData.termsAccepted) errors.termsAccepted = "You must agree to the Terms of Service and Privacy Policy to continue.";
     }
     return errors;
   };
@@ -358,15 +365,16 @@ const Register = () => {
                     </div>
 
                     <div className="register-form-group">
-                      <label htmlFor="dateOfBirth">Date of Birth</label>
+                      <label htmlFor="dateOfBirth">Date of Birth *</label>
                       <DatePickerInput
                         id="dateOfBirth"
                         selected={parseDateOnly(formData.dateOfBirth)}
                         onChange={(date) => handleChange({ target: { name: "dateOfBirth", value: formatDateOnly(date) } })}
                         placeholderText="mm/dd/yyyy"
-                        maxDate={new Date()}
+                        maxDate={adultMaxBirthdate()}
                         dateFormat="MM/dd/yyyy"
                       />
+                      {renderFieldError("dateOfBirth")}
                     </div>
 
                     <div className="register-form-group">
@@ -490,21 +498,6 @@ const Register = () => {
                       </div>
                       {renderFieldError("emergencyContactNumber")}
                     </div>
-                  </div>
-
-                  {/* Terms */}
-                  <div className="register-terms-row">
-                    <label className={`register-terms-label${fieldErrors.termsAccepted ? " has-error" : ""}`}>
-                      <input type="checkbox" checked={formData.termsAccepted}
-                        onChange={(e) => updateField("termsAccepted", e.target.checked)}
-                        disabled={loading} />
-                      <span>
-                        <FontAwesomeIcon icon={faFileContract} />
-                        I agree to Pawesome Retreat's Terms of Service and Privacy Policy.
-                        <span className="terms-required"> *</span>
-                      </span>
-                    </label>
-                    {renderFieldError("termsAccepted")}
                   </div>
 
                   {/* Summary */}
