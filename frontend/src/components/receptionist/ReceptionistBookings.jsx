@@ -1068,9 +1068,9 @@ const ReceptionistBookings = () => {
     }));
 
     const filename = "receptionist-bookings";
-    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
-    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Receptionist Bookings", filename);
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename, { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename, { signoff: false });
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Receptionist Bookings", filename, { signoff: false });
 
     notify("success", "Bookings exported successfully.");
   };

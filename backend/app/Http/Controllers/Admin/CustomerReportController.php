@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Services\ServiceDurationService;
 
 class CustomerReportController extends Controller
 {
@@ -18,8 +19,8 @@ class CustomerReportController extends Controller
     {
         $startDate = $request->query('start_date') ?: $request->query('from');
         $endDate = $request->query('end_date') ?: $request->query('to');
-        $start = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
-        $end = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
+        $start = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now(ServiceDurationService::STORE_TIMEZONE)->startOfMonth();
+        $end = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now(ServiceDurationService::STORE_TIMEZONE)->endOfDay();
 
         $customersQuery = Customer::withCount('pets');
 

@@ -483,6 +483,11 @@ class PayrollEndToEndTest extends TestCase
             'net_pay' => 22000,
         ]);
 
+        // Release recomputes figures from attendance — mirror generate() so
+        // the row is fresh, not a stale fabricated draft.
+        $payroll->calculatePayroll(true);
+        $payroll->save();
+
         $this->postJson("/api/manager/payroll/{$payroll->id}/approve", [], $this->managerAuth())
             ->assertOk()->assertJsonPath('data.status', 'pending');
 
@@ -543,6 +548,11 @@ class PayrollEndToEndTest extends TestCase
             'gross_pay' => 25000,
             'net_pay' => 22000,
         ]);
+
+        // Mirror generate() so stored figures match the release-time
+        // freshness recomputation.
+        $payroll->calculatePayroll(true);
+        $payroll->save();
 
         $response = $this->postJson(
             "/api/manager/payroll/{$payroll->id}/release",

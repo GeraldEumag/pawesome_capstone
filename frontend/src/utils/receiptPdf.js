@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { STORE_INFO } from "./storeInfo";
-import brandLogoUrl from "../assets/pawesome.jpg";
+import { loadBrandLogo } from "./brandAssets";
 
 /* A4 branded invoice. Same exports + opts contract as before so every
    caller (POS, transactions, history, customer payments, vet, verification)
@@ -49,22 +49,6 @@ const safeFilename = (value) => cleanText(value, "receipt")
   .replace(/[<>:"/\\|?*\u0000-\u001f]+/g, "-")
   .replace(/\s+/g, "-")
   .slice(0, 90);
-
-const loadBrandLogo = async () => {
-  try {
-    const response = await fetch(brandLogoUrl);
-    if (!response.ok) return null;
-    const blob = await response.blob();
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-};
 
 const setColor = (doc, c) => doc.setTextColor(c.r, c.g, c.b);
 const fill = (doc, c) => doc.setFillColor(c.r, c.g, c.b);

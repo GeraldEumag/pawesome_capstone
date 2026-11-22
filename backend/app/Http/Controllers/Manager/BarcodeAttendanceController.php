@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -90,8 +91,8 @@ class BarcodeAttendanceController extends Controller
 
         $personId = (int) $resolved['person']->id;
         $isEmployee = $resolved['kind'] === 'employee';
-        $today = Carbon::today()->toDateString();
-        $now = Carbon::now();
+        $today = ServiceDurationService::storeToday();
+        $now = Carbon::now(ServiceDurationService::STORE_TIMEZONE);
 
         return DB::transaction(function () use (
             $personId,
@@ -273,7 +274,7 @@ class BarcodeAttendanceController extends Controller
             ], 403);
         }
 
-        $today = Carbon::today()->toDateString();
+        $today = ServiceDurationService::storeToday();
 
         $records = Attendance::with(['user', 'employee'])
             ->where('date', $today)

@@ -286,12 +286,23 @@ const LoginHistory = () => {
 
       const filename = `staff-login-history-${new Date().toISOString().split("T")[0]}`;
 
+      const exportMetadata = {
+        signoff: false,
+        periodLabel:
+          dateFrom && dateTo
+            ? `${dateFrom} to ${dateTo}`
+            : dateFrom
+              ? `From ${dateFrom}`
+              : dateTo
+                ? `Through ${dateTo}`
+                : "All time",
+      };
       if (format === "csv") {
-        exportToCSV(rows, exportColumns, filename);
+        exportToCSV(rows, exportColumns, filename, exportMetadata);
       } else if (format === "excel") {
-        exportToExcel(rows, exportColumns, filename);
+        exportToExcel(rows, exportColumns, filename, exportMetadata);
       } else if (format === "pdf") {
-        exportToPDF(rows, exportColumns, "Staff Login History", filename);
+        exportToPDF(rows, exportColumns, "Staff Login History", filename, exportMetadata);
       }
 
       showSuccess("Logs exported successfully");

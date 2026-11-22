@@ -10,6 +10,7 @@ use App\Services\ClinicalAccessLogger;
 use App\Services\ServiceBillingService;
 use App\Models\PaymentSettlement;
 use App\Models\ServiceBillingPaymentRequest;
+use App\Services\ServiceDurationService;
 use App\Support\ReceiptBreakdown;
 use App\Support\VeterinaryStatus;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class DashboardController extends Controller
 
     public function overview()
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
 
         $todayAssigned = $this->assignedAppointments()
             ->whereDate('scheduled_at', $today)
@@ -162,7 +163,7 @@ class DashboardController extends Controller
             });
         }
 
-        if ($dateFilter === 'today')  $query->whereDate('scheduled_at', \Carbon\Carbon::today());
+        if ($dateFilter === 'today')  $query->whereDate('scheduled_at', \Carbon\Carbon::today(\App\Services\ServiceDurationService::STORE_TIMEZONE));
         if ($dateFilter === 'week')   $query->where('scheduled_at', '>=', \Carbon\Carbon::now()->subDays(7));
         if ($dateFilter === 'month')  $query->where('scheduled_at', '>=', \Carbon\Carbon::now()->subDays(30));
 
@@ -185,7 +186,7 @@ class DashboardController extends Controller
     {
         /** @var User|null $user */
         $user = Auth::user();
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         
         // Build base query based on user role
         $query = Appointment::with(['customer', 'pet', 'service', 'veterinarian']);

@@ -86,9 +86,9 @@ const HistoryTimeline = ({
     if (!entries || entries.length === 0) return;
 
     if (exportColumns && exportColumns.length > 0) {
-      if (format === "csv") exportToCSV(entries, exportColumns, exportFilename);
-      else if (format === "excel") exportToExcel(entries, exportColumns, exportFilename);
-      else if (format === "pdf") exportToPDF(entries, exportColumns, exportTitle, exportFilename);
+      if (format === "csv") exportToCSV(entries, exportColumns, exportFilename, { csvStyle: "data", signoff: false });
+      else if (format === "excel") exportToExcel(entries, exportColumns, exportFilename, { signoff: false });
+      else if (format === "pdf") exportToPDF(entries, exportColumns, exportTitle, exportFilename, { signoff: false });
     } else if (onExport) {
       // Legacy: call the old CSV-only callback
       onExport();

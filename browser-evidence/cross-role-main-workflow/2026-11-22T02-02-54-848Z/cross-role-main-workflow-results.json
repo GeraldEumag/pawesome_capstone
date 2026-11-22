@@ -1,0 +1,29 @@
+{
+  "startedAt": "2026-11-22T02:02:54.850Z",
+  "completedAt": "2026-11-22T02:03:03.094Z",
+  "frontendUrl": "http://127.0.0.1:3001",
+  "apiUrl": "http://127.0.0.1:8000/api",
+  "status": "NOT_RUN",
+  "pages": [],
+  "actions": [
+    {
+      "name": "Verify Buddy pet fixture",
+      "status": "PASS",
+      "detail": "Buddy pet #3"
+    },
+    {
+      "name": "Create pending customer vet request",
+      "status": "PASS",
+      "detail": "request #288"
+    }
+  ],
+  "screenshots": [],
+  "records": {
+    "buddyPetId": 3,
+    "vetRequestId": 288
+  },
+  "console": [],
+  "httpFailures": [],
+  "navigationAborts": [],
+  "limitations": []
+}

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\MedicalConfinement;
 use App\Models\Vaccination;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,7 @@ class SendRecalls extends Command
     {
         $due = Vaccination::with(['pet.customer.user'])
             ->whereNotNull('next_due_date')
-            ->whereDate('next_due_date', '>=', now()->toDateString())
+            ->whereDate('next_due_date', '>=', ServiceDurationService::storeToday())
             ->whereDate('next_due_date', '<=', now()->addDays($days)->toDateString())
             ->get();
 

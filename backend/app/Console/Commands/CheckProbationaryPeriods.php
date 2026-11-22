@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 /**
  * Daily job: alert manager when an employee's probationary period is ending soon.
@@ -26,7 +27,7 @@ class CheckProbationaryPeriods extends Command
             ->where('key', 'probationary_alert_days')
             ->value('value') ?? 14);
 
-        $today        = Carbon::today();
+        $today        = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $alertDate    = $today->copy()->addDays($alertDays);
         $endDate      = $today->copy()->addDays(180); // 6-month mark from hire
         $count        = 0;

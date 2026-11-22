@@ -44,10 +44,10 @@ class Invoice extends Model
 
         static::creating(function ($invoice) {
             if (empty($invoice->invoice_number)) {
-                $invoice->invoice_number = 'INV-' . date('Y') . '-' . strtoupper(uniqid());
+                $invoice->invoice_number = 'INV-' . now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->format('Y') . '-' . strtoupper(uniqid());
             }
             if (empty($invoice->invoice_date)) {
-                $invoice->invoice_date = today();
+                $invoice->invoice_date = \App\Services\ServiceDurationService::storeToday();
             }
         });
     }
@@ -84,7 +84,7 @@ class Invoice extends Model
 
     public function isOverdue(): bool
     {
-        return $this->status === 'sent' && $this->due_date && $this->due_date < today();
+        return $this->status === 'sent' && $this->due_date && $this->due_date < \Carbon\Carbon::today(\App\Services\ServiceDurationService::STORE_TIMEZONE);
     }
 
     public function scopePending($query)
@@ -95,6 +95,6 @@ class Invoice extends Model
     public function scopeOverdue($query)
     {
         return $query->where('status', 'sent')
-                     ->where('due_date', '<', today());
+                     ->where('due_date', '<', \Carbon\Carbon::today(\App\Services\ServiceDurationService::STORE_TIMEZONE));
     }
 }

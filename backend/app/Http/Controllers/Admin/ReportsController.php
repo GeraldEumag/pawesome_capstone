@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use App\Services\ServiceDurationService;
 
 class ReportsController extends Controller
 {
@@ -118,8 +119,8 @@ class ReportsController extends Controller
 
     public function summary()
     {
-        $today = Carbon::today();
-        $year = Carbon::now()->year;
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
+        $year = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->year;
         $revenue = new RevenueService();
 
         // Same [{month, total}] shape the previous Sale::selectRaw produced.
@@ -2161,19 +2162,19 @@ class ReportsController extends Controller
      */
     public function executiveOverview(Request $request)
     {
-        $from = $request->query('from', Carbon::today()->toDateString());
-        $to = $request->query('to', Carbon::today()->toDateString());
+        $from = $request->query('from', ServiceDurationService::storeToday());
+        $to = $request->query('to', ServiceDurationService::storeToday());
         $fromDate = Carbon::parse($from)->startOfDay();
         $toDate = Carbon::parse($to)->endOfDay();
         $revenueService = new RevenueService();
 
         // Revenue counts every paid source (POS, orders, services, boarding, confinement)
-        $todayRevenue = $revenueService->total(Carbon::today(), Carbon::today());
-        $yesterdayRevenue = $revenueService->total(Carbon::yesterday(), Carbon::yesterday());
+        $todayRevenue = $revenueService->total(Carbon::today(ServiceDurationService::STORE_TIMEZONE), Carbon::today(ServiceDurationService::STORE_TIMEZONE));
+        $yesterdayRevenue = $revenueService->total(Carbon::yesterday(ServiceDurationService::STORE_TIMEZONE), Carbon::yesterday(ServiceDurationService::STORE_TIMEZONE));
         $periodRevenue = $revenueService->total($fromDate, $toDate);
 
         // Order counts across all revenue sources
-        $todayOrders = $revenueService->count(Carbon::today(), Carbon::today());
+        $todayOrders = $revenueService->count(Carbon::today(ServiceDurationService::STORE_TIMEZONE), Carbon::today(ServiceDurationService::STORE_TIMEZONE));
         $periodOrders = $revenueService->count($fromDate, $toDate);
         
         // Status breakdown - ACCURATE counts from real data
@@ -2436,8 +2437,8 @@ class ReportsController extends Controller
      */
     public function comparativeReporting(Request $request)
     {
-        $primaryFrom = Carbon::now()->startOfMonth();
-        $primaryTo = Carbon::now()->endOfMonth();
+        $primaryFrom = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->startOfMonth();
+        $primaryTo = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->endOfMonth();
         $comparisonFrom = Carbon::now()->subMonth()->startOfMonth();
         $comparisonTo = Carbon::now()->subMonth()->endOfMonth();
 
@@ -2643,7 +2644,7 @@ class ReportsController extends Controller
 
         return match ($alert->type) {
             'revenue_drop' => (function () use ($threshold) {
-                $todayRevenue = (float) Sale::whereDate('created_at', Carbon::today())->sum('amount');
+                $todayRevenue = (float) Sale::whereDate('created_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE))->sum('amount');
                 return [
                     $todayRevenue < $threshold,
                     "Today's revenue (₱" . number_format($todayRevenue, 2) . ") is below the ₱" . number_format($threshold, 2) . " threshold.",

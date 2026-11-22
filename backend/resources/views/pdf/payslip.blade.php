@@ -4,25 +4,35 @@
     <meta charset="UTF-8">
     <title>Payslip {{ $payslip['payroll_id'] ?? '' }}</title>
     <style>
-        @page { margin: 34px 38px; }
+        @page { margin: 34px 38px 46px 38px; }
         body { color: #1f2937; font-family: "DejaVu Sans", sans-serif; font-size: 10px; }
-        h1 { color: #b02a67; font-size: 20px; margin: 0; }
-        h2 { color: #b02a67; font-size: 13px; margin: 20px 0 8px; }
+        h1 { color: #ff5f93; font-size: 20px; margin: 0; }
+        h2 { color: #ff5f93; font-size: 13px; margin: 20px 0 8px; }
         p { margin: 4px 0; }
         .muted { color: #64748b; }
-        .heading { border-bottom: 2px solid #f5c6da; padding-bottom: 12px; }
+        .heading { border-bottom: 2px solid #ffc8dd; padding-bottom: 12px; }
+        .letterhead { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+        .letterhead td { padding: 0; vertical-align: middle; }
+        .letterhead .logo { width: 52px; }
+        .letterhead .logo img { width: 46px; height: 46px; }
+        .letterhead .brand { padding-left: 10px; }
+        .letterhead .brand h1 { font-size: 17px; }
+        .letterhead .brand .sub { font-size: 8px; }
         .meta, .summary, .lines { border-collapse: collapse; width: 100%; }
         .meta { margin-top: 14px; }
         .meta td { padding: 4px 8px 4px 0; width: 50%; }
-        .summary { background: #fdf2f7; border: 1px solid #f5c6da; margin-top: 14px; }
+        .summary { background: #fff1f7; border: 1px solid #ffc8dd; margin-top: 14px; }
         .summary td { padding: 10px; text-align: center; }
-        .summary strong { color: #b02a67; font-size: 17px; }
-        .lines th { background: #b02a67; color: #fff; text-align: left; }
+        .summary strong { color: #ff5f93; font-size: 17px; }
+        .lines th { background: #ff5f93; color: #fff; text-align: left; }
         .lines th, .lines td { border: 1px solid #e2e8f0; padding: 6px 8px; }
         .lines .amount { text-align: right; white-space: nowrap; }
-        .lines .total { background: #fdf2f7; font-weight: bold; }
+        .lines .total { background: #fff1f7; font-weight: bold; }
         .attendance td { padding: 3px 10px 3px 0; }
         .confidential { border-top: 1px solid #e2e8f0; color: #64748b; font-size: 8px; margin-top: 22px; padding-top: 8px; }
+        footer { position: fixed; bottom: -34px; left: 0; right: 0; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 7.5px; padding-top: 4px; }
+        footer .page-num { float: right; }
+        footer .page-num::after { content: "Page " counter(page); }
     </style>
 </head>
 <body>
@@ -68,9 +78,29 @@
         ];
     @endphp
 
+    @php
+        // Embed the logo as a data URI — Dompdf runs with isRemoteEnabled=false,
+        // which cannot resolve filesystem image paths, and a data URI keeps the
+        // PDF self-contained. Fixed bundled asset path, never user input.
+        $logoPath = public_path('pawesome.jpg');
+        $logoDataUri = file_exists($logoPath)
+            ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+    @endphp
+    <table class="letterhead">
+        <tr>
+            @if ($logoDataUri)
+                <td class="logo"><img src="{{ $logoDataUri }}" alt="Pawesome Retreat Inc."></td>
+            @endif
+            <td class="brand">
+                <h1>{{ $payslip['company_name'] ?? 'Pawesome Retreat Inc.' }}</h1>
+                <p class="muted sub">Professional Veterinary &amp; Pet Hotel Services &mdash; Aldana Street, San Isidro Village, Las Pi&ntilde;as City, Philippines 1740</p>
+                <p class="muted sub">Confidential employee payroll statement</p>
+            </td>
+        </tr>
+    </table>
+
     <div class="heading">
-        <h1>{{ $payslip['company_name'] ?? 'Pawesome Retreat Inc.' }}</h1>
-        <p class="muted">Confidential employee payroll statement</p>
         <h2>PAYSLIP</h2>
         <p><strong>Pay period:</strong> {{ $payslip['pay_period'] ?? 'Not specified' }}</p>
         <p><strong>Payroll reference:</strong> {{ $payslip['payroll_id'] ?? 'N/A' }}</p>
@@ -184,5 +214,10 @@
         This document contains confidential payroll information intended only for the named employee.
         Keep it secure and contact the Payroll Department if you believe any details are incorrect.
     </p>
+
+    <footer>
+        <span>{{ $payslip['company_name'] ?? 'Pawesome Retreat Inc.' }} | Official payroll document | Generated {{ $payslip['payslip_date'] ?? now()->toDateString() }}</span>
+        <span class="page-num"></span>
+    </footer>
 </body>
 </html>

@@ -6,14 +6,10 @@ import {
   faExclamationTriangle,
   faSpinner,
   faEye,
-  faClock,
-  faReceipt,
-  faCreditCard,
-  faCalendarAlt,
-  faBox,
 } from "@fortawesome/free-solid-svg-icons";
 import "./CustomerNotifications.css";
-import { apiRequest } from "../../api/client";
+import { notificationApi } from "../../api/notifications";
+import { getNotificationMeta } from "../../utils/notificationIcons";
 import { showError } from "../../utils/alert.jsx";
 
 const CustomerNotifications = () => {
@@ -29,7 +25,7 @@ const CustomerNotifications = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const data = await apiRequest("/notifications?limit=50");
+      const data = await notificationApi.getAll({ limit: 50 });
       setNotifications(Array.isArray(data) ? data : data.notifications || []);
       setError("");
     } catch (err) {
@@ -43,9 +39,7 @@ const CustomerNotifications = () => {
 
   const markAsRead = async (id) => {
     try {
-      await apiRequest(`/notifications/${id}/read`, {
-        method: "POST",
-      });
+      await notificationApi.markAsRead(id);
       fetchNotifications();
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
@@ -54,81 +48,10 @@ const CustomerNotifications = () => {
 
   const markAllAsRead = async () => {
     try {
-      await apiRequest("/notifications/mark-all-read", {
-        method: "POST",
-      });
+      await notificationApi.markAllAsRead();
       fetchNotifications();
     } catch (err) {
       console.error("Failed to mark all notifications as read:", err);
-    }
-  };
-
-  const getNotificationIcon = (type) => {
-    switch (type?.toLowerCase()) {
-      case "success":
-        return <FontAwesomeIcon icon={faCheckCircle} className="notification-icon success" />;
-      case "warning":
-        return <FontAwesomeIcon icon={faExclamationTriangle} className="notification-icon warning" />;
-      case "error":
-      case "danger":
-        return <FontAwesomeIcon icon={faExclamationTriangle} className="notification-icon error" />;
-      case "info":
-        return <FontAwesomeIcon icon={faBell} className="notification-icon info" />;
-      case "order_submitted":
-        return <FontAwesomeIcon icon={faBox} className="notification-icon" />;
-      case "order_approved":
-        return <FontAwesomeIcon icon={faCheckCircle} className="notification-icon success" />;
-      case "order_rejected":
-        return <FontAwesomeIcon icon={faExclamationTriangle} className="notification-icon error" />;
-      case "payment_uploaded":
-        return <FontAwesomeIcon icon={faCreditCard} className="notification-icon warning" />;
-      case "payment_verified":
-        return <FontAwesomeIcon icon={faReceipt} className="notification-icon success" />;
-      case "payment_rejected":
-        return <FontAwesomeIcon icon={faExclamationTriangle} className="notification-icon error" />;
-      case "service_submitted":
-        return <FontAwesomeIcon icon={faCalendarAlt} className="notification-icon info" />;
-      case "service_approved":
-        return <FontAwesomeIcon icon={faCheckCircle} className="notification-icon success" />;
-      case "service_scheduled":
-        return <FontAwesomeIcon icon={faClock} className="notification-icon info" />;
-      case "service_completed":
-        return <FontAwesomeIcon icon={faCheckCircle} className="notification-icon success" />;
-      default:
-        return <FontAwesomeIcon icon={faBell} className="notification-icon" />;
-    }
-  };
-
-  const getNotificationColor = (type) => {
-    switch (type?.toLowerCase()) {
-      case "success":
-      case "info":
-      case "warning":
-      case "error":
-      case "danger":
-        return type === "danger" ? "error" : type;
-      case "order_submitted":
-      return "info";
-      case "order_approved":
-        return "success";
-      case "order_rejected":
-        return "error";
-      case "payment_uploaded":
-        return "warning";
-      case "payment_verified":
-        return "success";
-      case "payment_rejected":
-        return "error";
-      case "service_submitted":
-        return "info";
-      case "service_approved":
-        return "success";
-      case "service_scheduled":
-        return "info";
-      case "service_completed":
-        return "success";
-      default:
-        return "default";
     }
   };
 
@@ -229,8 +152,8 @@ const CustomerNotifications = () => {
                 key={notification.id}
                 className={`notification-item ${!notification.read ? "unread" : ""}`}
               >
-                <div className={`notification-icon-wrap ${getNotificationColor(notification.type)}`}>
-                  {getNotificationIcon(notification.type)}
+                <div className={`notification-icon-wrap ${getNotificationMeta(notification).severity}`}>
+                  <FontAwesomeIcon icon={getNotificationMeta(notification).icon} className="notification-icon" />
                 </div>
 
                 <div className="notification-body">
@@ -238,7 +161,7 @@ const CustomerNotifications = () => {
                     <div className="notification-meta">
                       <h3>{notification.title}</h3>
                     </div>
-                    <span className="notification-time">{formatDate(notification.created_at)}</span>
+                    <span className="notification-time">{notification.time || formatDate(notification.created_at)}</span>
                     {!notification.read && <span className="unread-indicator">New</span>}
                   </div>
 

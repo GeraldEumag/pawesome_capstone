@@ -18,10 +18,16 @@ const CashierHistory = lazy(() => import("../components/cashier/CashierHistory")
 const CashierReports = lazy(() => import("../components/cashier/CashierReports"));
 
 // Inventory components
-const UnifiedInventory = lazy(() => import("../components/inventory/UnifiedInventory"));
+const ProductManagement = lazy(() => import("../components/inventory/ProductManagement"));
+const StockManagement = lazy(() => import("../components/inventory/StockManagement"));
 const InventoryHistory = lazy(() => import("../components/inventory/InventoryHistory_Polished"));
 const InventoryReports = lazy(() => import("../components/inventory/InventoryReports"));
 const MonthlyInventoryAudit = lazy(() => import("../components/inventory/MonthlyInventoryAudit"));
+const StockInPage = lazy(() => import("../components/inventory/StockInPage"));
+const StockOutPage = lazy(() => import("../components/inventory/StockOutPage"));
+const StockReturnsPage = lazy(() => import("../components/inventory/StockReturnsPage"));
+const StockMovementsPage = lazy(() => import("../components/inventory/StockMovementsPage"));
+const StockApprovalsPage = lazy(() => import("../components/inventory/StockApprovalsPage"));
 
 // Shared
 const MyPayroll = lazy(() => import("../components/shared/MyPayroll"));
@@ -62,10 +68,17 @@ const SuperReceptionistRoutes = () => (
         <Route path="cashier-reports" element={<CashierReports />} />
 
         {/* Inventory */}
-        <Route path="inventory" element={<UnifiedInventory />} />
+        <Route path="inventory" element={<StockManagement />} />
+        <Route path="inventory/products" element={<ProductManagement />} />
+        <Route path="inventory/stock" element={<StockManagement />} />
         <Route path="inventory/history" element={<InventoryHistory />} />
         <Route path="inventory/reports" element={<InventoryReports />} />
         <Route path="inventory/audit" element={<MonthlyInventoryAudit />} />
+        <Route path="inventory/stock-in" element={<StockInPage />} />
+        <Route path="inventory/stock-out" element={<StockOutPage />} />
+        <Route path="inventory/returns" element={<StockReturnsPage />} />
+        <Route path="inventory/movements" element={<StockMovementsPage />} />
+        <Route path="inventory/approvals" element={<StockApprovalsPage />} />
 
         {/* Account */}
         <Route path="payroll" element={<MyPayroll roleAccent="var(--color-primary)" roleLabel="Super Receptionist" />} />

@@ -3,6 +3,7 @@
 namespace App\Services\Payroll;
 
 use App\Models\Payroll;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 
@@ -35,7 +36,7 @@ class PayrollPayslipDataService
 
         return [
             'company_name' => 'Pawesome Retreat Inc.',
-            'payslip_date' => now()->toDateString(),
+            'payslip_date' => ServiceDurationService::storeToday(),
             'payroll_id' => $payroll->payroll_id,
             'pay_period' => $payroll->pay_period_label,
             'period_factor' => $periodFactor,

@@ -5,6 +5,7 @@ namespace App\Services\Payroll;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -157,7 +158,7 @@ class PayrollComputationService
         if ($startDate && $endDate) {
             $start = Carbon::parse($startDate);
             $end   = Carbon::parse($endDate);
-            $today = Carbon::today();
+            $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
 
             // Approved leave dates overlapping the period
             $approvedLeaveDates = [];
@@ -995,7 +996,7 @@ class PayrollComputationService
      */
     private function sssSchedule(?string $periodStart): array
     {
-        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today();
+        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         if ($date->lt('2023-01-01')) {
             throw ValidationException::withMessages([
                 'period_start' => ['SSS payroll calculations before January 2023 require a verified historical schedule.'],
@@ -1068,7 +1069,7 @@ class PayrollComputationService
     /** Pag-IBIG employee share; MFS rose from ₱5,000 to ₱10,000 in Feb 2024. */
     public function calculatePagibig(float $baseSalary, ?string $periodStart = null): float
     {
-        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today();
+        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $maxFundSalary = $date->gte('2024-02-01') ? 10000.0 : 5000.0;
         $fundSalary = min(max(0, $baseSalary), $maxFundSalary);
         $employeeRate = $baseSalary <= 1500 ? 0.01 : 0.02;
@@ -1078,7 +1079,7 @@ class PayrollComputationService
 
     public function calculatePagibigEmployer(float $baseSalary, ?string $periodStart = null): float
     {
-        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today();
+        $date = $periodStart ? Carbon::parse($periodStart) : Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $maxFundSalary = $date->gte('2024-02-01') ? 10000.0 : 5000.0;
 
         return round(min(max(0, $baseSalary), $maxFundSalary) * 0.02, 2);

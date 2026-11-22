@@ -187,7 +187,7 @@ class Payroll extends Model
                 // Max existing sequence INCLUDING soft-deleted rows — the
                 // unique index still holds trashed payroll_ids, so counting
                 // live rows would reuse them and the insert would 500.
-                $year = date('Y');
+                $year = now(\App\Services\ServiceDurationService::STORE_TIMEZONE)->format('Y');
                 $seq = (int) (static::withTrashed()
                     ->where('payroll_id', 'like', "PAY-{$year}-%")
                     ->selectRaw("MAX(CAST(SUBSTRING(payroll_id, -4) AS UNSIGNED)) AS seq")

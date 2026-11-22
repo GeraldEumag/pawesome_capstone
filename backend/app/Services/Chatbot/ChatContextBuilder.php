@@ -15,6 +15,7 @@ use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
+use App\Services\ServiceDurationService;
 
 /**
  * Builds the role-scoped live context injected into the AI system prompt.
@@ -96,7 +97,7 @@ class ChatContextBuilder
 
     private static function forReceptionist(): array
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
 
         return [
             'pending_approvals' => [
@@ -114,7 +115,7 @@ class ChatContextBuilder
     private static function forVeterinary(?User $user): array
     {
         return [
-            'my_queue_today' => Appointment::whereDate('scheduled_at', Carbon::today())
+            'my_queue_today' => Appointment::whereDate('scheduled_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE))
                 ->where(fn ($q) => $q->whereNull('veterinarian_id')->orWhere('veterinarian_id', $user?->id))
                 ->orderBy('scheduled_at')->limit(8)->with(['pet:id,name', 'service:id,name'])->get()
                 ->map(fn ($a) => optional($a->scheduled_at)->format('g:i A') . ' - ' . ($a->pet?->name ?? 'Pet') . ' - ' . ($a->service?->name ?? 'Service') . " ({$a->status})")->all(),
@@ -142,7 +143,7 @@ class ChatContextBuilder
 
     private static function forManagement(): array
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
 
         return [
             'operations' => [

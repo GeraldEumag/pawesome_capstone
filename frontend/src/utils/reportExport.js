@@ -95,6 +95,9 @@ const resolveFormalReportConfig = ({ data, filename, metadata = {}, title }) => 
     ],
     certification: metadata.certification || DEFAULT_CERTIFICATION,
     signatures: metadata.signatures || defaultReportSignatures(preparedBy, preparedRole),
+    // signoff=false suppresses findings/certification/signature sections on
+    // ordinary list exports; formal reports keep them by default.
+    signoff: metadata.signoff !== false,
   };
 };
 
@@ -162,10 +165,21 @@ export const formalReportRows = {
 };
 
 /**
+ * Normalize export filenames to the `pawesome_<name>` convention without
+ * double-prefixing names that already carry the company name.
+ */
+export const normalizeExportFilename = (filename) => {
+  const base = String(filename || "report").replace(/\.(csv|xlsx|pdf)$/i, "");
+  return /^pawesome/i.test(base) ? base : `pawesome_${base}`;
+};
+
+/**
  * Export data to CSV format
  * @param {Array} data - Array of objects to export
  * @param {Array} columns - Array of {key, label} objects defining columns
  * @param {string} filename - Output filename without extension
+ * @param {Object} metadata - Formal-report metadata; `csvStyle: "data"` emits
+ *   headers + records only, `signoff: false` drops findings/signatures.
  */
 export const exportToCSV = (data, columns = [], filename = "report", metadata = {}) => {
   if (!Array.isArray(data) || data.length === 0) {
@@ -182,22 +196,32 @@ export const exportToCSV = (data, columns = [], filename = "report", metadata = 
     const safeValue = String(sanitizeCsvCell(value) ?? "");
     return /[",\n\r]/.test(safeValue) ? `"${safeValue.replace(/"/g, '""')}"` : safeValue;
   };
-  const rows = [
-    ...buildReportHeaderRows(config),
-    ...buildReportSummaryRows(config),
-    [],
-    [config.tableTitle.toUpperCase()],
-    headers,
-    ...data.map((row) => exportColumns.map((col) => formatCellForTextExport(col, getNestedValue(row, col.key)))),
-    ...buildReportClosingRows(config),
-  ];
+  const dataRows = data.map((row) =>
+    exportColumns.map((col) => formatCellForTextExport(col, getNestedValue(row, col.key)))
+  );
+  // csvStyle "data" emits headers + records only — no letterhead, summary,
+  // findings, or sign-off rows — for machine-oriented exports. Formal CSVs
+  // without sign-off keep the letterhead and a document-control trailer.
+  const rows = metadata.csvStyle === "data"
+    ? [headers, ...dataRows]
+    : [
+        ...buildReportHeaderRows(config),
+        ...buildReportSummaryRows(config),
+        [],
+        [config.tableTitle.toUpperCase()],
+        headers,
+        ...dataRows,
+        ...(config.signoff
+          ? buildReportClosingRows(config)
+          : [[], [`${config.docRef} | ${STORE_INFO.name} | For authorized business use`]]),
+      ];
   const csvContent = `\uFEFF${rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n")}`;
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
 
   link.href = url;
-  link.download = `${filename}_${formatDateForFilename(new Date())}.csv`;
+  link.download = `${normalizeExportFilename(filename)}_${formatDateForFilename(new Date())}.csv`;
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
@@ -259,7 +283,7 @@ export const exportToPDF = (data, columns, title = "Report", filename = "report"
     recommendations: reportOptions.recommendations || [
       "Retain this report with its source records and obtain the required review and approval signatures.",
     ],
-    filename: `${filename}_${formatDateForFilename(new Date())}`,
+    filename: `${normalizeExportFilename(filename)}_${formatDateForFilename(new Date())}`,
     signatures: reportOptions.signatures,
     preparedBy: reportOptions.preparedBy || generatedBy,
     preparedRole: reportOptions.preparedRole || getRole() || "Report Preparer",
@@ -340,7 +364,9 @@ export const exportToExcel = async (data, columns = [], filename = "report", met
     if (typeof value === "object") return JSON.stringify(value);
     return typeof value === "string" ? value.replace(/[\t\r\n]+/g, " ") : value;
   }));
-  const closingRows = buildReportClosingRows(config);
+  const closingRows = config.signoff
+    ? buildReportClosingRows(config)
+    : [[], [`${config.docRef} | ${STORE_INFO.name} | For authorized business use`]];
   const preambleRows = [
     ...buildReportHeaderRows(config),
     ...buildReportSummaryRows(config),
@@ -378,7 +404,7 @@ export const exportToExcel = async (data, columns = [], filename = "report", met
   const sheetName = String(metadata.sheetName || "Report").replace(/[\\/?*\[\]:]/g, " ").slice(0, 31) || "Report";
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-  await saveWorkbookAsLandscapeXlsx(workbook, `${filename}_${formatDateForFilename(new Date())}.xlsx`);
+  await saveWorkbookAsLandscapeXlsx(workbook, `${normalizeExportFilename(filename)}_${formatDateForFilename(new Date())}.xlsx`);
 };
 
 /**

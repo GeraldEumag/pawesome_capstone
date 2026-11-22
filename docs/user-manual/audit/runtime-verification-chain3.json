@@ -1,8 +1,8 @@
 {
   "register": {
     "status": "VERIFIED",
-    "note": "Customer e2e-reg-1795000311616@example.test registered (unverified); welcome/verify intent expected in outbox",
-    "at": "2026-11-18T11:11:52.616Z"
+    "note": "Customer e2e-reg-1795314057811@example.test registered (unverified); welcome/verify intent expected in outbox",
+    "at": "2026-11-22T02:21:01.797Z"
   },
   "email-verify": {
     "status": "VERIFIED",
@@ -20,24 +20,24 @@
     "at": "2026-11-18T11:11:57.629Z"
   },
   "inactive-login-block": {
-    "status": "VERIFIED",
-    "note": "Inactive login -> HTTP 403",
-    "at": "2026-11-18T11:11:58.299Z"
+    "status": "BLOCKED",
+    "note": "is_active toggle HTTP 401",
+    "at": "2026-11-22T02:21:25.262Z"
   },
   "role-gates": {
     "status": "VERIFIED",
     "note": "customer->/admin/users HTTP 403; cashier->/manager/payroll HTTP 403",
-    "at": "2026-11-18T11:11:58.968Z"
+    "at": "2026-11-22T02:21:26.208Z"
   },
   "kiosk-wrong-pin": {
     "status": "VERIFIED",
     "note": "Wrong PIN -> HTTP 401",
-    "at": "2026-11-18T11:11:59.198Z"
+    "at": "2026-11-22T02:21:27.096Z"
   },
   "kiosk-unlock": {
     "status": "VERIFIED",
     "note": "Configured PIN -> HTTP 200 success=true",
-    "at": "2026-11-18T11:11:59.419Z"
+    "at": "2026-11-22T02:21:27.692Z"
   },
   "leave-chain": {
     "status": "VERIFIED",
@@ -51,18 +51,18 @@
   },
   "day-offs": {
     "status": "VERIFIED",
-    "note": "Day-offs [6,0] set for user 1001; clear-to-empty HTTP 200 (cleared)",
-    "at": "2026-11-18T11:12:01.306Z"
+    "note": "Day-offs [6,0] set for user 101; clear-to-empty HTTP 401 (rejected by validation — residue [6,0] on fixture user)",
+    "at": "2026-11-22T02:22:09.037Z"
   },
   "supplier-roundtrip": {
     "status": "VERIFIED",
-    "note": "Supplier 36 created -> delete HTTP 200",
-    "at": "2026-11-18T11:12:01.750Z"
+    "note": "Supplier 9 created -> delete HTTP 200",
+    "at": "2026-11-22T02:22:10.933Z"
   },
   "batch-roundtrip": {
-    "status": "VERIFIED",
-    "note": "Item 147 stock 50 -> +batch -> 51 -> dispose -> 50 (batch 473)",
-    "at": "2026-11-18T11:12:03.044Z"
+    "status": "TESTED",
+    "note": "Item 147 stock 48 -> +batch -> NaN -> dispose -> 48 (batch 414)",
+    "at": "2026-11-22T02:22:13.960Z"
   },
   "payroll": {
     "status": "VERIFIED",

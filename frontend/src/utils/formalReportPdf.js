@@ -2,6 +2,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { STORE_INFO } from "./storeInfo";
 import { getRole, getUserData } from "./auth";
+import { loadBrandLogo } from "./brandAssets";
+import { showError } from "./alert.jsx";
 
 const PINK = [255, 95, 147];
 const DARK = [31, 41, 55];
@@ -40,8 +42,9 @@ const defaultSignatures = (preparedBy, preparedRole, employeeName) => [
   { role: employeeName ? "Received by" : "Approved by", name: employeeName || "", caption: employeeName ? "Employee Acknowledgment" : "Approving Officer" },
 ];
 
-export const exportFormalReportPDF = (config = {}) => {
+const renderFormalReportPdf = (config = {}, brandLogo = null) => {
   const {
+    signoff = true,
     docRef = `RPT-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
     title = "Business Report",
     subtitle = "Formal report",
@@ -78,16 +81,22 @@ export const exportFormalReportPDF = (config = {}) => {
     creator: STORE_INFO.name,
   });
 
-  // Letterhead and document control details.
+  // Letterhead and document control details. The official logo sits left of
+  // the company block at its native square aspect ratio; when it cannot be
+  // loaded the text-only letterhead is used (graceful fallback).
+  if (brandLogo) {
+    doc.addImage(brandLogo, "JPEG", 14, y - 4, 17, 17);
+  }
+  const brandTextX = brandLogo ? 33 : 14;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.setTextColor(...PINK);
-  doc.text(STORE_INFO.name, 14, y);
+  doc.text(STORE_INFO.name, brandTextX, y);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...MUTED);
-  doc.text(STORE_INFO.tagline, 14, y + 5);
-  doc.text(`${STORE_INFO.address.replace(/\n/g, " ")} | ${STORE_INFO.email} | ${STORE_INFO.phone}`, 14, y + 9);
+  doc.text(STORE_INFO.tagline, brandTextX, y + 5);
+  doc.text(`${STORE_INFO.address.replace(/\n/g, " ")} | ${STORE_INFO.email} | ${STORE_INFO.phone}`, brandTextX, y + 9);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(...DARK);
@@ -230,52 +239,58 @@ export const exportFormalReportPDF = (config = {}) => {
   });
   y = doc.lastAutoTable.finalY + 7;
 
-  // Findings and recommendations provide narrative context, not just a list of records.
-  const narrative = [...findings.map((item) => ({ title: "Finding", text: item })), ...recommendations.map((item) => ({ title: "Recommendation", text: item }))];
-  if (narrative.length) {
-    const narrativeSectionNumber = detailSectionNumber === "IV" ? "V" : "IV";
-    y = sectionHeading(doc, narrativeSectionNumber, "Findings & Recommendations", y);
-    narrative.forEach((item, index) => {
-      const lines = doc.splitTextToSize(`${index + 1}. ${item.title}: ${text(item.text)}`, pageWidth - 30);
-      y = pageBreakIfNeeded(doc, y, lines.length * 4.5 + 4);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
+  // Findings, certification, and signatures only render for reports where
+  // formal review and sign-off are meaningful (signoff !== false). Ordinary
+  // list exports end after the detail table — no empty approval fields and
+  // no boilerplate certification is presented on routine data exports.
+  if (signoff) {
+    // Findings and recommendations provide narrative context, not just a list of records.
+    const narrative = [...findings.map((item) => ({ title: "Finding", text: item })), ...recommendations.map((item) => ({ title: "Recommendation", text: item }))];
+    if (narrative.length) {
+      const narrativeSectionNumber = detailSectionNumber === "IV" ? "V" : "IV";
+      y = sectionHeading(doc, narrativeSectionNumber, "Findings & Recommendations", y);
+      narrative.forEach((item, index) => {
+        const lines = doc.splitTextToSize(`${index + 1}. ${item.title}: ${text(item.text)}`, pageWidth - 30);
+        y = pageBreakIfNeeded(doc, y, lines.length * 4.5 + 4);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...DARK);
+        doc.text(lines, 15, y);
+        y += lines.length * 4.5 + 2;
+      });
+    }
+
+    // Certification and signatures.
+    const signatureSectionNumber = narrative.length ? (detailSectionNumber === "IV" ? "VI" : "V") : (detailSectionNumber === "IV" ? "V" : "IV");
+    const signatureHeight = 56;
+    y = pageBreakIfNeeded(doc, y + 2, signatureHeight);
+    y = sectionHeading(doc, signatureSectionNumber, "Certification & Signatures", y);
+    const certLines = doc.splitTextToSize(text(certification), pageWidth - 28);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...DARK);
+    doc.text(certLines, 14, y);
+    y += certLines.length * 4.2 + 17;
+
+    const signatureGap = 7;
+    const signatureWidth = (pageWidth - 28 - signatureGap * 2) / 3;
+    resolvedSignatures.slice(0, 3).forEach((signature, index) => {
+      const x = 14 + index * (signatureWidth + signatureGap);
+      doc.setDrawColor(...MUTED);
+      doc.setLineWidth(0.3);
+      doc.line(x, y, x + signatureWidth, y);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
       doc.setTextColor(...DARK);
-      doc.text(lines, 15, y);
-      y += lines.length * 4.5 + 2;
+      doc.text(text(signature.name, " "), x, y + 4);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.setTextColor(...MUTED);
+      doc.text(text(signature.role), x, y + 8);
+      doc.text(text(signature.caption), x, y + 12);
+      doc.text("Date Signed: __________________", x, y + 17);
     });
   }
-
-  // Certification and signatures.
-  const signatureSectionNumber = narrative.length ? (detailSectionNumber === "IV" ? "VI" : "V") : (detailSectionNumber === "IV" ? "V" : "IV");
-  const signatureHeight = 56;
-  y = pageBreakIfNeeded(doc, y + 2, signatureHeight);
-  y = sectionHeading(doc, signatureSectionNumber, "Certification & Signatures", y);
-  const certLines = doc.splitTextToSize(text(certification), pageWidth - 28);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(...DARK);
-  doc.text(certLines, 14, y);
-  y += certLines.length * 4.2 + 17;
-
-  const signatureGap = 7;
-  const signatureWidth = (pageWidth - 28 - signatureGap * 2) / 3;
-  resolvedSignatures.slice(0, 3).forEach((signature, index) => {
-    const x = 14 + index * (signatureWidth + signatureGap);
-    doc.setDrawColor(...MUTED);
-    doc.setLineWidth(0.3);
-    doc.line(x, y, x + signatureWidth, y);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...DARK);
-    doc.text(text(signature.name, " "), x, y + 4);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(...MUTED);
-    doc.text(text(signature.role), x, y + 8);
-    doc.text(text(signature.caption), x, y + 12);
-    doc.text("Date Signed: __________________", x, y + 17);
-  });
 
   // Confidentiality and page numbering on every page.
   const pageCount = doc.internal.getNumberOfPages();
@@ -294,4 +309,20 @@ export const exportFormalReportPDF = (config = {}) => {
   const safeFilename = text(filename, "formal-report").replace(/[<>:"/\\|?*]+/g, "-");
   doc.save(`${safeFilename}.pdf`);
   return doc;
+};
+
+/**
+ * Public entry point — loads the official logo once (cached) and renders the
+ * report. Falls back to the text-only letterhead when the logo cannot be
+ * fetched. Render/load failures surface an error toast instead of an
+ * unhandled rejection (callers fire-and-forget from click handlers).
+ */
+export const exportFormalReportPDF = async (config = {}) => {
+  try {
+    const brandLogo = await loadBrandLogo();
+    return renderFormalReportPdf(config, brandLogo);
+  } catch {
+    showError("The report could not be generated. Please try again.");
+    return null;
+  }
 };

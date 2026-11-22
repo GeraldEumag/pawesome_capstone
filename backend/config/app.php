@@ -60,12 +60,13 @@ return [
     | Application Timezone
     |--------------------------------------------------------------------------
     |
-    | The business timezone defaults to the Philippines. Deployments may
-    | override it explicitly through APP_TIMEZONE.
+    | Stored datetimes are UTC; the app timezone must stay UTC so Eloquent
+    | hydrates them correctly. Business-local semantics (Asia/Manila) are
+    | handled explicitly through ServiceDurationService::STORE_TIMEZONE.
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'Asia/Manila'),
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

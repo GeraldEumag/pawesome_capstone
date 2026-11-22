@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\LeaveBalance;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -87,7 +88,7 @@ class LeaveController extends Controller
             'approved'         => $records->where('status', 'approved')->count(),
             'rejected'         => $records->where('status', 'rejected')->count(),
             'on_leave_today'   => $records->where('status', 'approved')
-                ->filter(fn ($r) => $r->start_date <= Carbon::today()->toDateString() && $r->end_date >= Carbon::today()->toDateString())
+                ->filter(fn ($r) => $r->start_date <= ServiceDurationService::storeToday() && $r->end_date >= ServiceDurationService::storeToday())
                 ->count(),
         ];
 
@@ -314,8 +315,8 @@ class LeaveController extends Controller
 
     public function calendar(Request $request): JsonResponse
     {
-        $year  = (int) $request->get('year', Carbon::now()->year);
-        $month = (int) $request->get('month', Carbon::now()->month);
+        $year  = (int) $request->get('year', Carbon::now(ServiceDurationService::STORE_TIMEZONE)->year);
+        $month = (int) $request->get('month', Carbon::now(ServiceDurationService::STORE_TIMEZONE)->month);
 
         $records = DB::table('leave_requests')
             ->join('users', 'users.id', '=', 'leave_requests.user_id')

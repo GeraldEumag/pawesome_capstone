@@ -183,28 +183,28 @@ class PayrollYear2026Test extends TestCase
     public function test_kiosk_barcode_punches_flow_into_payroll(): void
     {
         // --- Punch in/out on Mon Jan 5, 2026 via the actual kiosk endpoint ---
-        Carbon::setTestNow(Carbon::parse('2026-01-05 08:00:00'));
+        Carbon::setTestNow(Carbon::parse('2026-01-05 08:00:00', 'Asia/Manila'));
         $this->kioskPunch('PAW-2601')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('punch_type', 'check_in')
             ->assertJsonPath('data.status', 'present');
 
-        Carbon::setTestNow(Carbon::parse('2026-01-05 17:00:00'));
+        Carbon::setTestNow(Carbon::parse('2026-01-05 17:00:00', 'Asia/Manila'));
         $this->kioskPunch('PAW-2601')
             ->assertOk()
             ->assertJsonPath('punch_type', 'check_out')
             ->assertJsonPath('data.total_hours', '8.00');
 
         // --- A late kiosk punch on Tue Jan 6 (45 min past shift start) ---
-        Carbon::setTestNow(Carbon::parse('2026-01-06 08:45:00'));
+        Carbon::setTestNow(Carbon::parse('2026-01-06 08:45:00', 'Asia/Manila'));
         $this->kioskPunch('PAW-2601')
             ->assertOk()
             ->assertJsonPath('punch_type', 'check_in')
             ->assertJsonPath('data.status', 'late')
             ->assertJsonPath('data.is_late', true);
 
-        Carbon::setTestNow(Carbon::parse('2026-01-06 17:00:00'));
+        Carbon::setTestNow(Carbon::parse('2026-01-06 17:00:00', 'Asia/Manila'));
         $this->kioskPunch('PAW-2601')->assertOk()->assertJsonPath('punch_type', 'check_out');
 
         Carbon::setTestNow(); // back to real time — all of January is in the past
@@ -287,9 +287,9 @@ class PayrollYear2026Test extends TestCase
             'base_salary'       => 13000,  // daily 500
         ]);
 
-        Carbon::setTestNow(Carbon::parse('2026-02-02 08:00:00')); // Monday
+        Carbon::setTestNow(Carbon::parse('2026-02-02 08:00:00', 'Asia/Manila')); // Monday
         $this->kioskPunch('PAW-9901')->assertOk()->assertJsonPath('punch_type', 'check_in');
-        Carbon::setTestNow(Carbon::parse('2026-02-02 17:00:00'));
+        Carbon::setTestNow(Carbon::parse('2026-02-02 17:00:00', 'Asia/Manila'));
         $this->kioskPunch('PAW-9901')->assertOk()->assertJsonPath('punch_type', 'check_out');
         Carbon::setTestNow();
 
@@ -474,13 +474,14 @@ class PayrollYear2026Test extends TestCase
             'June cutoffs = monthly base + worked-holiday premium'
         );
 
-        // Regenerating the same period must not create a duplicate.
+        // Regenerating the same period refreshes the drafts in place —
+        // they are recounted as generated — and must not create a duplicate.
         $this->postJson('/api/manager/payroll/generate', [
             'period_start' => '2026-06-01',
             'period_end'   => '2026-06-15',
         ], $this->managerAuth())
             ->assertOk()
-            ->assertJsonPath('summary.generated_count', 0);
+            ->assertJsonPath('summary.generated_count', 2);
 
         $this->assertSame(
             2,

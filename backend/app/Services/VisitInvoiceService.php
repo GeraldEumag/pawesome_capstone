@@ -10,6 +10,7 @@ use App\Models\VisitInvoiceAdjustment;
 use App\Models\VisitInvoiceLine;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 /**
  * The visit invoice is the financial mirror of a veterinary appointment's
@@ -382,7 +383,7 @@ class VisitInvoiceService
 
     private static function nextInvoiceNumber(): string
     {
-        $year = now()->format('Y');
+        $year = now(ServiceDurationService::STORE_TIMEZONE)->format('Y');
         $max = VisitInvoice::where('invoice_number', 'like', "VINV-{$year}-%")
             ->lockForUpdate()
             ->max('invoice_number');

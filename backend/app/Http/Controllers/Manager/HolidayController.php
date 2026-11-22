@@ -9,13 +9,14 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 class HolidayController extends Controller
 {
     /** GET /manager/holidays?year=2026 */
     public function index(Request $request): JsonResponse
     {
-        $year = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
         $holidays = Holiday::where('year', $year)->orderBy('date')->get();
 
         return response()->json(['success' => true, 'data' => $holidays]);
@@ -106,7 +107,7 @@ class HolidayController extends Controller
      */
     public function generateRecurring(Request $request): JsonResponse
     {
-        $year = (int) $request->query('year', now()->year + 1);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year + 1);
 
         $recurring = Holiday::where('is_recurring', true)
             ->where('year', '!=', $year)

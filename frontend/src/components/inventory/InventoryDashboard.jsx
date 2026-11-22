@@ -181,11 +181,11 @@ const InventoryDashboard = () => {
 
   const ROUTE_META = [
     { path: "/inventory", title: "Inventory Dashboard", subtitle: "Monitor stock levels, product movement, and warehouse operations." },
-    { path: "/inventory/products", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
-    { path: "/inventory/stock", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
-    { path: "/inventory/management", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
-    { path: "/inventory/simplified", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
-    { path: "/inventory/legacy-products", title: "Product Management", subtitle: "Manage products, categories, pricing, and stock quantities." },
+    { path: "/inventory/products", title: "Product Management", subtitle: "Manage product identity, categories, brands, pricing, and catalog status." },
+    { path: "/inventory/stock", title: "Stock Management", subtitle: "Receive stock, adjust quantities, and track batches and expiry." },
+    { path: "/inventory/management", title: "Product Management", subtitle: "Manage product identity, categories, brands, pricing, and catalog status." },
+    { path: "/inventory/simplified", title: "Stock Management", subtitle: "Receive stock, adjust quantities, and track batches and expiry." },
+    { path: "/inventory/legacy-products", title: "Product Management", subtitle: "Manage product identity, categories, brands, pricing, and catalog status." },
     { path: "/inventory/history", title: "Inventory History", subtitle: "Review past stock movements, adjustments, and transfers." },
     { path: "/inventory/analytics", title: "Inventory Reports", subtitle: "Analyze stock trends, turnover rates, and demand forecasts." },
     { path: "/inventory/reports", title: "Inventory Reports", subtitle: "Analyze stock trends, turnover rates, and demand forecasts." },

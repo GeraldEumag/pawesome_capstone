@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faWarehouse,
   faBoxes,
+  faBoxOpen,
   faHistory,
   faChartBar,
   faClipboardList,
@@ -17,6 +18,10 @@ import {
   faArrowLeft,
   faBarcode,
   faBuilding,
+  faArrowDown,
+  faArrowUp,
+  faRotateLeft,
+  faClipboardCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { showConfirm } from "../../utils/alert.jsx";
 import { useAuth } from "../../context/AuthContext";
@@ -27,7 +32,13 @@ const NAV_SECTIONS = [
     label: "Manage",
     items: [
       { to: "/inventory", label: "Dashboard", icon: faWarehouse, end: true },
+      { to: "/inventory/products", label: "Product Management", icon: faBoxOpen },
       { to: "/inventory/stock", label: "Stock Management", icon: faBoxes },
+      { to: "/inventory/stock-in", label: "Stock In", icon: faArrowDown },
+      { to: "/inventory/stock-out", label: "Stock Out", icon: faArrowUp },
+      { to: "/inventory/returns", label: "Stock Returns", icon: faRotateLeft },
+      { to: "/inventory/movements", label: "Stock Movements", icon: faClipboardList },
+      { to: "/inventory/approvals", label: "Stock Approvals", icon: faClipboardCheck },
       { to: "/inventory/suppliers", label: "Suppliers", icon: faBuilding },
       { to: "/inventory/history", label: "History", icon: faHistory },
       { to: "/inventory/barcodes", label: "Barcode Generator", icon: faBarcode },

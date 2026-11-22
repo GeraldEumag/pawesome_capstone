@@ -1,10 +1,10 @@
 # Pawesome Full Workflow Playwright E2E Report
 
-Status: **PASSED**
+Status: **FAILED**
 
-Started: 2026-11-18T11:18:01.960Z
-Completed: 2026-11-18T11:20:28.476Z
-Frontend: http://localhost:3000
+Started: 2026-11-22T03:18:24.300Z
+Completed: 2026-11-22T03:19:47.017Z
+Frontend: http://127.0.0.1:3001
 Backend API: http://127.0.0.1:8000/api
 
 ## Workflow Checks
@@ -18,13 +18,8 @@ Backend API: http://127.0.0.1:8000/api
 | Login for veterinary | PASS | vet@example.com |
 | Login for manager | PASS | manager@example.com |
 | Login for admin | PASS | admin@example.com |
-| Customer creates booking/request/order | PASS | service_request #680 |
-| Receptionist approves or schedules | PASS | service_request #680 |
-| Customer uploads payment proof | PASS | service_request #680 |
-| Cashier verifies/rejects payment | PASS | verified service_request #680 |
-| Inventory stock/log check | PASS | inventory item #274 |
-| Veterinary appointment status update | PASS | vet appointment #135 started via /veterinary/consultations/{id}/start (direct scheduled -> completed is rejected by the backend) |
-| Manager/Admin reports visibility | PASS | manager and admin overview reports loaded |
+| Customer creates booking/request/order | PASS | service_request #292 |
+| customer to admin full workflow | FAIL | Error: POST /receptionist/requests/292/approve failed 401: {"message":"Unauthenticated.","success":false} |
 
 ## Evidence Screenshots
 
@@ -38,21 +33,13 @@ Backend API: http://127.0.0.1:8000/api
 | 01-login-manager | `browser-evidence/pawesome-full-workflow/01-login-manager.png` |
 | 01-login-admin | `browser-evidence/pawesome-full-workflow/01-login-admin.png` |
 | 02-customer-created-request | `browser-evidence/pawesome-full-workflow/02-customer-created-request.png` |
-| 03-receptionist-approved-request | `browser-evidence/pawesome-full-workflow/03-receptionist-approved-request.png` |
-| 04-customer-uploaded-payment-proof | `browser-evidence/pawesome-full-workflow/04-customer-uploaded-payment-proof.png` |
-| 05-cashier-verified-payment | `browser-evidence/pawesome-full-workflow/05-cashier-verified-payment.png` |
-| 06-inventory-stock-log-check | `browser-evidence/pawesome-full-workflow/06-inventory-stock-log-check.png` |
-| 07-veterinary-status-updated | `browser-evidence/pawesome-full-workflow/07-veterinary-status-updated.png` |
-| 08-manager-reports-visible | `browser-evidence/pawesome-full-workflow/08-manager-reports-visible.png` |
-| 09-admin-reports-visible | `browser-evidence/pawesome-full-workflow/09-admin-reports-visible.png` |
 
 ## Created Records
 
 ```json
 {
-  "petId": 1445,
-  "serviceRequestId": 680,
-  "vetAppointmentId": 135
+  "petId": 142,
+  "serviceRequestId": 292
 }
 ```
 
@@ -60,8 +47,7 @@ Backend API: http://127.0.0.1:8000/api
 
 | Kind | Status | Detail |
 | --- | --- | --- |
-| aborted | ERR_ABORTED | http://localhost:8000/api/veterinary/appointments |
-| aborted | ERR_ABORTED | http://localhost:8000/api/veterinary/history?status=completed,cancelled&per_page=500 |
+| None detected |  |  |
 
 ## Run Instructions
 

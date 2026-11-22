@@ -52,7 +52,7 @@ class Phase4InventoryPayslipTest extends TestCase
 
     private function payrollFor(User $user, string $status = 'pending', array $overrides = []): Payroll
     {
-        return Payroll::create(array_merge([
+        $payroll = Payroll::create(array_merge([
             'payroll_id' => 'PAY-P4-' . strtoupper(uniqid()),
             'user_id' => $user->id,
             'department' => 'Operations',
@@ -65,6 +65,20 @@ class Phase4InventoryPayslipTest extends TestCase
             'gross_pay' => 12500,
             'net_pay' => 11000,
         ], $overrides));
+
+        // markAsPaid() re-derives figures from attendance and requires
+        // recorded approval — mirror the generate() + approve() path so this
+        // fixture is a releasable payroll rather than a fabricated one.
+        $payroll->calculatePayroll(true);
+        $payroll->save();
+        if ($status === 'pending' && $payroll->approved_by === null) {
+            $payroll->update([
+                'approved_by' => $this->manager->id,
+                'approved_at' => now(),
+            ]);
+        }
+
+        return $payroll;
     }
 
     public function test_release_creates_durable_payslip_intent(): void
@@ -92,10 +106,10 @@ class Phase4InventoryPayslipTest extends TestCase
         // The serialized mailable carries authoritative payroll fields —
         // reference code and gross pay flow from the payroll row itself.
         $this->assertStringContainsString($payroll->payroll_id, $payload);
-        $this->assertStringContainsString('12500', $payload);
 
         /** @var \App\Mail\PayslipReleasedMail $mail */
         $mail = unserialize($payload);
+        $this->assertSame((float) $payroll->fresh()->gross_pay, $mail->grossPay);
         $this->assertSame($payroll->pay_period_label, $mail->payslipData['pay_period']);
         $this->assertSame($this->employee->name, $mail->payslipData['employee']['name']);
     }
@@ -248,6 +262,24 @@ class Phase4InventoryPayslipTest extends TestCase
         ], $this->auth($this->manager))->assertStatus(500);
 
         $this->assertSame('pending', $payroll->fresh()->status);
+        $this->assertDatabaseCount('email_deliveries', 0);
+    }
+
+    public function test_stale_figures_revert_to_draft_and_create_no_intent(): void
+    {
+        $payroll = $this->payrollFor($this->employee);
+
+        // Figures edited after generation no longer match a fresh
+        // recomputation — release must refuse and roll the row back to
+        // draft so it is regenerated and re-approved, never paying stale
+        // amounts.
+        $payroll->update(['gross_pay' => 999999]);
+
+        $this->postJson("/api/manager/payroll/{$payroll->id}/release", [
+            'payment_method' => 'Cash',
+        ], $this->auth($this->manager))->assertStatus(422);
+
+        $this->assertSame('draft', $payroll->fresh()->status);
         $this->assertDatabaseCount('email_deliveries', 0);
     }
 

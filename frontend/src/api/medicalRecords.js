@@ -226,5 +226,7 @@ export function exportMedicalRecordsToCSV(records) {
 
   exportToCSV(rows, columns, `medical-records-${new Date().toISOString().split('T')[0]}`, {
     title: 'Medical Records Report',
+    csvStyle: 'data',
+    signoff: false,
   });
 }

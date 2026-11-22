@@ -570,14 +570,15 @@ const ManagerAttendance = () => {
 
     setShowExportDropdown(false);
 
+    const exportMetadata = { signoff: false };
     if (format === "csv") {
-      exportToCSV(exportData, exportColumns, filename);
+      exportToCSV(exportData, exportColumns, filename, exportMetadata);
       showToast("Attendance CSV exported successfully.", "success");
     } else if (format === "excel") {
-      exportToExcel(exportData, exportColumns, filename);
+      exportToExcel(exportData, exportColumns, filename, exportMetadata);
       showToast("Attendance Excel exported successfully.", "success");
     } else if (format === "pdf") {
-      exportToPDF(exportData, exportColumns, "Attendance Report", filename);
+      exportToPDF(exportData, exportColumns, "Attendance Report", filename, exportMetadata);
       showToast("Attendance PDF exported successfully.", "success");
     }
   };

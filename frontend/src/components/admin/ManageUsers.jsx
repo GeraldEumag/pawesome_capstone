@@ -414,12 +414,13 @@ const ManageUsers = () => {
 
       const filename = `manage-users-${new Date().toISOString().slice(0, 10)}`;
 
+      const exportMetadata = { signoff: false };
       if (format === "csv") {
-        exportToCSV(rows, exportColumns, filename);
+        exportToCSV(rows, exportColumns, filename, exportMetadata);
       } else if (format === "excel") {
-        exportToExcel(rows, exportColumns, filename);
+        exportToExcel(rows, exportColumns, filename, exportMetadata);
       } else if (format === "pdf") {
-        exportToPDF(rows, exportColumns, "Manage Users", filename);
+        exportToPDF(rows, exportColumns, "Manage Users", filename, exportMetadata);
       }
 
       showSuccess("User list exported successfully.");

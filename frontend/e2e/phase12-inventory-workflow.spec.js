@@ -129,11 +129,13 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
   const barcode = `P12BC${unique}`;
   const auditMonth = monthNow();
 
-  const view = await openAs(browser, inventory, "/inventory/stock", network, consoleLog);
+  // Product creation is a real browser submission on Product Management.
+  // The catalog record is created with zero stock; the first physical batch
+  // arrives through the Stock Management receive action below.
+  const view = await openAs(browser, inventory, "/inventory/products", network, consoleLog);
   const page = view.page;
   screenshots.push(await shot(page, "01-inventory-overview"));
 
-  // Product creation and its initial batch are real browser submissions.
   await page.getByRole("button", { name: /Add New Item/i }).click();
   const productModal = page.getByRole("dialog", { name: /Add New Product/i });
   await productModal.locator('input[name="name"]').fill(productName);
@@ -142,11 +144,9 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
   await productModal.locator('select[name="category"]').selectOption("Accessories");
   await productModal.locator('input[name="brand"]').fill("Phase12 Audit");
   await productModal.getByRole("button", { name: /Next/i }).click();
-  await productModal.locator('input[name="quantity"]').fill("12");
   await productModal.locator('input[name="reorder_level"]').fill("1");
   await productModal.locator('input[name="price"]').fill("25");
   await productModal.locator('input[name="cost"]').fill("10");
-  await productModal.locator('input[name="batch_quantity"]').fill("12");
   await productModal.getByRole("button", { name: /Next/i }).click();
   screenshots.push(await shot(page, "02-product-review"));
   await Promise.all([
@@ -157,20 +157,29 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
   await page.getByPlaceholder(/Search by name, SKU, barcode, brand/i).fill(sku);
   const productRow = page.locator(".ui-table tbody tr", { hasText: productName }).first();
   await expect(productRow).toContainText(sku);
-  await expect(productRow.locator(".stock-value")).toHaveText("12");
+  await expect(productRow.locator(".stock-value")).toHaveText("0");
   screenshots.push(await shot(page, "03-product-created"));
 
   const created = await findInventoryItem(request, inventory, sku);
   const itemId = created.id;
 
-  // Expand the row and verify the UI-created initial batch.
-  await openInventoryRowAction(page, productName, "View Batches");
-  const batchPanel = page.locator(".batch-details", { hasText: `Batches for ${productName}` });
-  await expect(batchPanel).toContainText("Batch-001", { timeout: 30000 });
-  await expect(batchPanel).toContainText("12");
+  // Stock Management receives the first batch — Batch-001 is created by the
+  // dedicated receiving operation, not by product creation.
+  await page.goto("/inventory/stock");
+  await page.getByPlaceholder(/Search by name, SKU, barcode, brand/i).fill(sku);
+
+  await openInventoryRowAction(page, productName, "Adjust Stock");
+  const receiveModal = page.getByRole("dialog", { name: /Adjust Stock/i });
+  await receiveModal.locator(".quantity-input").fill("12");
+  await receiveModal.locator(".reason-select").selectOption("New stock received");
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/inventory/items/${itemId}/batches` && r.status() === 200),
+    receiveModal.locator("button.btn-confirm").click(),
+  ]);
+  await expect(page.locator(".ui-table tbody tr", { hasText: productName }).first().locator(".stock-value")).toHaveText("12");
   screenshots.push(await shot(page, "04-initial-batch"));
 
-  // Authorized stock-in through the native Adjust Stock modal creates Batch-002.
+  // A second authorized stock-in through the native Adjust Stock modal creates Batch-002.
   await openInventoryRowAction(page, productName, "Adjust Stock");
   const adjustModal = page.getByRole("dialog", { name: /Adjust Stock/i });
   await adjustModal.locator(".quantity-input").fill("5");
@@ -181,6 +190,13 @@ test("Phase 12.3 native inventory lifecycle: product, batch receive, stock-out, 
   ]);
   await expect(page.locator(".ui-table tbody tr", { hasText: productName }).first().locator(".stock-value")).toHaveText("17");
   screenshots.push(await shot(page, "05-stock-in-batch"));
+
+  // Expand the row and verify both receive-created batches.
+  await openInventoryRowAction(page, productName, "View Batches");
+  const batchPanel = page.locator(".batch-details", { hasText: `Batches for ${productName}` });
+  await expect(batchPanel).toContainText("Batch-001", { timeout: 30000 });
+  await expect(batchPanel).toContainText("Batch-002");
+  await expect(batchPanel).toContainText("12");
 
   // Authorized stock-out through the same UI path deducts FIFO batch stock.
   await openInventoryRowAction(page, productName, "Adjust Stock");

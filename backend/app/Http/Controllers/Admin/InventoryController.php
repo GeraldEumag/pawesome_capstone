@@ -444,7 +444,7 @@ class InventoryController extends Controller
      */
     public function expiryAlerts()
     {
-        $today = now()->toDateString();
+        $today = ServiceDurationService::storeToday();
         $soon = now()->addDays(30)->toDateString();
 
         $alerts = DB::table('inventory_batches')
@@ -817,7 +817,7 @@ class InventoryController extends Controller
 
     public function getMonthlyAuditItems(Request $request)
     {
-        $month = $request->query('month', now()->format('Y-m'));
+        $month = $request->query('month', now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m'));
 
         $items = InventoryItem::query()
             ->orderBy('name')

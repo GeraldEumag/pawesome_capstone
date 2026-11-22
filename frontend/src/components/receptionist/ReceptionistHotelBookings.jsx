@@ -465,9 +465,13 @@ const ReceptionistHotelBookings = () => {
     }));
 
     const filename = "hotel-boarding";
-    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
-    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Hotel Boarding Records", filename);
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename, { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename, { signoff: false });
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Hotel Boarding Records", filename, {
+      signoff: false,
+      periodLabel:
+        dateRange?.from && dateRange?.to ? `${dateRange.from} to ${dateRange.to}` : "All time",
+    });
 
     showMessage("success", "Hotel boarding records exported.");
   };

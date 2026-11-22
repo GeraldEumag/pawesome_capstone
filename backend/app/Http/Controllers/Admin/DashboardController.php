@@ -12,12 +12,13 @@ use App\Services\RevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 class DashboardController extends Controller
 {
     public function overview()
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $revenue = new RevenueService();
 
         return response()->json([
@@ -93,7 +94,7 @@ class DashboardController extends Controller
             'appointments_by_status' => Appointment::selectRaw('status, count(*) as count')
                 ->groupBy('status')
                 ->get(),
-            'monthly_revenue' => collect((new RevenueService())->monthly(Carbon::now()->year))
+            'monthly_revenue' => collect((new RevenueService())->monthly(Carbon::now(ServiceDurationService::STORE_TIMEZONE)->year))
                 ->map(fn ($total, $month) => (object) ['month' => $month, 'total' => $total])
                 ->values(),
         ]);

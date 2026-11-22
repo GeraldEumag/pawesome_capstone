@@ -768,9 +768,9 @@ const ReceptionistApprovals = () => {
     }));
 
     const filename = "receptionist-approvals";
-    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
-    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Receptionist Approvals", filename);
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename, { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename, { signoff: false });
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Receptionist Approvals", filename, { signoff: false });
   };
 
   const clearFilters = () => {

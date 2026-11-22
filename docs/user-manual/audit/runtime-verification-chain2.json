@@ -1,13 +1,13 @@
 {
   "walk-in-create": {
     "status": "VERIFIED",
-    "note": "Walk-in SR-184 (prior run)",
-    "at": "2026-11-18T11:11:41.943Z"
+    "note": "Walk-in SR-272 (prior run)",
+    "at": "2026-11-22T02:20:07.468Z"
   },
   "walk-in-counter-cash": {
     "status": "VERIFIED",
-    "note": "SR-184 already settled as cash; receipt=on file (DB: service_requests.receipt_number)",
-    "at": "2026-11-18T11:11:42.225Z"
+    "note": "SR-272 already settled as cash; receipt=on file (DB: service_requests.receipt_number)",
+    "at": "2026-11-22T02:20:07.864Z"
   },
   "pos-sale": {
     "status": "VERIFIED",
@@ -21,8 +21,8 @@
   },
   "proof-rejection": {
     "status": "VERIFIED",
-    "note": "SR-52 proof already rejected by cashier (prior run); payment_status=rejected",
-    "at": "2026-11-18T11:11:43.106Z"
+    "note": "SR-273 proof already rejected by cashier (prior run); payment_status=rejected",
+    "at": "2026-11-22T02:20:19.276Z"
   },
   "consult-start": {
     "status": "VERIFIED",

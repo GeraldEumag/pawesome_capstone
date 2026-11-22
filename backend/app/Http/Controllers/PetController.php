@@ -275,7 +275,7 @@ class PetController extends Controller
         $groomingServiceRequests = $pet->groomingAppointments()
             ->whereIn('status', ['pending', 'pending_review', 'approved', 'scheduled'])
             ->where(function ($query) {
-                $today = now()->toDateString();
+                $today = ServiceDurationService::storeToday();
                 $query->whereDate('request_date', '>=', $today)
                       ->orWhereDate('preferred_date', '>=', $today);
             })

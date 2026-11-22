@@ -12,6 +12,7 @@ use App\Models\Appointment;
 use App\Models\MedicalRecordAddendum;
 use App\Models\ActivityLog;
 use App\Services\ClinicalAccessLogger;
+use App\Services\ServiceDurationService;
 use App\Services\VeterinaryInventoryService;
 use App\Support\VeterinaryStatus;
 use Illuminate\Http\Request;
@@ -877,7 +878,7 @@ class MedicalRecordController extends Controller
             'quantity_unit' => $data['quantity_unit'] ?? 'unit',
             'refills_allowed' => $data['refills_allowed'] ?? 0,
             'refills_remaining' => $data['refills_allowed'] ?? 0,
-            'start_date' => $data['start_date'] ?? now()->toDateString(),
+            'start_date' => $data['start_date'] ?? ServiceDurationService::storeToday(),
             'end_date' => $data['end_date'] ?? null,
             'side_effects_notes' => $data['side_effects_notes'] ?? null,
         ]);

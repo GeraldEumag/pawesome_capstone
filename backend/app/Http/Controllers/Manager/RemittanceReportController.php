@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 /**
  * Government remittance reports for SSS, PhilHealth, and Pag-IBIG.
@@ -22,7 +23,7 @@ class RemittanceReportController extends Controller
             'type'   => 'sometimes|in:sss,philhealth,pagibig',
         ]);
 
-        $period = $validated['period'] ?? now()->format('Y-m');
+        $period = $validated['period'] ?? now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m');
         $type   = $validated['type'] ?? 'sss';
 
         [$year, $month] = explode('-', $period);

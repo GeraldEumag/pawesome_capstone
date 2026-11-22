@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, API_URL } from "./client";
 
 /**
  * Builds a query string from filter parameters.
@@ -293,34 +293,6 @@ export const inventoryApi = {
 
   /**
    * Adds stock to an existing item (50 + 25 = 75).
-   * Adds the provided amount to the current stock quantity.
-   * @async
-   * @param {string|number} id - Inventory item ID
-   * @param {number} quantity - Amount to add
-   * @param {string} [reason] - Reason for adding stock
-   * @returns {Promise<Object>} Updated inventory item
-   * @throws {Error} When item not found or request fails
-   */
-  addStock: async (id, quantity, reason = "Stock restock") => {
-    validateId(id, "Item ID");
-    if (typeof quantity !== "number" || quantity <= 0) {
-      throw new Error("Quantity must be a positive number");
-    }
-    try {
-      return await apiRequest(`/inventory/items/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          stock: quantity,
-          add_stock: true, // This tells backend to ADD, not replace
-          reason: reason,
-        }),
-      });
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  /**
    * Archives an inventory item (replaces delete).
    * @async
    * @param {string|number} id - Inventory item ID
@@ -878,7 +850,218 @@ export const inventoryApi = {
       throw error;
     }
   },
+
+  // ========================
+  // Stock Movement & Control
+  // ========================
+
+  /**
+   * Quick item selector search — matches name, SKU, barcode, brand and
+   * generic name. Returns at most 20 compact item rows.
+   */
+  searchItems: async (query = "") => {
+    try {
+      const queryString = buildQueryString(query ? { q: query } : {});
+      return await apiRequest(`/inventory/items/search${queryString}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Submit a multi-item Stock In transaction.
+   * @param {Object} payload - { transaction_type, description?, supplier?, reference?, items: [{ inventory_item_id, quantity, batch_no?, received_date?, manufacturing_date?, expiration_date?, supplier?, unit_cost? }] }
+   */
+  stockIn: async (payload, options = {}) => {
+    validateData(payload, "stock in");
+    try {
+      return await apiRequest("/inventory/stock-in", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Submit a multi-item Stock Out transaction. Sensitive reasons return
+   * { queued: true, request } — stock is untouched until approval.
+   */
+  stockOut: async (payload, options = {}) => {
+    validateData(payload, "stock out");
+    try {
+      return await apiRequest("/inventory/stock-out", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Stock movement ledger with filters (movement_type, reason_code,
+   * transaction_no, item_id, performed_by, reference, startDate, endDate).
+   */
+  getMovements: async (params = {}) => {
+    try {
+      const queryString = buildQueryInput(params);
+      return await apiRequest(`/inventory/movements${queryString}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getMovement: async (id) => {
+    validateId(id, "Movement ID");
+    try {
+      return await apiRequest(`/inventory/movements/${id}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Reverse a reversible stock movement (linked stock-in/out).
+   * @param {Object} payload - { quantity, reason }
+   */
+  reverseMovement: async (id, payload, options = {}) => {
+    validateId(id, "Movement ID");
+    validateData(payload, "reverse movement");
+    try {
+      return await apiRequest(`/inventory/movements/${id}/reverse`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // ---- Stock-out approval queue ----
+
+  getStockRequests: async (params = {}) => {
+    try {
+      const queryString = buildQueryInput(params);
+      return await apiRequest(`/inventory/stock-requests${queryString}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getStockRequest: async (id) => {
+    validateId(id, "Request ID");
+    try {
+      return await apiRequest(`/inventory/stock-requests/${id}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /** Manager/admin only — executes the deduction exactly once. */
+  approveStockRequest: async (id, remarks = "", options = {}) => {
+    validateId(id, "Request ID");
+    try {
+      return await apiRequest(`/manager/inventory/stock-requests/${id}/approve`, {
+        method: "POST",
+        body: JSON.stringify({ remarks }),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /** Manager/admin only — remarks are required. */
+  rejectStockRequest: async (id, remarks, options = {}) => {
+    validateId(id, "Request ID");
+    try {
+      return await apiRequest(`/manager/inventory/stock-requests/${id}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ remarks }),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // ---- Customer product returns ----
+
+  getReturns: async (params = {}) => {
+    try {
+      const queryString = buildQueryInput(params);
+      return await apiRequest(`/inventory/returns${queryString}`);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  createReturn: async (payload, options = {}) => {
+    validateData(payload, "create return");
+    try {
+      return await apiRequest("/inventory/returns", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Inspect and disposition a return.
+   * @param {Object} payload - { disposition: 'restock'|'quarantine'|'damaged'|'dispose', inspection_notes? }
+   */
+  submitReturnDisposition: async (id, payload, options = {}) => {
+    validateId(id, "Return ID");
+    validateData(payload, "return disposition");
+    try {
+      return await apiRequest(`/inventory/returns/${id}/disposition`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // ---- Evidence photos (private-disk upload + authenticated view) ----
+
+  /**
+   * Upload a damage/expiry/incident/inspection photo to the private disk.
+   * Returns { path, url } — attach `path` to a stock-out or return payload.
+   */
+  uploadEvidence: async (file, options = {}) => {
+    validateData(file, "evidence photo");
+    const formData = new FormData();
+    formData.append("photo", file);
+    try {
+      return await apiRequest("/inventory/evidence", {
+        method: "POST",
+        body: formData,
+        headers: options.headers || {},
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
 };
+
+/**
+ * Stored `photo` path → authenticated evidence endpoint URL.
+ * Returns null for legacy/manual references (non-uploaded values).
+ */
+export const inventoryEvidenceUrl = (photo) =>
+  photo && String(photo).startsWith("inventory-evidence/")
+    ? `${API_URL}/inventory/evidence/${String(photo).split("/").pop()}`
+    : null;
 
 export default inventoryApi;
 

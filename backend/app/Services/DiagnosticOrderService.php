@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\DiagnosticOrder;
 use App\Models\DiagnosticResult;
 use App\Models\ActivityLog;
+use App\Services\ServiceDurationService;
 use App\Support\VeterinaryStatus;
 use Illuminate\Support\Facades\DB;
 
@@ -196,7 +197,7 @@ class DiagnosticOrderService
 
     private static function nextCode(): string
     {
-        $year = now()->format('Y');
+        $year = now(ServiceDurationService::STORE_TIMEZONE)->format('Y');
         $max = DiagnosticOrder::where('code', 'like', "DX-{$year}-%")
             ->lockForUpdate()
             ->max('code');

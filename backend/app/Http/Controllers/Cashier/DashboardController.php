@@ -9,6 +9,7 @@ use App\Models\ServiceBillingPaymentRequest;
 use App\Models\InventoryItem;
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use App\Support\ReceiptBreakdown;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class DashboardController extends Controller
 {
     private function overviewData(): array
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $user = Auth::user();
 
         $lowStockItems = InventoryItem::whereColumn('stock', '<=', 'threshold')
@@ -323,7 +324,7 @@ class DashboardController extends Controller
         if ($dateFilter && $dateFilter !== 'all') {
             $now = now();
             $allTransactions = $allTransactions->filter(function ($t) use ($dateFilter, $now) {
-                $date = \Carbon\Carbon::parse($t['date'] ?? null);
+                $date = \Carbon\Carbon::parse($t['date'] ?? null, \App\Services\ServiceDurationService::STORE_TIMEZONE);
                 if (!$date) return false;
                 if ($dateFilter === 'today')  return $date->isToday();
                 if ($dateFilter === 'week')   return $date->gte($now->copy()->subDays(7));
@@ -370,7 +371,7 @@ class DashboardController extends Controller
         $revenueRows = $allTransactions->filter(
             fn ($t) => !in_array(strtolower((string) ($t['status'] ?? '')), ['cancelled', 'voided', 'refunded'], true)
         );
-        $todayStr = now()->toDateString();
+        $todayStr = ServiceDurationService::storeToday();
         $todayRows = $revenueRows->filter(function ($t) use ($todayStr) {
             $date = \Carbon\Carbon::parse($t['date'] ?? null);
             return $date && $date->toDateString() === $todayStr;

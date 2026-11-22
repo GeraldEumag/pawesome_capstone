@@ -515,7 +515,7 @@ const CustomerReports = () => {
   };
 
   const handleExportCSV = () => {
-    exportToCSV(filteredBookings, bookingExportColumns, "customer-bookings-report");
+    exportToCSV(filteredBookings, bookingExportColumns, "customer-bookings-report", { csvStyle: "data", signoff: false });
   };
 
   const handleExportPDF = () => {
@@ -523,12 +523,13 @@ const CustomerReports = () => {
       filteredBookings,
       bookingExportColumns,
       "Customer Bookings Report",
-      "customer-bookings-report"
+      "customer-bookings-report",
+      { signoff: false, periodLabel: startDate && endDate ? `${startDate} to ${endDate}` : startDate ? `From ${startDate}` : endDate ? `Through ${endDate}` : "All time" }
     );
   };
 
   const handleExportExcel = () => {
-    exportToExcel(filteredBookings, bookingExportColumns, "customer-bookings-report");
+    exportToExcel(filteredBookings, bookingExportColumns, "customer-bookings-report", { signoff: false });
   };
 
   return (

@@ -393,9 +393,9 @@ const ReceptionistDashboard = () => {
     }
 
     const filename = "receptionist-requests";
-    if (format === "csv") exportToCSV(sortedRequests, exportColumns, filename);
-    else if (format === "excel") exportToExcel(sortedRequests, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(sortedRequests, exportColumns, "Receptionist Requests", filename);
+    if (format === "csv") exportToCSV(sortedRequests, exportColumns, filename, { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(sortedRequests, exportColumns, filename, { signoff: false });
+    else if (format === "pdf") exportToPDF(sortedRequests, exportColumns, "Receptionist Requests", filename, { signoff: false });
 
     notify("success", "Receptionist requests exported.");
   };

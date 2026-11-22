@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Payroll\PayrollComputationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use App\Services\ServiceDurationService;
 
 /**
  * Accrue 13th month pay for all active staff for a given year+month.
@@ -23,8 +24,8 @@ class AccrueThirteenthMonth extends Command
 
     public function handle(): int
     {
-        $year  = (int) ($this->argument('year')  ?? now()->year);
-        $month = (int) ($this->argument('month') ?? now()->month);
+        $year  = (int) ($this->argument('year')  ?? now(ServiceDurationService::STORE_TIMEZONE)->year);
+        $month = (int) ($this->argument('month') ?? now(ServiceDurationService::STORE_TIMEZONE)->month);
 
         if ($month < 1 || $month > 12) {
             $this->error("Invalid month: {$month}");

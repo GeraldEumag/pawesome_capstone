@@ -126,7 +126,7 @@ class LoginLogController extends Controller
                 ->count(),
             'logins_today' => $base()->where('action', 'login')
                 ->where('status', 'success')
-                ->whereDate('created_at', today())
+                ->whereDate('created_at', \App\Services\ServiceDurationService::storeToday())
                 ->count(),
             'daily_logins' => $base()->where('created_at', '>=', $since)
                 ->where('action', 'login')

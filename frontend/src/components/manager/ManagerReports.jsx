@@ -758,13 +758,20 @@ const ManagerReports = ({ initialTab }) => {
     const filename = `manager-${activeTab}-report`;
     const title = getTabTitle(activeTab);
 
+    // Formal sign-off stays on the payroll tab; operational list tabs export
+    // without certification/signature sections.
+    const exportMetadata = {
+      periodLabel: `${startDate || "start"} to ${endDate || "today"}`,
+      signoff: activeTab === "payroll",
+    };
+
     try {
       if (type === "csv") {
-        exportToCSV(dataset, columns, filename);
+        exportToCSV(dataset, columns, filename, exportMetadata);
       } else if (type === "pdf") {
-        exportToPDF(dataset, columns, title, filename);
+        exportToPDF(dataset, columns, title, filename, exportMetadata);
       } else if (type === "excel") {
-        exportToExcel(dataset, columns, filename);
+        exportToExcel(dataset, columns, filename, exportMetadata);
       }
       showToast("success", `${title} exported as ${type.toUpperCase()} successfully.`);
     } catch (err) {

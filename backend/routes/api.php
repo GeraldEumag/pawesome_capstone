@@ -24,6 +24,7 @@ use App\Http\Controllers\Cashier\DashboardController as CashierDashboardControll
 use App\Http\Controllers\Cashier\ReceiptController as CashierReceiptController;
 use App\Http\Controllers\Cashier\POSController;
 use App\Http\Controllers\Inventory\DashboardController as InventoryDashboardController;
+use App\Http\Controllers\Inventory\StockMovementController;
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
 use App\Http\Controllers\Manager\ReceiptSettingsController as ManagerReceiptSettingsController;
 use App\Http\Controllers\Receptionist\DashboardController as ReceptionistDashboardController;
@@ -637,6 +638,18 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     // Items collection routes
     Route::get('items', [InventoryDashboardController::class, 'items']);
     Route::get('items/archived', [InventoryController::class, 'archived']);
+    Route::get('items/search', [StockMovementController::class, 'searchItems']); // Quick item selector (before items/{id})
+
+    // Stock Movement & Control — dedicated Stock In / Stock Out / Returns / Reversals
+    Route::post('stock-in', [StockMovementController::class, 'stockIn'])->middleware('idempotency');
+    Route::post('stock-out', [StockMovementController::class, 'stockOut'])->middleware('idempotency');
+    Route::get('movements', [StockMovementController::class, 'movements']);
+    Route::get('movements/{id}', [StockMovementController::class, 'showMovement']);
+    Route::get('returns', [StockMovementController::class, 'returns']);
+    Route::post('returns', [StockMovementController::class, 'storeReturn'])->middleware('idempotency');
+    Route::post('returns/{id}/disposition', [StockMovementController::class, 'dispositionReturn'])->middleware('idempotency');
+    Route::post('evidence', [StockMovementController::class, 'uploadEvidence'])->middleware('idempotency');
+    Route::get('evidence/{filename}', [StockMovementController::class, 'viewEvidence']);
     Route::post('items', [InventoryDashboardController::class, 'storeItem'])->middleware('idempotency');
     Route::post('monthly-audit', [InventoryDashboardController::class, 'saveMonthlyAudit'])->middleware('idempotency');
     
@@ -661,6 +674,16 @@ Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory'])->prefix(
     Route::get('suppliers/{id}', [SupplierController::class, 'show']);
     Route::put('suppliers/{id}', [SupplierController::class, 'update']);
     Route::delete('suppliers/{id}', [SupplierController::class, 'destroy']);
+});
+
+// Stock-out approval queue — read access for requesters (inventory) and
+// reviewers (manager/admin). Approve/reject lives in the manager group below.
+Route::middleware(['auth.api', 'throttle:api', 'role:admin,inventory,manager'])->prefix('inventory')->group(function () {
+    Route::get('stock-requests', [StockMovementController::class, 'stockRequests']);
+    Route::get('stock-requests/{id}', [StockMovementController::class, 'showStockRequest']);
+    // Reversal: inventory may reverse ordinary movements; movements that came
+    // from an approved request are gated to manager/admin inside the service.
+    Route::post('movements/{id}/reverse', [StockMovementController::class, 'reverseMovement'])->middleware('idempotency');
 });
 
 Route::middleware(['auth.api', 'throttle:api'])->prefix('manager')->group(function () {
@@ -866,6 +889,9 @@ Route::middleware(['auth.api', 'throttle:api', 'role:manager,admin'])->prefix('m
     Route::get('inventory-audits/pending', [\App\Http\Controllers\Inventory\DashboardController::class, 'pendingAuditApprovals']);
     Route::post('inventory-audits/{id}/approve', [\App\Http\Controllers\Inventory\DashboardController::class, 'approveAudit']);
     Route::post('inventory-audits/{id}/reject', [\App\Http\Controllers\Inventory\DashboardController::class, 'rejectAudit']);
+    // Sensitive stock-out approval queue — same manager/admin gate as audit variances
+    Route::post('inventory/stock-requests/{id}/approve', [StockMovementController::class, 'approveStockRequest'])->middleware('idempotency');
+    Route::post('inventory/stock-requests/{id}/reject', [StockMovementController::class, 'rejectStockRequest'])->middleware('idempotency');
     // Manager override release (financial-clearance bypass, logged)
     Route::post('medical-confinements/{id}/release', [MedicalConfinementController::class, 'release']);
     // Vaccine lot recall oversight (Phase E)

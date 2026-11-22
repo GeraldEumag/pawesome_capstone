@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { formatCurrency } from "../../utils/currency";
-import { formatDateOnly, parseDateOnly } from "../../utils/date";
-import DatePickerInput from "../shared/DatePickerInput";
 import Modal from "../shared/Modal";
 import QrScanner from "../shared/QrScanner";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,7 +14,6 @@ import {
   faChevronRight,
   faEdit,
   faCloudArrowUp,
-  faImage,
   faCamera,
 } from "@fortawesome/free-solid-svg-icons";
 import "./AddProductModal.css";
@@ -37,7 +34,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     generic_name: "",
     supplier: "",
     supplier_id: null,
-    quantity: "",
     reorder_level: "0",
     price: "",
     cost: "",
@@ -47,16 +43,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     photoFile: null,
     requires_expiry_tracking: false,
     issue_method: "FIFO",
-    // Batch fields
-    batch_no: "",
-    batch_quantity: "",
-    manufacturing_date: "",
-    expiration_date: "",
-    batch_supplier: "",
-    batch_unit_cost: "",
-    received_date: formatDateOnly(new Date()),
-    batch_proof: null,
-    batch_proof_preview: null,
   });
 
   const [errors, setErrors] = useState({});
@@ -81,7 +67,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         generic_name: editItem.generic_name || "",
         supplier: editItem.supplier || "",
         supplier_id: editItem.supplier_id || null,
-        quantity: editItem.quantity?.toString() || "",
         reorder_level: editItem.reorder_level?.toString() || "0",
         price: editItem.price?.toString() || "",
         cost: editItem.cost?.toString() || "",
@@ -103,7 +88,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         generic_name: "",
         supplier: "",
         supplier_id: null,
-        quantity: "",
         reorder_level: "0",
         price: "",
         cost: "",
@@ -113,15 +97,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         photoFile: null,
         requires_expiry_tracking: false,
         issue_method: "FIFO",
-        batch_no: "",
-        batch_quantity: "",
-        manufacturing_date: "",
-        expiration_date: "",
-        batch_supplier: "",
-        batch_unit_cost: "",
-        received_date: formatDateOnly(new Date()),
-        batch_proof: null,
-        batch_proof_preview: null,
       });
       setPhotoPreview(null);
     }
@@ -220,22 +195,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     setPhotoPreview(null);
   };
 
-  const handleBatchProofChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, batch_proof: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, batch_proof_preview: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveBatchProof = () => {
-    setFormData((prev) => ({ ...prev, batch_proof: null, batch_proof_preview: null }));
-  };
-
   // Auto-set issue_method and requires_expiry_tracking when category changes
   const handleCategoryChange = (e) => {
     const category = e.target.value;
@@ -261,17 +220,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       if (!formData.price || parseFloat(formData.price) <= 0) {
         newErrors.price = "Valid price is required";
       }
-      if (!editItem) {
-        if (!formData.quantity || parseInt(formData.quantity) < 0) {
-          newErrors.quantity = "Valid quantity is required";
-        }
-        if (!formData.batch_quantity || parseInt(formData.batch_quantity) <= 0) {
-          newErrors.batch_quantity = "Valid batch quantity is required";
-        }
-        if (formData.requires_expiry_tracking && !formData.expiration_date) {
-          newErrors.expiration_date = "Expiration date is required for expiry-tracked items";
-        }
-      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -292,11 +240,8 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     if (!validateStep(currentStep)) return;
 
     setLoading(true);
-    const stock = parseInt(formData.quantity) || 0;
     const data = {
       ...formData,
-      quantity: stock,
-      stock: stock,
       reorder_level: parseInt(formData.reorder_level) || 0,
       price: parseFloat(formData.price),
       cost: formData.cost ? parseFloat(formData.cost) : null,
@@ -304,32 +249,15 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       requires_expiry_tracking: formData.requires_expiry_tracking ? 1 : 0,
     };
     delete data.photoFile;
-    delete data.batch_proof;
-    delete data.batch_proof_preview;
     if (formData.photoFile instanceof File) {
       data.photo = formData.photoFile;
     }
 
-    if (editItem) {
-      delete data.stock;
-      delete data.quantity;
-    }
-
-    // Build batchData for new items
+    // Product registration creates a catalog record only — stock arrives
+    // later through the dedicated Stock Management receiving action, which
+    // records the opening batch and movement log.
     if (!editItem) {
-      data.batchData = {
-        batch_no: null,
-        quantity: parseInt(formData.batch_quantity) || stock,
-        manufacturing_date: formData.manufacturing_date || null,
-        expiration_date: formData.expiration_date || null,
-        supplier: formData.batch_supplier || null,
-        unit_cost: formData.batch_unit_cost ? parseFloat(formData.batch_unit_cost) : null,
-        received_date: formData.received_date || formatDateOnly(new Date()),
-        notes: 'Initial stock batch',
-      };
-      if (formData.batch_proof instanceof File) {
-        data.batchData.proof_photo = formData.batch_proof;
-      }
+      data.stock = 0;
     }
 
     try {
@@ -340,7 +268,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
           await inventoryApi.updateItem(editItem.id, data);
         }
       } else {
-        if (data.photo instanceof File || data.batchData?.proof_photo instanceof File) {
+        if (data.photo instanceof File) {
           await inventoryApi.createItemWithPhoto(data);
         } else {
           await inventoryApi.createItem(data);
@@ -360,7 +288,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
 
   const steps = [
     { num: 1, label: "Basic Info", icon: faBoxOpen },
-    { num: 2, label: "Stock & Batch", icon: faLayerGroup },
+    { num: 2, label: "Pricing & Tracking", icon: faLayerGroup },
     { num: 3, label: "Supplier & Review", icon: faClipboardCheck },
   ];
 
@@ -626,30 +554,22 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
               </div>
             )}
 
-            {/* STEP 2: Stock & Batch */}
+            {/* STEP 2: Pricing & Tracking */}
             {currentStep === 2 && (
               <div className="step-content">
                 <div className="form-section">
-                  <h4>Stock Information</h4>
+                  <h4>Stock Thresholds</h4>
+                  {editItem && (
+                    <p className="helper-text" style={{ marginTop: 0 }}>
+                      Current stock: <strong>{Number(editItem.stock ?? 0)} units</strong> — managed in Stock Management.
+                    </p>
+                  )}
+                  {!editItem && (
+                    <p className="helper-text" style={{ marginTop: 0 }}>
+                      New products are created with zero stock. Receive the first batch in Stock Management.
+                    </p>
+                  )}
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label>
-                        {editItem ? "Current Stock" : "Initial Stock"} {!editItem && <span className="required">*</span>}
-                      </label>
-                      <input
-                        type="number"
-                        name="quantity"
-                        value={formData.quantity}
-                        onChange={handleChange}
-                        placeholder="0"
-                        min="0"
-                        disabled={Boolean(editItem)}
-                        className={errors.quantity ? "error" : ""}
-                      />
-                      {editItem && <small className="helper-text">Use Add Stock to receive a new batch.</small>}
-                      {errors.quantity && <span className="error-text">{errors.quantity}</span>}
-                    </div>
-
                     <div className="form-group">
                       <label>Reorder Level</label>
                       <input
@@ -726,141 +646,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     </div>
                   </div>
                 </div>
-
-                {!editItem && (
-                  <div className="form-section batch-section">
-                    <h4>Batch Information</h4>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label>Batch Number</label>
-                        <input
-                          type="text"
-                          value="Auto-generated"
-                          disabled
-                        />
-                        <small className="helper-text">Assigned automatically (Batch-001, Batch-002…) for each product.</small>
-                      </div>
-
-                      <div className="form-group">
-                        <label>
-                          Batch Quantity <span className="required">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          name="batch_quantity"
-                          value={formData.batch_quantity}
-                          onChange={handleChange}
-                          placeholder="0"
-                          min="0"
-                          className={errors.batch_quantity ? "error" : ""}
-                        />
-                        {errors.batch_quantity && <span className="error-text">{errors.batch_quantity}</span>}
-                      </div>
-
-                      <div className="form-group">
-                        <label>Manufacturing Date</label>
-                        <DatePickerInput
-                          selected={parseDateOnly(formData.manufacturing_date)}
-                          onChange={(date) => handleChange({ target: { name: "manufacturing_date", value: formatDateOnly(date) } })}
-                          placeholderText="Select manufacturing date..."
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>
-                          Expiration Date {formData.requires_expiry_tracking && <span className="required">*</span>}
-                        </label>
-                        <DatePickerInput
-                          selected={parseDateOnly(formData.expiration_date)}
-                          onChange={(date) => handleChange({ target: { name: "expiration_date", value: formatDateOnly(date) } })}
-                          placeholderText="Select expiration date..."
-                          className={errors.expiration_date ? "error" : ""}
-                        />
-                        {errors.expiration_date && <span className="error-text">{errors.expiration_date}</span>}
-                      </div>
-
-                      <div className="form-group">
-                        <label>Supplier</label>
-                        <select
-                          name="batch_supplier"
-                          value={formData.batch_supplier}
-                          onChange={handleChange}
-                        >
-                          <option value="">Select supplier</option>
-                          {suppliers.map((s) => (
-                            <option key={s.id} value={s.name}>
-                              {s.name}
-                            </option>
-                          ))}
-                          {formData.batch_supplier &&
-                            !suppliers.some(
-                              (s) => s.name === formData.batch_supplier
-                            ) && (
-                              <option value={formData.batch_supplier}>
-                                {formData.batch_supplier}
-                              </option>
-                            )}
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Received Date</label>
-                        <DatePickerInput
-                          selected={parseDateOnly(formData.received_date)}
-                          onChange={(date) => handleChange({ target: { name: "received_date", value: formatDateOnly(date) } })}
-                          placeholderText="Select received date..."
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Unit Cost (₱)</label>
-                        <input
-                          type="number"
-                          name="batch_unit_cost"
-                          value={formData.batch_unit_cost}
-                          onChange={handleChange}
-                          placeholder="0.00"
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Proof / Receipt Image</label>
-                        {formData.batch_proof_preview ? (
-                          <div className="photo-preview-container">
-                            <img
-                              src={formData.batch_proof_preview}
-                              alt="Batch proof"
-                              className="photo-preview-img compact"
-                            />
-                            <button
-                              type="button"
-                              className="btn-remove-photo"
-                              onClick={handleRemoveBatchProof}
-                            >
-                              Remove Proof
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="photo-upload-label compact">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleBatchProofChange}
-                              className="photo-input"
-                            />
-                            <div className="photo-upload-placeholder">
-                              <FontAwesomeIcon icon={faImage} className="upload-icon" />
-                              <span>Click to upload receipt/proof</span>
-                              <small>JPEG, PNG, GIF up to 5MB</small>
-                            </div>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -943,10 +728,6 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       <span className="review-value">{formData.brand || "—"}</span>
                     </div>
                     <div className="review-row">
-                      <span className="review-label">Stock:</span>
-                      <span className="review-value">{formData.quantity || 0} units</span>
-                    </div>
-                    <div className="review-row">
                       <span className="review-label">Price:</span>
                       <span className="review-value">{formatCurrency(parseFloat(formData.price) || 0)}</span>
                     </div>
@@ -963,20 +744,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                       <span className="review-value">{formData.requires_expiry_tracking ? "Yes" : "No"}</span>
                     </div>
                     {!editItem && (
-                      <>
-                        <div className="review-row">
-                          <span className="review-label">Batch No:</span>
-                          <span className="review-value">{formData.batch_no || "Auto-generated"}</span>
-                        </div>
-                        <div className="review-row">
-                          <span className="review-label">Batch Qty:</span>
-                          <span className="review-value">{formData.batch_quantity || 0}</span>
-                        </div>
-                        <div className="review-row">
-                          <span className="review-label">Expiration:</span>
-                          <span className="review-value">{formData.expiration_date || "—"}</span>
-                        </div>
-                      </>
+                      <div className="review-row">
+                        <span className="review-label">Initial Stock:</span>
+                        <span className="review-value">0 units — receive in Stock Management</span>
+                      </div>
                     )}
                     <div className="review-row">
                       <span className="review-label">Supplier:</span>

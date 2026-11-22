@@ -9,13 +9,14 @@ use App\Models\User;
 use App\Services\Payroll\PayrollComputationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Services\ServiceDurationService;
 
 class ThirteenthMonthController extends Controller
 {
     /** GET /manager/payroll/thirteenth-month?year=2026 */
     public function index(Request $request): JsonResponse
     {
-        $year = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
 
         $accruals = ThirteenthMonthAccrual::where('year', $year)
             ->with(['user:id,name,employee_no', 'employee:id,first_name,last_name,employee_no'])
@@ -43,7 +44,7 @@ class ThirteenthMonthController extends Controller
         ]);
 
         $year  = $data['year'];
-        $month = $data['month'] ?? now()->month;
+        $month = $data['month'] ?? now(ServiceDurationService::STORE_TIMEZONE)->month;
 
         $service = app(PayrollComputationService::class);
         $count   = 0;
@@ -88,7 +89,7 @@ class ThirteenthMonthController extends Controller
         $remaining = max(0, (float) $accrual->total_accrued - (float) $accrual->paid_amount);
 
         $paidAmount = $data['paid_amount'] ?? $remaining;
-        $paidDate   = $data['paid_date'] ?? now()->toDateString();
+        $paidDate   = $data['paid_date'] ?? ServiceDurationService::storeToday();
 
         $newPaid = (float) $accrual->paid_amount + (float) $paidAmount;
 

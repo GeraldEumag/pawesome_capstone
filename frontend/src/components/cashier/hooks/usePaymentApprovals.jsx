@@ -485,9 +485,9 @@ export const usePaymentApprovals = (user) => {
   const exportToCSV = useCallback((format = "csv") => {
     const data = filteredRequests;
     if (!data || data.length === 0) { showSuccess("No data to export"); return; }
-    if (format === "csv") exportCSVUtil(data, exportColumns, "pending-payments");
-    else if (format === "excel") exportToExcel(data, exportColumns, "pending-payments");
-    else if (format === "pdf") exportToPDF(data, exportColumns, "Pending Payments Report", "pending-payments");
+    if (format === "csv") exportCSVUtil(data, exportColumns, "pending-payments", { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(data, exportColumns, "pending-payments", { signoff: false });
+    else if (format === "pdf") exportToPDF(data, exportColumns, "Pending Payments Report", "pending-payments", { signoff: false });
     showSuccess(`Exported ${data.length} records`);
   }, [filteredRequests]);
 

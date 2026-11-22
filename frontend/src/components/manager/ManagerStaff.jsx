@@ -538,14 +538,15 @@ const ManagerStaff = () => {
 
     setShowExportDropdown(false);
 
+    const exportMetadata = { signoff: false };
     if (format === "csv") {
-      exportToCSV(exportData, exportColumns, filename);
+      exportToCSV(exportData, exportColumns, filename, exportMetadata);
       showToast("Staff CSV exported successfully.", "success");
     } else if (format === "excel") {
-      exportToExcel(exportData, exportColumns, filename);
+      exportToExcel(exportData, exportColumns, filename, exportMetadata);
       showToast("Staff Excel exported successfully.", "success");
     } else if (format === "pdf") {
-      exportToPDF(exportData, exportColumns, "Staff Directory Report", filename);
+      exportToPDF(exportData, exportColumns, "Staff Directory Report", filename, exportMetadata);
       showToast("Staff PDF exported successfully.", "success");
     }
   };

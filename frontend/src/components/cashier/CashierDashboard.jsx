@@ -465,13 +465,20 @@ const CashierDashboard = () => {
     }));
 
     const filename = `transactions_${new Date().toISOString().split('T')[0]}`;
+    const periodLabel = filterDateFrom && filterDateTo
+      ? `${filterDateFrom} to ${filterDateTo}`
+      : filterDateFrom
+        ? `From ${filterDateFrom}`
+        : filterDateTo
+          ? `Through ${filterDateTo}`
+          : "All time";
 
     if (format === "csv") {
-      exportToCSV(rows, exportColumns, filename);
+      exportToCSV(rows, exportColumns, filename, { csvStyle: "data", signoff: false });
     } else if (format === "excel") {
-      exportToExcel(rows, exportColumns, filename);
+      exportToExcel(rows, exportColumns, filename, { signoff: false, periodLabel });
     } else if (format === "pdf") {
-      exportToPDF(rows, exportColumns, "Transactions", filename);
+      exportToPDF(rows, exportColumns, "Transactions", filename, { signoff: false, periodLabel });
     }
   };
 

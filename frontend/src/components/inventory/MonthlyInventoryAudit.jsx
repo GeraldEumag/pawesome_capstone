@@ -373,7 +373,7 @@ const MonthlyInventoryAudit = () => {
       fetchAuditItems();
     } catch (err) {
       console.error("Failed to save monthly audit:", err);
-      showError(err?.response?.data?.message || "Failed to save monthly audit.");
+      showError(err?.response?.message || err?.message || "Failed to save monthly audit.");
     } finally {
       setSaving(false);
     }

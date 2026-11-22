@@ -19,6 +19,7 @@ import SalaryLoanManagement from "../components/manager/SalaryLoanManagement";
 import ThirteenthMonthPanel from "../components/manager/ThirteenthMonthPanel";
 import GovernmentRemittanceReports from "../components/manager/GovernmentRemittanceReports";
 import DTRReport from "../components/manager/DTRReport";
+import ManagerStockApprovals from "../components/manager/ManagerStockApprovals";
 import ServiceCatalogManager from "../components/shared/catalog/ServiceCatalogManager";
 import ReceiptScannerSettings from "../components/manager/ReceiptScannerSettings";
 // Employee self-service
@@ -79,6 +80,7 @@ const ManagerRoutes = () => (
       />
       <Route path="payments" element={<Navigate to="/manager/reports" replace />} />
       <Route path="inventory" element={<Navigate to="/manager/reports" replace />} />
+      <Route path="stock-approvals" element={<ManagerStockApprovals />} />
       <Route path="customers" element={<Navigate to="/manager/reports" replace />} />
       <Route path="id-cards" element={<EmployeeIdPrinter />} />
       <Route path="profile" element={<ProfileSettings />} />

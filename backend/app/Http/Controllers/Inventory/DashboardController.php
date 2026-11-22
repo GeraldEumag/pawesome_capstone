@@ -9,6 +9,7 @@ use App\Models\InventoryBatch;
 use App\Models\InventoryLog;
 use App\Models\InventoryMonthlyAudit;
 use App\Services\InventoryService;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class DashboardController extends Controller
     public function overview()
     {
         $summary = $this->inventoryService->getSummary();
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
 
         $recentLogs = InventoryLog::with('inventoryItem')
             ->latest()
@@ -275,7 +276,7 @@ class DashboardController extends Controller
             ]);
         }
 
-        $today = now()->toDateString();
+        $today = ServiceDurationService::storeToday();
         // Phase D: alert windows are 90-day (watch) and 30-day (urgent).
         $soon = now()->addDays(90)->toDateString();
         $todayCarbon = Carbon::parse($today);
@@ -316,7 +317,7 @@ class DashboardController extends Controller
 
     public function monthlyAudit(Request $request)
     {
-        $month = $request->query('month', now()->format('Y-m'));
+        $month = $request->query('month', now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m'));
 
         $items = InventoryItem::orderBy('name')
             ->get()
@@ -459,7 +460,7 @@ class DashboardController extends Controller
 
     public function monthlyAuditReport(Request $request)
     {
-        $month = $request->query('month', now()->format('Y-m'));
+        $month = $request->query('month', now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m'));
         $audits = InventoryMonthlyAudit::with('item')
             ->where('audit_month', $month)
             ->orderBy('inventory_item_id')
@@ -484,7 +485,7 @@ class DashboardController extends Controller
     public function auditAnalytics(Request $request)
     {
         $months = max(1, min(24, (int) $request->query('months', 6)));
-        $startMonth = now()->startOfMonth()->subMonths($months - 1)->format('Y-m');
+        $startMonth = now(ServiceDurationService::STORE_TIMEZONE)->startOfMonth()->subMonths($months - 1)->format('Y-m');
 
         $monthly = InventoryMonthlyAudit::select(
                 'audit_month',
@@ -719,6 +720,8 @@ class DashboardController extends Controller
                 oldPhoto: InventoryItem::findOrFail($id)->photo,
             );
             return response()->json($result);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], 422);
         }

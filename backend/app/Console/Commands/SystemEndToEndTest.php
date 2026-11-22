@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Services\ServiceDurationService;
 
 class SystemEndToEndTest extends Command
 {
@@ -324,7 +325,7 @@ class SystemEndToEndTest extends Command
         $this->testEndpoint('/api/veterinary/vaccinations', 'POST', $vet->api_token, 'Veterinary - Vaccination', [
             'pet_id' => $this->testData['pet']->id,
             'vaccine_name' => 'Test Vaccine',
-            'administered_date' => now()->format('Y-m-d'),
+            'administered_date' => now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m-d'),
             'next_due_date' => now()->addYear()->format('Y-m-d'),
         ]);
         

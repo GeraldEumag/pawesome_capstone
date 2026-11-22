@@ -8,13 +8,14 @@ use App\Models\LeaveBalance;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Services\ServiceDurationService;
 
 class LeaveBalanceController extends Controller
 {
     /** GET /manager/leave-balances?year=2026 */
     public function index(Request $request): JsonResponse
     {
-        $year = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
 
         $balances = LeaveBalance::where('year', $year)
             ->with(['user:id,name,employee_no', 'employee:id,first_name,last_name,employee_no'])
@@ -27,7 +28,7 @@ class LeaveBalanceController extends Controller
     /** GET /manager/leave-balances/{userId}/user?year=2026 */
     public function forUser(int $userId, Request $request): JsonResponse
     {
-        $year = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
         $balances = LeaveBalance::where('user_id', $userId)->where('year', $year)->get();
 
         return response()->json(['success' => true, 'data' => $balances]);
@@ -36,7 +37,7 @@ class LeaveBalanceController extends Controller
     /** GET /manager/leave-balances/{employeeId}/employee?year=2026 */
     public function forEmployee(int $employeeId, Request $request): JsonResponse
     {
-        $year = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
         $balances = LeaveBalance::where('employee_id', $employeeId)->where('year', $year)->get();
 
         return response()->json(['success' => true, 'data' => $balances]);
@@ -59,7 +60,7 @@ class LeaveBalanceController extends Controller
     /** POST /manager/leave-balances/seed — seed balances for all current employees for a year. */
     public function seed(Request $request): JsonResponse
     {
-        $year = (int) $request->input('year', now()->year);
+        $year = (int) $request->input('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
         $count = 0;
 
         User::whereIn('role', [

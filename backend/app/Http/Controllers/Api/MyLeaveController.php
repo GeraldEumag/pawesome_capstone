@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\LeaveBalance;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +37,7 @@ class MyLeaveController extends Controller
     public function balance(Request $request): JsonResponse
     {
         $user = auth()->user();
-        $year = (int) $request->query('year', now()->year);
+        $year = (int) $request->query('year', now(ServiceDurationService::STORE_TIMEZONE)->year);
 
         $balances = LeaveBalance::where('user_id', $user->id)
             ->where('year', $year)

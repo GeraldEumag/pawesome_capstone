@@ -6,11 +6,14 @@ use App\Models\InventoryItem;
 use App\Models\InventoryBatch;
 use App\Models\InventoryLog;
 use App\Models\InventoryMonthlyAudit;
+use App\Models\InventoryReturn;
+use App\Models\InventoryStockRequest;
 use App\Models\Notification;
 use App\Models\ActivityLog;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -129,69 +132,38 @@ class InventoryService
     }
 
     /**
-     * Update an existing inventory item
+     * Fields that move inventory quantities. Product updates must never carry
+     * them — stock only changes through the dedicated receiving/adjustment
+     * endpoints, which keep batches, movement logs and notifications in sync.
+     */
+    private const STOCK_MUTATION_FIELDS = ['stock', 'quantity', 'stock_quantity', 'add_stock'];
+
+    /**
+     * Update an existing inventory item (product information only)
      */
     public function updateItem(int $id, array $data): array
     {
         return DB::transaction(function () use ($id, $data) {
+            // Reject outright — do not silently strip — so callers fail loudly
+            // instead of believing a stock change was applied.
+            $prohibited = array_intersect(self::STOCK_MUTATION_FIELDS, array_keys($data));
+            if (!empty($prohibited)) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Stock quantity cannot be changed through product updates. Use the stock receiving or stock adjustment endpoints instead.',
+                ]);
+            }
+
             $item = InventoryItem::lockForUpdate()->findOrFail($id);
             $validated = $this->validateItemData($data, false, $id);
 
-            // Track stock change for logging
-            $oldStock = $item->stock;
-            $inputStock = $validated['stock'] ?? $validated['stock_quantity'] ?? ($validated['quantity'] ?? null);
-            $addStock = $validated['add_stock'] ?? false;
-
-            // Determine new stock value
-            $stockAction = $this->getStockAction($item, $inputStock, $addStock);
-            $newStock = $this->calculateNewStock($item, $inputStock, $addStock);
-            if ($newStock > $oldStock) {
-                throw ValidationException::withMessages([
-                    'stock' => 'Stock increases must be recorded as a new batch. Use the stock receiving action.',
-                ]);
-            }
-            $validated['stock'] = $newStock;
-
-            // Remove fields that don't exist in database
-            unset($validated['quantity'], $validated['stock_quantity'], $validated['add_stock']);
-
-            // Batch-tracked items must reconcile batches when stock changes —
-            // let reconcileToStock own the write instead of the flat update.
-            $reconcileBatches = $oldStock !== $newStock && $item->hasRealBatches();
-            if ($reconcileBatches) {
-                unset($validated['stock']);
-            }
-
             $item->update($validated);
-
-            // Log stock adjustment if changed
-            if ($oldStock !== $newStock) {
-                $delta = $newStock - $oldStock;
-                $reason = $this->getStockAdjustmentReason($item, $addStock, $delta);
-                $referenceType = $this->getStockReferenceType($item, $addStock);
-
-                if ($reconcileBatches) {
-                    $this->reconcileToStock(
-                        $item->fresh(),
-                        $newStock,
-                        $reason,
-                        'stock_adjustment_' . $referenceType,
-                        $referenceType
-                    );
-                } else {
-                    $this->logStockChange($item->id, $delta, $reason, $referenceType);
-                }
-
-                // Check for low/out of stock and create notifications
-                $this->checkAndCreateStockNotifications($item->fresh());
-            }
 
             return [
                 'message' => 'Item updated successfully',
                 'item' => $item->fresh(),
-                'stock_action' => $stockAction,
-                'previous_stock' => $oldStock,
-                'new_stock' => $newStock,
+                'stock_action' => 'unchanged',
+                'previous_stock' => $item->stock,
+                'new_stock' => $item->stock,
             ];
         });
     }
@@ -716,7 +688,8 @@ class InventoryService
         string $referenceType,
         ?int $referenceId = null,
         string $batchPrefix = 'ADJUST',
-        array $logDetails = []
+        array $logDetails = [],
+        array $logExtra = []
     ): array {
         $previousStock = (int) $item->stock;
         $batch = null;
@@ -746,7 +719,7 @@ class InventoryService
         $item->update($update);
 
         $delta = $targetStock - $previousStock;
-        InventoryLog::create([
+        InventoryLog::create(array_merge([
             'inventory_item_id' => $item->id,
             'delta' => $delta,
             'quantity' => abs($delta),
@@ -765,8 +738,8 @@ class InventoryService
             'details' => json_encode(array_merge([
                 'reconciled_batch_id' => $batch?->id,
                 'batch_written_off' => $writtenOff,
-            ], $logDetails)),
-        ]);
+            ], $logDetails, (array) ($logExtra['details'] ?? []))),
+        ], \Illuminate\Support\Arr::except($logExtra, 'details')));
 
         return [
             'batch' => $batch,
@@ -1120,98 +1093,6 @@ class InventoryService
         return $normalized === '' ? null : $normalized;
     }
 
-    /**
-     * Calculate new stock value based on add_stock flag and expiry
-     */
-    private function calculateNewStock(InventoryItem $item, ?int $inputStock, bool $addStock): int
-    {
-        if ($inputStock === null) {
-            return $item->stock;
-        }
-
-        $hasExpiry = $item->expiry_date !== null;
-        $isExpired = $hasExpiry && $item->expiry_date < now();
-
-        if ($hasExpiry && $isExpired) {
-            // Item HAS expiry AND IS expired: Replace stock
-            return $inputStock;
-        } elseif ($addStock) {
-            // Item has NO expiry (or not expired) + add_stock=true: Add to existing stock
-            return $item->stock + $inputStock;
-        } else {
-            // No add_stock flag: Replace stock
-            return $inputStock;
-        }
-    }
-
-    private function getStockAction(InventoryItem $item, ?int $inputStock, bool $addStock): string
-    {
-        if ($inputStock === null) {
-            return 'unchanged';
-        }
-
-        $isExpired = $item->expiry_date !== null && $item->expiry_date < now();
-
-        if ($isExpired) {
-            return 'replaced_expired';
-        }
-
-        return $addStock ? 'added' : 'replaced';
-    }
-
-    /**
-     * Get stock adjustment reason
-     */
-    private function getStockAdjustmentReason(InventoryItem $item, bool $addStock, int $delta): string
-    {
-        $hasExpiry = $item->expiry_date !== null;
-        $isExpired = $hasExpiry && $item->expiry_date < now();
-
-        if ($isExpired) {
-            return 'Stock replacement (expired inventory cleared)';
-        } elseif ($addStock) {
-            return "Stock addition (+{$delta})";
-        } else {
-            return 'Stock update';
-        }
-    }
-
-    /**
-     * Get stock reference type
-     */
-    private function getStockReferenceType(InventoryItem $item, bool $addStock): string
-    {
-        $hasExpiry = $item->expiry_date !== null;
-        $isExpired = $hasExpiry && $item->expiry_date < now();
-
-        if ($isExpired) {
-            return 'expired_replacement';
-        } elseif ($addStock) {
-            return 'addition';
-        } else {
-            return 'adjustment';
-        }
-    }
-
-    /**
-     * Log stock change
-     */
-    private function logStockChange(int $itemId, int $delta, string $reason, string $referenceType): void
-    {
-        InventoryLog::create([
-            'inventory_item_id' => $itemId,
-            'delta' => $delta,
-            'quantity' => abs($delta),
-            'type' => $delta >= 0 ? 'restock' : 'sale',
-            'movement_type' => $referenceType,
-            'reason' => $reason,
-            'reference_type' => $referenceType,
-            'performed_by' => auth()->user()?->name,
-            'role' => auth()->user()?->role,
-            'user_id' => auth()->id(),
-        ]);
-    }
-
     private function notifyInventoryMovement(InventoryItem $item, int $delta, string $reason, string $referenceType, ?int $referenceId, int $previousStock, int $newStock): void
     {
         $direction = $delta < 0 ? 'deducted' : 'restored';
@@ -1331,6 +1212,1073 @@ class InventoryService
         $random = strtoupper(Str::random(4));
         $timestamp = date('ym');
         return "{$prefix}-{$random}{$timestamp}";
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | Stock Movement & Control System
+    |----------------------------------------------------------------------
+    */
+
+    /** Stock-in transaction types. */
+    public const STOCK_IN_TYPES = [
+        'purchase' => 'New Purchase',
+        'supplier_delivery' => 'Supplier Delivery',
+        'customer_return' => 'Customer Return (Approved Restock)',
+        'return_from_internal' => 'Return from Internal Usage',
+        'correction' => 'Inventory Correction',
+        'other' => 'Other Authorized Incoming Stock',
+    ];
+
+    /** Stock-out reason codes. */
+    public const STOCK_OUT_REASONS = [
+        'damaged' => 'Damaged',
+        'expired' => 'Expired',
+        'lost_missing' => 'Lost / Missing',
+        'internal_usage' => 'Internal Usage',
+        'service_consumption' => 'Service Consumption',
+        'supplier_return' => 'Returned to Supplier',
+        'disposal' => 'Disposal',
+        'correction' => 'Inventory Correction',
+        'other' => 'Other Authorized Withdrawal',
+    ];
+
+    /**
+     * Reason-specific required fields, validated against the request-level
+     * payload (not the per-line data).
+     */
+    private const STOCK_OUT_REQUIRED_FIELDS = [
+        'damaged' => ['damage_details'],
+        'expired' => ['disposal_details'],
+        'lost_missing' => ['incident_details'],
+        'internal_usage' => ['department', 'purpose'],
+        'service_consumption' => ['service_reference'],
+        'supplier_return' => ['supplier', 'return_reference'],
+        'disposal' => ['disposal_method'],
+        'correction' => ['explanation'],
+        'other' => ['explanation'],
+    ];
+
+    /**
+     * Reasons that must pass through the manager/admin approval queue before
+     * any stock is touched. `service_consumption` executes immediately; the
+     * vet/grooming/boarding services keep their own automatic deduction.
+     * `correction` is queued only above a configurable quantity threshold.
+     */
+    private const STOCK_OUT_APPROVAL_REASONS = [
+        'damaged', 'expired', 'lost_missing', 'internal_usage',
+        'supplier_return', 'disposal', 'other',
+    ];
+
+    /**
+     * Write-off reasons deduct from every physical batch (including expired
+     * lots awaiting disposal). Consumption-type reasons deduct from sellable
+     * batches only, same as POS.
+     */
+    private const STOCK_OUT_WRITE_OFF_REASONS = [
+        'damaged', 'expired', 'disposal', 'lost_missing', 'correction',
+    ];
+
+    /**
+     * Movement types eligible for the reversal workflow. POS, customer-order
+     * and service deductions are deliberately excluded — they keep their own
+     * void/restore paths and must never be double-restored through here.
+     */
+    private const REVERSIBLE_MOVEMENT_TYPES = [
+        'stock_out',
+        'stock_in',
+        'stock_adjustment_decrement',
+        'stock_adjustment_set',
+        'batch_disposal',
+    ];
+
+    /**
+     * Compact item payload for the quick-select dropdown. Searches name, SKU,
+     * barcode, brand and generic name; returns at most 20 active items.
+     */
+    public function searchItems(?string $query = null): array
+    {
+        $items = InventoryItem::query()
+            ->where('status', self::STATUS_ACTIVE)
+            ->whereNull('archived_at')
+            ->when($query !== null && trim($query) !== '', function ($q) use ($query) {
+                $term = trim($query);
+                $q->where(function ($inner) use ($term) {
+                    $inner->where('name', 'like', "%{$term}%")
+                        ->orWhere('sku', 'like', "%{$term}%")
+                        ->orWhere('barcode', 'like', "%{$term}%")
+                        ->orWhere('brand', 'like', "%{$term}%")
+                        ->orWhere('generic_name', 'like', "%{$term}%");
+                });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(fn (InventoryItem $item) => [
+                'id' => $item->id,
+                'name' => $item->name,
+                'sku' => $item->sku,
+                'barcode' => $item->barcode,
+                'brand' => $item->brand,
+                'generic_name' => $item->generic_name,
+                'category' => $item->category,
+                'stock' => (int) $item->stock,
+                'unit' => $item->unit,
+                'status' => $item->status,
+                'reorder_level' => (int) ($item->reorder_level ?? 0),
+                'requires_expiry_tracking' => (bool) $item->requires_expiry_tracking,
+                'issue_method' => $item->issue_method,
+                'is_sellable' => (bool) $item->is_sellable,
+                'photo_url' => $item->photo_url,
+            ]);
+
+        return ['items' => $items, 'count' => $items->count()];
+    }
+
+    private function nextTransactionNo(string $prefix): string
+    {
+        return $prefix . '-' . now()->format('Ymd') . '-' . strtoupper(Str::random(5));
+    }
+
+    /**
+     * The newest log row for an item. Safe because every caller holds the
+     * item's FOR UPDATE row lock, so no other writer can interleave a log for
+     * this item between the write and this read.
+     */
+    private function latestMovementFor(InventoryItem $item): InventoryLog
+    {
+        return InventoryLog::where('inventory_item_id', $item->id)->latest('id')->firstOrFail();
+    }
+
+    /**
+     * Record a multi-item Stock In transaction. One DB transaction and one
+     * shared transaction_no for every line.
+     */
+    public function recordStockIn(array $payload): array
+    {
+        $transactionType = $payload['transaction_type'] ?? '';
+        if (!array_key_exists($transactionType, self::STOCK_IN_TYPES)) {
+            throw ValidationException::withMessages(['transaction_type' => 'Select a valid stock-in type.']);
+        }
+        if ($transactionType === 'other' && trim((string) ($payload['description'] ?? '')) === '') {
+            throw ValidationException::withMessages(['description' => 'A description is required for "Other" stock-in.']);
+        }
+        $lines = $payload['items'] ?? [];
+        if (empty($lines) || !is_array($lines)) {
+            throw ValidationException::withMessages(['items' => 'Add at least one inventory item.']);
+        }
+
+        $transactionNo = $this->nextTransactionNo('IN');
+
+        // Lock ordering: sort lines by item id so concurrent multi-item
+        // transactions acquire row locks in a consistent order — otherwise
+        // reversed submissions ([a,b] vs [b,a]) can deadlock.
+        usort($lines, fn ($a, $b) => ($a['inventory_item_id'] ?? $a['item_id'] ?? 0) <=> ($b['inventory_item_id'] ?? $b['item_id'] ?? 0));
+
+        return DB::transaction(function () use ($payload, $lines, $transactionType, $transactionNo) {
+            $movements = [];
+            $results = [];
+
+            foreach ($lines as $index => $line) {
+                $itemId = (int) ($line['inventory_item_id'] ?? $line['item_id'] ?? 0);
+                $quantity = (int) ($line['quantity'] ?? 0);
+                $item = InventoryItem::lockForUpdate()->findOrFail($itemId);
+
+                if ($item->status !== self::STATUS_ACTIVE || $item->archived_at) {
+                    throw ValidationException::withMessages(["items.{$index}" => "{$item->name} is not an active inventory item."]);
+                }
+                if ($quantity <= 0) {
+                    throw ValidationException::withMessages(["items.{$index}.quantity" => 'Quantity must be greater than zero.']);
+                }
+
+                $movement = $this->executeStockInLine($item, $quantity, (array) $line, [
+                    'transaction_type' => $transactionType,
+                    'transaction_no' => $transactionNo,
+                    'supplier' => $payload['supplier'] ?? null,
+                    'reference' => $payload['reference'] ?? null,
+                    'description' => $payload['description'] ?? null,
+                ]);
+                $movements[] = $movement;
+                $results[] = [
+                    'item_id' => $item->id,
+                    'name' => $item->name,
+                    'quantity' => $quantity,
+                    'movement_id' => $movement->id,
+                    'new_stock' => $movement->new_stock,
+                ];
+            }
+
+            return [
+                'transaction_no' => $transactionNo,
+                'transaction_type' => $transactionType,
+                'movements' => $movements,
+                'lines' => $results,
+            ];
+        });
+    }
+
+    private function executeStockInLine(InventoryItem $item, int $quantity, array $line, array $context): InventoryLog
+    {
+        $stockBefore = (int) $item->stock;
+        $batchFields = [
+            'batch_no' => $line['batch_no'] ?? null,
+            'expiration_date' => $line['expiration_date'] ?? null,
+            'manufacturing_date' => $line['manufacturing_date'] ?? null,
+            'received_date' => $line['received_date'] ?? null,
+            'supplier' => $line['supplier'] ?? $context['supplier'] ?? null,
+            'unit_cost' => $line['unit_cost'] ?? null,
+        ];
+        $needsBatch = $item->needsFefo() || $item->hasRealBatches()
+            || !empty($batchFields['expiration_date']) || !empty($batchFields['batch_no']);
+
+        $reasonText = self::STOCK_IN_TYPES[$context['transaction_type']]
+            . ($context['description'] ? ': ' . $context['description'] : '');
+
+        $logExtra = [
+            'movement_type' => 'stock_in',
+            'type' => 'stock_in',
+            'reason' => $reasonText,
+            'reason_code' => $context['transaction_type'],
+            'transaction_no' => $context['transaction_no'],
+            'reference_type' => 'stock_in',
+            'reference' => $context['reference'],
+            'details' => [
+                'transaction_type' => $context['transaction_type'],
+                'supplier' => $context['supplier'],
+                'reference' => $context['reference'],
+                'description' => $context['description'],
+                'line' => $batchFields,
+            ],
+        ];
+
+        if ($needsBatch) {
+            if ($item->needsFefo() && empty($batchFields['expiration_date'])) {
+                throw ValidationException::withMessages([
+                    'expiration_date' => "Expiration date is required for {$item->name}.",
+                ]);
+            }
+            $item->addBatchStock(
+                $quantity,
+                $batchFields['batch_no'],
+                $batchFields['expiration_date'],
+                $reasonText,
+                true,
+                $batchFields['manufacturing_date'],
+                $batchFields['supplier'],
+                isset($batchFields['unit_cost']) ? (float) $batchFields['unit_cost'] : null,
+                null,
+                $batchFields['received_date'],
+                $logExtra
+            );
+            $fresh = $item->fresh();
+            $this->notifyInventoryMovement($fresh, $quantity, $reasonText, 'stock_in', null, $stockBefore, (int) $fresh->stock);
+
+            return $this->latestMovementFor($item);
+        }
+
+        $item->increment('stock', $quantity);
+        $item = $item->fresh();
+        $movement = InventoryLog::create(array_merge([
+            'inventory_item_id' => $item->id,
+            'delta' => $quantity,
+            'quantity' => $quantity,
+            'stock_before' => $stockBefore,
+            'stock_after' => $item->stock,
+            'previous_stock' => $stockBefore,
+            'new_stock' => $item->stock,
+            'performed_by' => auth()->user()?->name,
+            'role' => auth()->user()?->role,
+            'user_id' => auth()->id(),
+            'details' => json_encode($logExtra['details']),
+        ], \Illuminate\Support\Arr::except($logExtra, 'details')));
+
+        $this->notifyInventoryMovement($item, $quantity, $reasonText, 'stock_in', null, $stockBefore, (int) $item->stock);
+
+        return $movement;
+    }
+
+    private function validateStockOutReasonFields(string $reasonCode, array $payload): void
+    {
+        $required = self::STOCK_OUT_REQUIRED_FIELDS[$reasonCode] ?? [];
+        $errors = [];
+        foreach ($required as $field) {
+            if (trim((string) ($payload[$field] ?? '')) === '') {
+                $errors[$field] = "This field is required for the \"{$reasonCode}\" removal reason.";
+            }
+        }
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /**
+     * Record a multi-item Stock Out transaction. Sensitive reasons create a
+     * pending approval request and leave stock untouched; non-sensitive
+     * reasons execute immediately. Either way the response states what
+     * happened so callers can't misreport a queued request as a deduction.
+     */
+    public function recordStockOut(array $payload): array
+    {
+        $reasonCode = $payload['reason_code'] ?? '';
+        if (!array_key_exists($reasonCode, self::STOCK_OUT_REASONS)) {
+            throw ValidationException::withMessages(['reason_code' => 'Select a valid removal reason.']);
+        }
+        $this->validateStockOutReasonFields($reasonCode, $payload);
+
+        $lines = $payload['items'] ?? [];
+        if (empty($lines) || !is_array($lines)) {
+            throw ValidationException::withMessages(['items' => 'Add at least one inventory item.']);
+        }
+
+        // Lock ordering: sort lines by item id so concurrent multi-item
+        // transactions acquire row locks in a consistent order — otherwise
+        // reversed submissions ([a,b] vs [b,a]) can deadlock.
+        usort($lines, fn ($a, $b) => ($a['inventory_item_id'] ?? $a['item_id'] ?? 0) <=> ($b['inventory_item_id'] ?? $b['item_id'] ?? 0));
+
+        // Resolve per-line intent under item locks so the queue decision and
+        // (for immediate execution) the deduction see one consistent snapshot.
+        return DB::transaction(function () use ($payload, $lines, $reasonCode) {
+            $resolved = [];
+
+            foreach ($lines as $index => $line) {
+                $itemId = (int) ($line['inventory_item_id'] ?? $line['item_id'] ?? 0);
+                $item = InventoryItem::lockForUpdate()->findOrFail($itemId);
+
+                if ($item->status !== self::STATUS_ACTIVE || $item->archived_at) {
+                    throw ValidationException::withMessages(["items.{$index}" => "{$item->name} is not an active inventory item."]);
+                }
+
+                if ($reasonCode === 'correction') {
+                    if (!array_key_exists('physical_count', (array) $line)) {
+                        throw ValidationException::withMessages(["items.{$index}.physical_count" => 'Enter the physical count for this item.']);
+                    }
+                    $physical = (int) $line['physical_count'];
+                    if ($physical < 0) {
+                        throw ValidationException::withMessages(["items.{$index}.physical_count" => 'Physical count cannot be negative.']);
+                    }
+                    $delta = $physical - (int) $item->stock;
+                    if ($delta === 0) {
+                        continue; // counted correctly — nothing to record
+                    }
+                    $resolved[] = [
+                        'item' => $item,
+                        'quantity' => abs($delta),
+                        'batch_id' => null,
+                        'line_details' => [
+                            'physical_count' => $physical,
+                            'system_count' => (int) $item->stock,
+                            'delta' => $delta,
+                            'direction' => $delta > 0 ? 'increase' : 'decrease',
+                        ],
+                    ];
+                } else {
+                    $quantity = (int) ($line['quantity'] ?? 0);
+                    if ($quantity <= 0) {
+                        throw ValidationException::withMessages(["items.{$index}.quantity" => 'Quantity must be greater than zero.']);
+                    }
+                    if ($quantity > (int) $item->stock) {
+                        throw ValidationException::withMessages(["items.{$index}.quantity" => "Only {$item->stock} units of {$item->name} are available."]);
+                    }
+                    if (!empty($line['batch_id']) && !$item->batches()->where('id', (int) $line['batch_id'])->exists()) {
+                        throw ValidationException::withMessages(["items.{$index}.batch_id" => "The selected batch does not belong to {$item->name}."]);
+                    }
+                    $resolved[] = [
+                        'item' => $item,
+                        'quantity' => $quantity,
+                        'batch_id' => isset($line['batch_id']) ? (int) $line['batch_id'] : null,
+                        'line_details' => (array) $line,
+                    ];
+                }
+            }
+
+            if (empty($resolved)) {
+                throw ValidationException::withMessages(['items' => 'No stock changes to record.']);
+            }
+
+            if ($this->stockOutRequiresApproval($reasonCode, $resolved)) {
+                return $this->queueStockOutRequest($payload, $resolved, $reasonCode);
+            }
+
+            $transactionNo = $this->nextTransactionNo('OUT');
+            $movements = [];
+            foreach ($resolved as $line) {
+                $movements[] = $this->executeStockOutLine($line['item'], $line['quantity'], $reasonCode, $payload, [
+                    'transaction_no' => $transactionNo,
+                    'reference_type' => 'stock_out',
+                    'reference_id' => null,
+                    'batch_id' => $line['batch_id'],
+                    'line_details' => $line['line_details'],
+                ]);
+            }
+
+            return [
+                'queued' => false,
+                'transaction_no' => $transactionNo,
+                'reason_code' => $reasonCode,
+                'movements' => $movements,
+            ];
+        });
+    }
+
+    private function stockOutRequiresApproval(string $reasonCode, array $resolvedLines): bool
+    {
+        if (in_array($reasonCode, self::STOCK_OUT_APPROVAL_REASONS, true)) {
+            return true;
+        }
+        if ($reasonCode === 'correction') {
+            $threshold = (int) env('INVENTORY_CORRECTION_APPROVAL_THRESHOLD', 10);
+            foreach ($resolvedLines as $line) {
+                if ($line['quantity'] > $threshold) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function queueStockOutRequest(array $payload, array $resolvedLines, string $reasonCode): array
+    {
+        $transactionNo = $this->nextTransactionNo('OUT');
+        $request = InventoryStockRequest::create([
+            'request_no' => $this->nextTransactionNo('SR'),
+            'transaction_no' => $transactionNo,
+            'reason_code' => $reasonCode,
+            'status' => InventoryStockRequest::STATUS_PENDING,
+            'request_payload' => \Illuminate\Support\Arr::except($payload, 'items'),
+            'requested_by' => auth()->id(),
+        ]);
+
+        foreach ($resolvedLines as $line) {
+            $request->items()->create([
+                'inventory_item_id' => $line['item']->id,
+                'quantity' => $line['quantity'],
+                'batch_id' => $line['batch_id'],
+                'line_details' => $line['line_details'],
+            ]);
+        }
+
+        $message = sprintf(
+            '%s requested "%s" stock-out for %d item(s) — %s',
+            auth()->user()?->name ?? 'Staff',
+            self::STOCK_OUT_REASONS[$reasonCode],
+            count($resolvedLines),
+            $request->request_no
+        );
+        $meta = ['request_no' => $request->request_no, 'reason_code' => $reasonCode];
+        WorkflowNotifier::notifyRole('manager', 'Stock-Out Approval Requested', $message, 'warning', 'inventory_stock_request', $request->id, $meta);
+        WorkflowNotifier::notifyRole('admin', 'Stock-Out Approval Requested', $message, 'warning', 'inventory_stock_request', $request->id, $meta);
+
+        return [
+            'queued' => true,
+            'request' => $request->fresh(['items.item', 'requester']),
+            'transaction_no' => $transactionNo,
+            'reason_code' => $reasonCode,
+        ];
+    }
+
+    /**
+     * Approve a pending stock-out request and execute its deductions
+     * atomically. Any line failing (e.g. stock dropped while pending) rolls
+     * everything back — the request stays pending for retry or rejection.
+     */
+    public function approveStockRequest(int $requestId, ?string $remarks, User $reviewer): array
+    {
+        return DB::transaction(function () use ($requestId, $remarks, $reviewer) {
+            $request = InventoryStockRequest::with('items')->lockForUpdate()->findOrFail($requestId);
+
+            if ($request->status !== InventoryStockRequest::STATUS_PENDING) {
+                throw ValidationException::withMessages(['request' => 'Only pending requests can be approved.']);
+            }
+            if ((int) $request->requested_by === (int) $reviewer->id) {
+                throw ValidationException::withMessages(['request' => 'You cannot approve your own stock-out request.']);
+            }
+
+            $payload = (array) ($request->request_payload ?? []);
+            $reasonCode = $request->reason_code;
+
+            // Lock ordering: execute lines in item-id order, consistent with
+            // recordStockOut/recordStockIn — prevents deadlocks between two
+            // pending requests covering overlapping items.
+            $requestItems = $request->items->sortBy('inventory_item_id');
+
+            foreach ($requestItems as $line) {
+                $item = InventoryItem::lockForUpdate()->findOrFail($line->inventory_item_id);
+                $movement = $this->executeStockOutLine($item, (int) $line->quantity, $reasonCode, $payload, [
+                    'transaction_no' => $request->transaction_no,
+                    'reference_type' => 'stock_request',
+                    'reference_id' => $request->id,
+                    'batch_id' => $line->batch_id,
+                    'line_details' => (array) ($line->line_details ?? []),
+                ]);
+                $line->update(['movement_id' => $movement->id]);
+            }
+
+            $request->update([
+                'status' => InventoryStockRequest::STATUS_APPROVED,
+                'reviewed_by' => $reviewer->id,
+                'reviewed_at' => now(),
+                'review_remarks' => $remarks,
+                'executed_at' => now(),
+            ]);
+
+            WorkflowNotifier::notifyUser(
+                $request->requested_by,
+                'Stock-Out Request Approved',
+                "{$request->request_no} (" . (self::STOCK_OUT_REASONS[$reasonCode] ?? $reasonCode) . ") was approved by {$reviewer->name} and stock was deducted.",
+                'success',
+                'inventory_stock_request',
+                $request->id
+            );
+
+            return ['request' => $request->fresh(['items.item', 'requester', 'reviewer'])];
+        });
+    }
+
+    /**
+     * Reject a pending stock-out request. Never touches stock.
+     */
+    public function rejectStockRequest(int $requestId, string $remarks, User $reviewer): array
+    {
+        return DB::transaction(function () use ($requestId, $remarks, $reviewer) {
+            $request = InventoryStockRequest::lockForUpdate()->findOrFail($requestId);
+
+            if ($request->status !== InventoryStockRequest::STATUS_PENDING) {
+                throw ValidationException::withMessages(['request' => 'Only pending requests can be rejected.']);
+            }
+
+            $request->update([
+                'status' => InventoryStockRequest::STATUS_REJECTED,
+                'reviewed_by' => $reviewer->id,
+                'reviewed_at' => now(),
+                'review_remarks' => $remarks,
+            ]);
+
+            WorkflowNotifier::notifyUser(
+                $request->requested_by,
+                'Stock-Out Request Rejected',
+                "{$request->request_no} was rejected by {$reviewer->name}: {$remarks}",
+                'error',
+                'inventory_stock_request',
+                $request->id
+            );
+
+            return ['request' => $request->fresh(['items.item', 'requester', 'reviewer'])];
+        });
+    }
+
+    /**
+     * Execute one stock-out line. Correction lines apply their recorded
+     * physical count (set-semantics through reconcileToStock); write-off
+     * reasons deplete physical batches including expired lots; consumption
+     * reasons deduct sellable batches FEFO like POS.
+     */
+    private function executeStockOutLine(InventoryItem $item, int $quantity, string $reasonCode, array $requestPayload, array $options): InventoryLog
+    {
+        $stockBefore = (int) $item->stock;
+        $reasonLabel = self::STOCK_OUT_REASONS[$reasonCode] ?? $reasonCode;
+        $lineDetails = (array) ($options['line_details'] ?? []);
+        $referenceType = $options['reference_type'] ?? 'stock_out';
+        $referenceId = $options['reference_id'] ?? null;
+        $transactionNo = $options['transaction_no'];
+
+        if ($reasonCode === 'correction') {
+            $target = (int) ($lineDetails['physical_count'] ?? $item->stock);
+            $reasonText = 'Inventory correction: ' . ($requestPayload['explanation'] ?? 'physical count adjustment');
+            $this->reconcileToStock(
+                $item->fresh(),
+                $target,
+                $reasonText,
+                'stock_out',
+                $referenceType,
+                $referenceId,
+                'CORR',
+                [],
+                [
+                    'reason_code' => $reasonCode,
+                    'transaction_no' => $transactionNo,
+                    'details' => [
+                        'physical_count' => $target,
+                        'explanation' => $requestPayload['explanation'] ?? null,
+                    ],
+                ]
+            );
+
+            return $this->latestMovementFor($item);
+        }
+
+        $reasonText = $reasonLabel . $this->stockOutReasonSuffix($reasonCode, $requestPayload);
+        $logExtra = [
+            'movement_type' => 'stock_out',
+            'type' => 'stock_out',
+            'reason' => $reasonText,
+            'reason_code' => $reasonCode,
+            'transaction_no' => $transactionNo,
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+            'details' => [
+                'request' => \Illuminate\Support\Arr::except($requestPayload, 'items'),
+                'line' => $lineDetails,
+            ],
+        ];
+
+        if ($quantity > (int) $item->stock) {
+            throw ValidationException::withMessages([
+                'quantity' => "Only {$item->stock} units of {$item->name} are available.",
+            ]);
+        }
+
+        if ($item->hasRealBatches() && !in_array($reasonCode, self::STOCK_OUT_WRITE_OFF_REASONS, true)) {
+            // Sellable-batches FEFO — same path as POS deductions.
+            $item->deductStockFefo($quantity, $reasonText, 'stock_out', $referenceType, $referenceId, $options['batch_id'] ?? null, $logExtra);
+        } else {
+            $batchWriteOffs = $item->hasRealBatches()
+                ? $this->writeOffBatches($item, $quantity, $options['batch_id'] ?? null)
+                : [];
+            $item->decrement('stock', $quantity);
+            $item = $item->fresh();
+            InventoryLog::create(array_merge([
+                'inventory_item_id' => $item->id,
+                'delta' => -$quantity,
+                'quantity' => $quantity,
+                'stock_before' => $stockBefore,
+                'stock_after' => $item->stock,
+                'previous_stock' => $stockBefore,
+                'new_stock' => $item->stock,
+                'performed_by' => auth()->user()?->name,
+                'role' => auth()->user()?->role,
+                'user_id' => auth()->id(),
+                'details' => json_encode(array_merge(['batch_writeoffs' => $batchWriteOffs], $logExtra['details'])),
+            ], \Illuminate\Support\Arr::except($logExtra, 'details')));
+        }
+
+        $movement = $this->latestMovementFor($item);
+        $fresh = $item->fresh();
+        $this->checkAndCreateStockNotifications($fresh);
+        $this->notifyInventoryMovement($fresh, -$quantity, $reasonText, $referenceType, $referenceId, $stockBefore, (int) $fresh->stock);
+
+        return $movement;
+    }
+
+    private function stockOutReasonSuffix(string $reasonCode, array $payload): string
+    {
+        $fragments = match ($reasonCode) {
+            'damaged' => [$payload['damage_details'] ?? null],
+            'expired' => [$payload['disposal_details'] ?? null],
+            'lost_missing' => [$payload['incident_details'] ?? null],
+            'internal_usage' => [$payload['department'] ?? null, $payload['purpose'] ?? null],
+            'service_consumption' => [$payload['service_reference'] ?? null],
+            'supplier_return' => [$payload['supplier'] ?? null, $payload['return_reference'] ?? null],
+            'disposal' => [$payload['disposal_method'] ?? null],
+            'correction', 'other' => [$payload['explanation'] ?? null],
+            default => [],
+        };
+        $fragments = array_filter($fragments, fn ($v) => $v !== null && trim((string) $v) !== '');
+
+        return $fragments ? ': ' . implode(' — ', $fragments) : '';
+    }
+
+    /**
+     * Write off up to $amount from physical batches (includes expired lots
+     * awaiting disposal). Optional preferred batch first. Returns per-batch
+     * write-off detail; a shortfall vs. the flat stock counter is tolerated —
+     * the counter is authoritative and reconcile-stock reports the drift.
+     */
+    private function writeOffBatches(InventoryItem $item, int $amount, ?int $preferredBatchId = null): array
+    {
+        $writeOffs = [];
+        $remaining = $amount;
+
+        if ($preferredBatchId) {
+            $batch = $item->batches()
+                ->where('id', $preferredBatchId)
+                ->where('remaining_quantity', '>', 0)
+                ->whereNotIn('status', ['depleted', 'disposed'])
+                ->first();
+            if ($batch) {
+                $take = min($batch->remaining_quantity, $remaining);
+                $batch->remaining_quantity -= $take;
+                if ($batch->remaining_quantity <= 0) {
+                    $batch->status = 'depleted';
+                }
+                $batch->save();
+                $writeOffs[] = ['batch_id' => $batch->id, 'batch_no' => $batch->batch_no, 'amount' => $take];
+                $remaining -= $take;
+            }
+        }
+
+        if ($remaining > 0) {
+            $batches = $item->physicalBatches()
+                ->when($preferredBatchId, fn ($q) => $q->where('id', '!=', $preferredBatchId))
+                ->get();
+            foreach ($batches as $batch) {
+                if ($remaining <= 0) {
+                    break;
+                }
+                $take = min($batch->remaining_quantity, $remaining);
+                $batch->remaining_quantity -= $take;
+                if ($batch->remaining_quantity <= 0) {
+                    $batch->status = 'depleted';
+                }
+                $batch->save();
+                $writeOffs[] = ['batch_id' => $batch->id, 'batch_no' => $batch->batch_no, 'amount' => $take];
+                $remaining -= $take;
+            }
+        }
+
+        return $writeOffs;
+    }
+
+    /**
+     * Reverse part or all of a reversible stock movement. Direction follows
+     * the original delta: a deduction is restored upward, an erroneous
+     * stock-in is removed downward. Never deletes or rewrites the original.
+     */
+    public function reverseMovement(int $logId, int $quantity, string $reason): array
+    {
+        return DB::transaction(function () use ($logId, $quantity, $reason) {
+            $original = InventoryLog::lockForUpdate()->findOrFail($logId);
+
+            if (!in_array($original->movement_type, self::REVERSIBLE_MOVEMENT_TYPES, true)) {
+                throw ValidationException::withMessages([
+                    'movement' => 'This movement cannot be reversed. POS, order and service deductions are restored through their own workflows.',
+                ]);
+            }
+
+            // Approval-bypass guard: a deduction that was executed through the
+            // manager/admin approval queue must not be silently undone by the
+            // requester — reversing it requires a manager or admin, so the
+            // same tier that authorized the removal also authorizes restoring it.
+            if ($original->reference_type === 'stock_request') {
+                $role = strtolower((string) (auth()->user()?->role ?? ''));
+                if (!in_array($role, ['manager', 'admin', 'super_admin'], true)) {
+                    throw ValidationException::withMessages([
+                        'movement' => 'This movement came from an approved stock-out request. Only a manager or admin can reverse it.',
+                    ]);
+                }
+            }
+
+            if ($quantity <= 0) {
+                throw ValidationException::withMessages(['quantity' => 'Quantity must be greater than zero.']);
+            }
+
+            $reversibleBase = abs((int) ($original->delta ?? $original->quantity ?? 0));
+            $remaining = $reversibleBase - (int) ($original->reversed_quantity ?? 0);
+            if ($reversibleBase <= 0 || $remaining <= 0) {
+                throw ValidationException::withMessages(['movement' => 'This movement has already been fully reversed.']);
+            }
+            if ($quantity > $remaining) {
+                throw ValidationException::withMessages(['quantity' => "Only {$remaining} units remain reversible."]);
+            }
+
+            $item = InventoryItem::lockForUpdate()->findOrFail($original->inventory_item_id);
+            $stockBefore = (int) $item->stock;
+            $restore = (int) ($original->delta ?? 0) < 0; // deduction → restore upward
+            $reasonText = "Reversal of movement #{$original->id}: {$reason}";
+            $transactionNo = $this->nextTransactionNo('REV');
+            $logExtra = [
+                'movement_type' => 'stock_reversal',
+                'type' => 'stock_reversal',
+                'reason' => $reasonText,
+                'reason_code' => 'reversal',
+                'reference_type' => 'reversal',
+                'reference_id' => $original->id,
+                'original_movement_id' => $original->id,
+                'transaction_no' => $transactionNo,
+                'details' => [
+                    'reversal_reason' => $reason,
+                    'original_reason_code' => $original->reason_code,
+                    'original_movement_type' => $original->movement_type,
+                ],
+            ];
+
+            if ($restore) {
+                if ($item->hasRealBatches() || $item->needsFefo()) {
+                    $item->addBatchStock(
+                        $quantity,
+                        'REVR-' . strtoupper(Str::random(5)),
+                        null,
+                        $reasonText,
+                        true,
+                        null,
+                        null,
+                        null,
+                        null,
+                        now()->toDateString(),
+                        $logExtra
+                    );
+                } else {
+                    $item->increment('stock', $quantity);
+                    $item = $item->fresh();
+                    InventoryLog::create(array_merge([
+                        'inventory_item_id' => $item->id,
+                        'delta' => $quantity,
+                        'quantity' => $quantity,
+                        'stock_before' => $stockBefore,
+                        'stock_after' => $item->stock,
+                        'previous_stock' => $stockBefore,
+                        'new_stock' => $item->stock,
+                        'performed_by' => auth()->user()?->name,
+                        'role' => auth()->user()?->role,
+                        'user_id' => auth()->id(),
+                        'details' => json_encode($logExtra['details']),
+                    ], \Illuminate\Support\Arr::except($logExtra, 'details')));
+                }
+            } else {
+                if ($quantity > (int) $item->stock) {
+                    throw ValidationException::withMessages([
+                        'quantity' => "Cannot reverse: only {$item->stock} units of {$item->name} remain in stock.",
+                    ]);
+                }
+                $batchWriteOffs = $item->hasRealBatches() ? $this->writeOffBatches($item, $quantity) : [];
+                $item->decrement('stock', $quantity);
+                $item = $item->fresh();
+                InventoryLog::create(array_merge([
+                    'inventory_item_id' => $item->id,
+                    'delta' => -$quantity,
+                    'quantity' => $quantity,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $item->stock,
+                    'previous_stock' => $stockBefore,
+                    'new_stock' => $item->stock,
+                    'performed_by' => auth()->user()?->name,
+                    'role' => auth()->user()?->role,
+                    'user_id' => auth()->id(),
+                    'details' => json_encode(array_merge(['batch_writeoffs' => $batchWriteOffs], $logExtra['details'])),
+                ], \Illuminate\Support\Arr::except($logExtra, 'details')));
+            }
+
+            $original->increment('reversed_quantity', $quantity);
+            $movement = $this->latestMovementFor($item);
+
+            $fresh = $item->fresh();
+            $delta = $restore ? $quantity : -$quantity;
+            $this->checkAndCreateStockNotifications($fresh);
+            $this->notifyInventoryMovement($fresh, $delta, $reasonText, 'reversal', $original->id, $stockBefore, (int) $fresh->stock);
+
+            return [
+                'movement' => $movement,
+                'original_movement' => $original->fresh(),
+                'reversed' => $quantity,
+                'remaining_reversible' => $remaining - $quantity,
+            ];
+        });
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | Customer product returns (inspection → disposition)
+    |----------------------------------------------------------------------
+    */
+
+    public function createReturn(array $payload): array
+    {
+        $item = InventoryItem::findOrFail($payload['inventory_item_id']);
+        $this->validateReturnSource($payload, $item);
+
+        $return = InventoryReturn::create([
+            'return_no' => $this->nextTransactionNo('RET'),
+            'source_type' => $payload['source_type'] ?? 'manual',
+            'source_id' => $payload['source_id'] ?? null,
+            'inventory_item_id' => $item->id,
+            'quantity' => (int) $payload['quantity'],
+            'return_reason' => $payload['return_reason'] ?? null,
+            'photo' => $payload['photo'] ?? null,
+            'received_by' => auth()->id(),
+        ]);
+
+        WorkflowNotifier::notifyRole(
+            'inventory',
+            'Product Return Received',
+            "{$item->name}: {$return->quantity} unit(s) returned — pending inspection ({$return->return_no}).",
+            'info',
+            'inventory_return',
+            $return->id
+        );
+
+        return ['return' => $return->fresh(['item', 'receiver'])];
+    }
+
+    /**
+     * Verify a source-linked return references a real sale/order and does not
+     * exceed the returnable quantity. Every created return counts against the
+     * sold quantity regardless of later disposition — the goods physically
+     * came back — so restocked, quarantined, damaged and disposed returns all
+     * reduce what can still be returned.
+     */
+    private function validateReturnSource(array $payload, InventoryItem $item): void
+    {
+        $sourceType = $payload['source_type'] ?? 'manual';
+        $sourceId = $payload['source_id'] ?? null;
+        if ($sourceType === 'manual' || !$sourceId) {
+            return;
+        }
+
+        $quantity = (int) $payload['quantity'];
+
+        $sold = match ($sourceType) {
+            'sale' => (int) DB::table('sale_items')
+                ->where('sale_id', $sourceId)
+                ->where('item_type', 'product')
+                ->where('product_id', $item->id)
+                ->sum('quantity'),
+            'customer_order' => (int) DB::table('customer_order_items')
+                ->where('customer_order_id', $sourceId)
+                ->where('inventory_item_id', $item->id)
+                ->sum('quantity'),
+            default => -1,
+        };
+
+        if ($sold === -1) {
+            throw ValidationException::withMessages(['source_type' => 'Unsupported return source type.']);
+        }
+        if ($sold === 0) {
+            throw ValidationException::withMessages([
+                'source_id' => "This item was not part of {$sourceType} #{$sourceId}.",
+            ]);
+        }
+
+        $alreadyReturned = (int) InventoryReturn::where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->where('inventory_item_id', $item->id)
+            ->sum('quantity');
+
+        $remaining = $sold - $alreadyReturned;
+        if ($quantity > $remaining) {
+            throw ValidationException::withMessages([
+                'quantity' => $remaining > 0
+                    ? "Only {$remaining} unit(s) can still be returned from {$sourceType} #{$sourceId}."
+                    : "All {$sold} unit(s) from {$sourceType} #{$sourceId} have already been returned.",
+            ]);
+        }
+    }
+
+    /**
+     * Apply an inspection disposition to a return. Only `restock` changes
+     * stock (a linked stock-in movement); quarantine/damaged/dispose write a
+     * zero-delta tracking entry so the physical goods stay out of sellable
+     * stock but remain auditable.
+     */
+    public function setReturnDisposition(int $id, string $disposition, ?string $notes, User $inspector, ?string $photo = null): array
+    {
+        return DB::transaction(function () use ($id, $disposition, $notes, $inspector, $photo) {
+            $return = InventoryReturn::lockForUpdate()->findOrFail($id);
+
+            $allowed = match ($return->status) {
+                InventoryReturn::STATUS_PENDING => ['restock', 'quarantine', 'damaged', 'dispose'],
+                InventoryReturn::STATUS_QUARANTINED => ['restock', 'dispose'],
+                default => [],
+            };
+            if (!in_array($disposition, $allowed, true)) {
+                throw ValidationException::withMessages([
+                    'disposition' => "This return cannot be dispositioned as \"{$disposition}\" (current status: {$return->status}).",
+                ]);
+            }
+
+            $item = InventoryItem::lockForUpdate()->findOrFail($return->inventory_item_id);
+            $movement = null;
+
+            if ($disposition === 'restock') {
+                $reasonText = "Customer return {$return->return_no} approved for restock";
+                $logExtra = [
+                    'movement_type' => 'customer_return_restock',
+                    'type' => 'customer_return',
+                    'reason' => $reasonText,
+                    'reason_code' => 'customer_return',
+                    'reference_type' => 'inventory_return',
+                    'reference_id' => $return->id,
+                    'details' => [
+                        'return_no' => $return->return_no,
+                        'source_type' => $return->source_type,
+                        'source_id' => $return->source_id,
+                        'inspection_notes' => $notes,
+                    ],
+                ];
+                if ($item->hasRealBatches() || $item->needsFefo()) {
+                    $item->addBatchStock(
+                        (int) $return->quantity,
+                        'RET-' . strtoupper(Str::random(5)),
+                        null,
+                        $reasonText,
+                        true,
+                        null,
+                        null,
+                        null,
+                        null,
+                        now()->toDateString(),
+                        $logExtra
+                    );
+                } else {
+                    $stockBefore = (int) $item->stock;
+                    $item->increment('stock', (int) $return->quantity);
+                    $item = $item->fresh();
+                    InventoryLog::create(array_merge([
+                        'inventory_item_id' => $item->id,
+                        'delta' => (int) $return->quantity,
+                        'quantity' => (int) $return->quantity,
+                        'stock_before' => $stockBefore,
+                        'stock_after' => $item->stock,
+                        'previous_stock' => $stockBefore,
+                        'new_stock' => $item->stock,
+                        'performed_by' => $inspector->name,
+                        'role' => $inspector->role,
+                        'user_id' => $inspector->id,
+                        'details' => json_encode($logExtra['details']),
+                    ], \Illuminate\Support\Arr::except($logExtra, 'details')));
+                }
+                $movement = $this->latestMovementFor($item);
+                $newStatus = InventoryReturn::STATUS_RESTOCKED;
+            } else {
+                $movement = InventoryLog::create([
+                    'inventory_item_id' => $item->id,
+                    'delta' => 0,
+                    'quantity' => (int) $return->quantity,
+                    'type' => 'return_disposition',
+                    'movement_type' => 'return_disposition',
+                    'reason' => "Return {$return->return_no} disposition: {$disposition}" . ($notes ? " — {$notes}" : ''),
+                    'reason_code' => 'return_' . $disposition,
+                    'reference_type' => 'inventory_return',
+                    'reference_id' => $return->id,
+                    'stock_before' => $item->stock,
+                    'stock_after' => $item->stock,
+                    'previous_stock' => $item->stock,
+                    'new_stock' => $item->stock,
+                    'performed_by' => $inspector->name,
+                    'role' => $inspector->role,
+                    'user_id' => $inspector->id,
+                    'details' => json_encode([
+                        'return_no' => $return->return_no,
+                        'disposition' => $disposition,
+                        'inspection_notes' => $notes,
+                    ]),
+                ]);
+                $newStatus = match ($disposition) {
+                    'quarantine' => InventoryReturn::STATUS_QUARANTINED,
+                    'damaged' => InventoryReturn::STATUS_DAMAGED,
+                    default => InventoryReturn::STATUS_DISPOSED,
+                };
+            }
+
+            $return->update([
+                'status' => $newStatus,
+                'disposition' => $disposition,
+                'inspection_notes' => $notes,
+                'photo' => $photo ?? $return->photo,
+                'inspected_by' => $inspector->id,
+                'inspected_at' => now(),
+                'movement_id' => $movement?->id,
+            ]);
+
+            WorkflowNotifier::notifyRole(
+                'inventory',
+                'Return Dispositioned',
+                "{$item->name}: {$return->quantity} unit(s) — {$disposition} ({$return->return_no}).",
+                'info',
+                'inventory_return',
+                $return->id
+            );
+
+            return ['return' => $return->fresh(['item', 'receiver', 'inspector', 'movement']), 'movement' => $movement];
+        });
     }
 
     /**

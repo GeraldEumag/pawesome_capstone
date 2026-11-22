@@ -139,7 +139,7 @@ class Sale extends Model
 
     public function scopeToday($query)
     {
-        return $query->whereDate('created_at', today());
+        return $query->whereDate('created_at', \App\Services\ServiceDurationService::storeToday());
     }
 
     public function calculateTotals(): void

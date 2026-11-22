@@ -418,9 +418,9 @@ const Grooming = () => {
     }));
 
     const filename = "grooming-appointments";
-    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
-    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Grooming Appointments", filename);
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename, { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename, { signoff: false });
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Grooming Appointments", filename, { signoff: false });
 
     showMessage("success", "Grooming appointments exported.");
   };

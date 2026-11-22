@@ -251,12 +251,16 @@ class AdminDeepAuditTest extends TestCase
     {
         SystemSetting::set('notif_failed_login_alerts', '1');
         User::factory()->create(['email' => 'target@example.com']);
+        $admin = $this->admin();
 
         for ($i = 0; $i < 3; $i++) {
             $this->postJson('/api/auth/login', ['email' => 'target@example.com', 'password' => "bad{$i}"]);
         }
 
+        // Fan-out produces an owned row per active admin — the alert must be
+        // markable, so a NULL-owner broadcast row is not acceptable.
         $this->assertDatabaseHas('notifications', [
+            'user_id' => $admin->id,
             'role' => 'admin',
             'type' => 'warning',
         ]);
@@ -266,12 +270,13 @@ class AdminDeepAuditTest extends TestCase
     {
         SystemSetting::set('notif_failed_login_alerts', '1');
         User::factory()->create(['email' => 'burst@example.com']);
+        $admin = $this->admin();
 
         for ($i = 0; $i < 5; $i++) {
             $this->postJson('/api/auth/login', ['email' => 'burst@example.com', 'password' => "bad{$i}"]);
         }
 
-        $this->assertSame(1, Notification::where('role', 'admin')->where('type', 'warning')->count());
+        $this->assertSame(1, Notification::where('user_id', $admin->id)->where('type', 'warning')->count());
     }
 
     public function test_admin_failed_login_alert_suppressed_when_disabled(): void

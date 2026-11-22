@@ -193,6 +193,16 @@ const AdminLiveReport = ({
   }, [filteredRows]);
 
   const exportColumns = columns.filter((column) => column.key !== "actions");
+  const exportMetadata = {
+    signoff: false,
+    periodLabel: startDate && endDate
+      ? `${startDate} to ${endDate}`
+      : startDate
+        ? `From ${startDate}`
+        : endDate
+          ? `Through ${endDate}`
+          : "All time",
+  };
 
   const formatCellValue = (key, value) => {
     const column = columns.find((item) => item.key === key);
@@ -341,15 +351,15 @@ const AdminLiveReport = ({
             </div>
 
             <div className="table-action-group">
-              <button type="button" onClick={() => exportToCSV(filteredRows, exportColumns, exportName)}>
+              <button type="button" onClick={() => exportToCSV(filteredRows, exportColumns, exportName, exportMetadata)}>
                 <FontAwesomeIcon icon={faFileCsv} />
                 CSV
               </button>
-              <button type="button" onClick={() => exportToExcel(filteredRows, exportColumns, exportName)}>
+              <button type="button" onClick={() => exportToExcel(filteredRows, exportColumns, exportName, exportMetadata)}>
                 <FontAwesomeIcon icon={faFileExcel} />
                 Excel
               </button>
-              <button type="button" onClick={() => exportToPDF(filteredRows, exportColumns, title, exportName)}>
+              <button type="button" onClick={() => exportToPDF(filteredRows, exportColumns, title, exportName, exportMetadata)}>
                 <FontAwesomeIcon icon={faFilePdf} />
                 PDF
               </button>

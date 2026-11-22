@@ -363,9 +363,9 @@ const ReceptionistGroomingBookings = () => {
     }));
 
     const filename = "grooming-bookings";
-    if (format === "csv") exportToCSV(exportData, exportColumns, filename);
-    else if (format === "excel") exportToExcel(exportData, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Grooming Bookings", filename);
+    if (format === "csv") exportToCSV(exportData, exportColumns, filename, { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(exportData, exportColumns, filename, { signoff: false });
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Grooming Bookings", filename, { signoff: false });
 
     showMessage("success", "Export downloaded.");
   };

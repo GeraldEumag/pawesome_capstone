@@ -215,7 +215,7 @@ class POSController extends Controller
             $invoice = Invoice::create([
                 'sale_id' => $sale->id,
                 'customer_id' => $saleCustomerId,
-                'invoice_date' => today(),
+                'invoice_date' => \App\Services\ServiceDurationService::storeToday(),
                 'status' => 'paid',
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,

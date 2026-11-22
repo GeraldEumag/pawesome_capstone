@@ -226,13 +226,24 @@ class AuthController extends Controller
                 return;
             }
 
-            \App\Models\Notification::create([
-                'role' => 'admin',
-                'title' => 'Repeated failed logins detected',
-                'message' => "{$identifier} has {$recentFailures} failed login attempts in the last 15 minutes"
-                    . ' from IP ' . request()->ip() . '.',
-                'type' => 'warning',
-            ]);
+            // Fan out one row per active admin instead of a single broadcast
+            // row (user_id NULL). Broadcast rows are read-visible via the
+            // forUserOrRole scope but can never be marked read or deleted —
+            // the mutation endpoints scope to the caller's own rows, so a
+            // NULL-owner alert pinned every admin's unread badge forever.
+            $message = "{$identifier} has {$recentFailures} failed login attempts in the last 15 minutes"
+                . ' from IP ' . request()->ip() . '.';
+
+            User::where('role', 'admin')
+                ->where('is_active', true)
+                ->pluck('id')
+                ->each(fn ($adminId) => \App\Models\Notification::create([
+                    'user_id' => $adminId,
+                    'role' => 'admin',
+                    'title' => 'Repeated failed logins detected',
+                    'message' => $message,
+                    'type' => 'warning',
+                ]));
         } catch (\Throwable $e) {
             Log::warning('Failed to create admin failed-login alert', ['exception' => get_class($e)]);
         }

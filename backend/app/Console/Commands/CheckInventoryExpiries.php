@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
+use App\Services\ServiceDurationService;
 
 /**
  * Daily expiry sweep (Phase D): notify inventory/admin/manager when batches
@@ -22,7 +23,7 @@ class CheckInventoryExpiries extends Command
     public function handle(): int
     {
         $staff = User::whereIn('role', ['admin', 'inventory', 'manager', 'super_receptionist'])->pluck('id');
-        $now = now()->startOfDay();
+        $now = now(ServiceDurationService::STORE_TIMEZONE)->startOfDay();
 
         // 1) Flag newly-expired batches (physical quantity kept for counts).
         $expired = InventoryBatch::with('inventoryItem')->where('status', 'active')

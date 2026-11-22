@@ -2,8 +2,13 @@ import { apiRequest } from "./client";
 
 export const notificationApi = {
   // Get notifications for the authenticated user (server scopes by token).
-  getAll: async () => {
-    return apiRequest("/notifications");
+  // Optional params: { unread: boolean, limit: number }
+  getAll: async ({ unread = false, limit } = {}) => {
+    const params = new URLSearchParams();
+    if (unread) params.set("unread", "1");
+    if (limit) params.set("limit", String(limit));
+    const qs = params.toString();
+    return apiRequest(`/notifications${qs ? `?${qs}` : ""}`);
   },
 
   // Get unread notifications

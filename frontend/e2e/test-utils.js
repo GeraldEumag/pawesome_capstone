@@ -75,6 +75,9 @@ async function loginAs(page, role = 'admin') {
     tokenCache.set(cacheKey, data);
   }
   await page.addInitScript(({ token, user }) => {
+    // getToken() prefers the standard key — it must be overwritten on every
+    // role switch or a migrated stale token keeps being sent (403s).
+    window.localStorage.setItem('pawesome_auth_token', token);
     window.localStorage.setItem('token', token);
     window.localStorage.setItem('role', user.role);
     window.localStorage.setItem('name', user.name);

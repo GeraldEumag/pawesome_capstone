@@ -1206,7 +1206,7 @@ class AppointmentController extends Controller
      */
     public function veterinarianSchedule($vetId, Request $request)
     {
-        $date = $request->input('date', Carbon::today()->toDateString());
+        $date = $request->input('date', ServiceDurationService::storeToday());
         
         $appointments = Appointment::where('veterinarian_id', $vetId)
             ->whereDate('scheduled_at', $date)

@@ -8,6 +8,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 /**
  * Annual leave balance reset (runs January 1).
@@ -26,7 +27,7 @@ class ResetLeaveBalances extends Command
 
     public function handle(): int
     {
-        $newYear  = (int) ($this->argument('year') ?? now()->year);
+        $newYear  = (int) ($this->argument('year') ?? now(ServiceDurationService::STORE_TIMEZONE)->year);
         $prevYear = $newYear - 1;
 
         $this->info("Resetting leave balances for {$newYear} (previous year: {$prevYear})...");
@@ -86,7 +87,7 @@ class ResetLeaveBalances extends Command
                     'year'        => $year,
                     'days'        => (float) $sil->remaining_days,
                     'cash_value'  => $cashValue,
-                    'applied_at'  => now()->toDateString(),
+                    'applied_at'  => ServiceDurationService::storeToday(),
                 ]),
                 'updated_at' => now(),
                 'created_at' => now(),

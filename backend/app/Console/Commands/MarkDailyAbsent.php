@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -24,7 +25,7 @@ class MarkDailyAbsent extends Command
     public function handle(): int
     {
         $days   = max(1, (int) $this->option('days'));
-        $today  = Carbon::today();
+        $today  = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $marked = 0;
 
         for ($i = 1; $i <= $days; $i++) {

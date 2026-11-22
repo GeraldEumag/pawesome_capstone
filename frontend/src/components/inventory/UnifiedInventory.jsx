@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import StatusDot from "../shared/StatusDot";
 import { exportToCSV as exportCSVUtil, exportToPDF, exportToExcel } from "../../utils/reportExport";
@@ -7,6 +8,7 @@ import {
   faWarehouse, faBoxes, faBell, faSort, faSortUp, faSortDown,
   faChevronDown, faDownload, faHistory, faInfoCircle,
   faSlidersH, faAdjust, faCamera, faXmark, faTrash,
+  faArrowDown, faArrowUp, faRotateLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { normalizeList } from "../../api/client";
@@ -31,7 +33,20 @@ const CATEGORIES = [
   { value: "Services", label: "Services" },
 ];
 
-const UnifiedInventory = () => {
+// mode: "products" → product identity/catalog management only (no stock mutation controls)
+//       "stock"    → stock operations only (receiving, adjustments, batches; no product edits)
+//       "all"      → legacy combined view
+const UnifiedInventory = ({ mode = "all" }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  // The same component mounts under /inventory and /super-receptionist/inventory —
+  // keep quick-action navigation inside the active portal.
+  const portalBase = location.pathname.startsWith("/super-receptionist") ? "/super-receptionist/inventory" : "/inventory";
+  const isProductMode = mode === "products";
+  const isStockMode = mode === "stock";
+  const canManageProducts = mode !== "stock";
+  const canManageStock = mode !== "products";
+
   // Data
   const [items, setItems] = useState([]);
   const [archivedItems, setArchivedItems] = useState([]);
@@ -460,9 +475,9 @@ const UnifiedInventory = () => {
       stock: getStock(it),
       status: getStatus(it),
     }));
-    if (format === "csv") exportCSVUtil(exportData, exportColumns, "inventory");
-    else if (format === "excel") exportToExcel(exportData, exportColumns, "inventory");
-    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Inventory Report", "inventory");
+    if (format === "csv") exportCSVUtil(exportData, exportColumns, "inventory", { csvStyle: "data", signoff: false });
+    else if (format === "excel") exportToExcel(exportData, exportColumns, "inventory", { signoff: false });
+    else if (format === "pdf") exportToPDF(exportData, exportColumns, "Inventory Report", "inventory", { signoff: false });
   };
 
   // ---- Reorder ----
@@ -499,7 +514,7 @@ const UnifiedInventory = () => {
       {/* Header */}
       <div className="ui-header">
         <div className="ui-header-left">
-          <h1><FontAwesomeIcon icon={faWarehouse} /> Unified Inventory</h1>
+          <h1><FontAwesomeIcon icon={isProductMode ? faBox : isStockMode ? faBoxes : faWarehouse} /> {isProductMode ? "Product Management" : isStockMode ? "Stock Management" : "Unified Inventory"}</h1>
           {alertCount > 0 && (
             <span className="stock-alert-badge">
               <FontAwesomeIcon icon={faBell} /> {alertCount} alert{alertCount > 1 ? "s" : ""}
@@ -523,9 +538,24 @@ const UnifiedInventory = () => {
               </>
             )}
           </div>
-          <button className="btn btn-primary" onClick={handleAddNew}>
-            <FontAwesomeIcon icon={faPlus} /> Add New Item
-          </button>
+          {canManageStock && (
+            <>
+              <button className="btn btn-secondary" onClick={() => navigate(`${portalBase}/stock-in`)} title="Receive stock without opening a row menu">
+                <FontAwesomeIcon icon={faArrowDown} /> Stock In
+              </button>
+              <button className="btn btn-secondary" onClick={() => navigate(`${portalBase}/stock-out`)} title="Record an authorized withdrawal">
+                <FontAwesomeIcon icon={faArrowUp} /> Stock Out
+              </button>
+              <button className="btn btn-secondary" onClick={() => navigate(`${portalBase}/returns`)} title="Process a customer product return">
+                <FontAwesomeIcon icon={faRotateLeft} /> Return
+              </button>
+            </>
+          )}
+          {canManageProducts && (
+            <button className="btn btn-primary" onClick={handleAddNew}>
+              <FontAwesomeIcon icon={faPlus} /> Add New Item
+            </button>
+          )}
         </div>
       </div>
 
@@ -562,7 +592,7 @@ const UnifiedInventory = () => {
       )}
 
       {/* Reorder suggestions */}
-      {reorderSuggestions.length > 0 && activeTab === "active" && (
+      {canManageStock && reorderSuggestions.length > 0 && activeTab === "active" && (
         <div className="ui-reorder-panel">
           <div className="ui-reorder-header">
             <div>
@@ -595,9 +625,11 @@ const UnifiedInventory = () => {
         <button className={`ui-tab ${activeTab === "active" ? "active" : ""}`} onClick={() => setActiveTab("active")}>
           <FontAwesomeIcon icon={faBox} /> Active Items ({items.length})
         </button>
-        <button className={`ui-tab ${activeTab === "archived" ? "active" : ""}`} onClick={() => setActiveTab("archived")}>
-          <FontAwesomeIcon icon={faArchive} /> Archived ({archivedItems.length})
-        </button>
+        {canManageProducts && (
+          <button className={`ui-tab ${activeTab === "archived" ? "active" : ""}`} onClick={() => setActiveTab("archived")}>
+            <FontAwesomeIcon icon={faArchive} /> Archived ({archivedItems.length})
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -667,7 +699,7 @@ const UnifiedInventory = () => {
       )}
 
       {/* Bulk actions */}
-      {selectedItems.length > 0 && activeTab === "active" && (
+      {canManageProducts && selectedItems.length > 0 && activeTab === "active" && (
         <div className="ui-bulk-bar">
           <span>{selectedItems.length} selected</span>
           <button className="btn btn-danger" onClick={handleBulkArchive}>
@@ -692,7 +724,7 @@ const UnifiedInventory = () => {
           <table className="ui-table">
             <thead>
               <tr>
-                {activeTab === "active" && (
+                {canManageProducts && activeTab === "active" && (
                   <th className="checkbox-col">
                     <input type="checkbox" checked={selectedItems.length === paginatedItems.length && paginatedItems.length > 0} onChange={handleSelectAll} />
                   </th>
@@ -711,7 +743,7 @@ const UnifiedInventory = () => {
               {paginatedItems.map((item) => (
                 <React.Fragment key={item.id}>
                   <tr className={`${getStock(item) === 0 ? "out-of-stock-row" : ""} ${selectedItems.includes(item.id) ? "selected" : ""} ${scanHighlightId === item.id ? "scan-highlight" : ""}`}>
-                    {activeTab === "active" && <td className="checkbox-col" />}
+                    {canManageProducts && activeTab === "active" && <td className="checkbox-col" />}
                     <td className="sku-cell">
                       <div className="sku-primary">{item.sku || "—"}</div>
                       {item.barcode && item.barcode !== item.sku && (
@@ -760,38 +792,50 @@ const UnifiedInventory = () => {
                           </div>
                         ) : (
                           <>
-                            <label className="row-action-popover-checkbox">
-                              <input
-                                type="checkbox"
-                                aria-label={`Select ${item.name || item.sku || "item"} for bulk archive`}
-                                checked={selectedItems.includes(item.id)}
-                                onChange={() => handleSelectItem(item.id)}
-                              />
-                              <span>Select for bulk archive</span>
-                            </label>
+                            {canManageProducts && (
+                              <label className="row-action-popover-checkbox">
+                                <input
+                                  type="checkbox"
+                                  aria-label={`Select ${item.name || item.sku || "item"} for bulk archive`}
+                                  checked={selectedItems.includes(item.id)}
+                                  onChange={() => handleSelectItem(item.id)}
+                                />
+                                <span>Select for bulk archive</span>
+                              </label>
+                            )}
                             <div className="action-group">
-                              <button
-                                className={`btn-icon batches ${expandedItems.has(item.id) ? "expanded" : ""}`}
-                                onClick={() => toggleExpand(item.id)}
-                                title={expandedItems.has(item.id) ? "Hide Batches" : "View Batches"}
-                              >
-                                <FontAwesomeIcon icon={faChevronDown} />
-                              </button>
+                              {canManageStock && (
+                                <button
+                                  className={`btn-icon batches ${expandedItems.has(item.id) ? "expanded" : ""}`}
+                                  onClick={() => toggleExpand(item.id)}
+                                  title={expandedItems.has(item.id) ? "Hide Batches" : "View Batches"}
+                                >
+                                  <FontAwesomeIcon icon={faChevronDown} />
+                                </button>
+                              )}
                               <button className="btn-icon info" onClick={() => handleViewInfo(item)} title="View Info">
                                 <FontAwesomeIcon icon={faInfoCircle} />
                               </button>
-                              <button className="btn-icon history" onClick={() => handleViewHistory(item)} title="History">
-                                <FontAwesomeIcon icon={faHistory} />
-                              </button>
-                              <button className="btn-icon edit" onClick={() => handleEdit(item)} title="Edit">
-                                <FontAwesomeIcon icon={faEdit} />
-                              </button>
-                              <button className="btn-icon adjust" onClick={() => handleAdjust(item)} title="Adjust Stock">
-                                <FontAwesomeIcon icon={faAdjust} />
-                              </button>
-                              <button className="btn-icon archive" onClick={() => handleArchive(item)} title="Archive">
-                                <FontAwesomeIcon icon={faArchive} />
-                              </button>
+                              {canManageStock && (
+                                <button className="btn-icon history" onClick={() => handleViewHistory(item)} title="History">
+                                  <FontAwesomeIcon icon={faHistory} />
+                                </button>
+                              )}
+                              {canManageProducts && (
+                                <button className="btn-icon edit" onClick={() => handleEdit(item)} title="Edit">
+                                  <FontAwesomeIcon icon={faEdit} />
+                                </button>
+                              )}
+                              {canManageStock && (
+                                <button className="btn-icon adjust" onClick={() => handleAdjust(item)} title="Receive / Adjust Stock">
+                                  <FontAwesomeIcon icon={faAdjust} />
+                                </button>
+                              )}
+                              {canManageProducts && (
+                                <button className="btn-icon archive" onClick={() => handleArchive(item)} title="Archive">
+                                  <FontAwesomeIcon icon={faArchive} />
+                                </button>
+                              )}
                             </div>
                           </>
                         )}

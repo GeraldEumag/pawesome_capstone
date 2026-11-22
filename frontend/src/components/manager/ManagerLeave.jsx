@@ -214,14 +214,15 @@ const ManagerLeave = () => {
 
     setShowExportDropdown(false);
 
+    const exportMetadata = { signoff: false };
     if (format === "csv") {
-      exportToCSV(exportData, exportColumns, filename);
+      exportToCSV(exportData, exportColumns, filename, exportMetadata);
       showToast("Leave CSV exported successfully.", "success");
     } else if (format === "excel") {
-      exportToExcel(exportData, exportColumns, filename);
+      exportToExcel(exportData, exportColumns, filename, exportMetadata);
       showToast("Leave Excel exported successfully.", "success");
     } else if (format === "pdf") {
-      exportToPDF(exportData, exportColumns, "Leave Requests Report", filename);
+      exportToPDF(exportData, exportColumns, "Leave Requests Report", filename, exportMetadata);
       showToast("Leave PDF exported successfully.", "success");
     }
   };

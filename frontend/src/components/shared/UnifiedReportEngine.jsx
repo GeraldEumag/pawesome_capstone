@@ -18,6 +18,7 @@ import DatePickerInput from './DatePickerInput';
 import Modal from './Modal';
 import { formatDateOnly, parseDateOnly } from '../../utils/date';
 import { exportToCSV, exportToPDF, exportToExcel, getDateRangePreset } from '../../utils/reportExport';
+import { showError } from '../../utils/alert.jsx';
 import { formatCurrency } from "../../utils/currency";
 import './UnifiedReportEngine.css';
 
@@ -378,6 +379,9 @@ const UnifiedReportEngineBase = ({
   exportEnabled = true,
   exportFilename = 'report',
   exportTitle = 'Report',
+  // UnifiedReportEngine drives operational list reports — sign-off sections
+  // are suppressed by default; formal reports opt back in via exportSignoff.
+  exportSignoff = false,
   
   // Features
   enableRefresh = true,
@@ -572,30 +576,70 @@ const UnifiedReportEngineBase = ({
   }, [data, appliedFilters, appliedDateRange, columns, customFilters]);
 
   // Export handlers — exports must match what the user sees: the
-  // filtered dataset, never the unfiltered source.
-  const handleExportCSV = useCallback(() => {
-    exportToCSV(filteredData, columns, exportFilename);
-  }, [filteredData, columns, exportFilename]);
+  // filtered dataset, never the unfiltered source. The applied date range
+  // and status filter are propagated so the generated document reports the
+  // actual reporting period instead of a generic "as of issue" label.
+  const [exporting, setExporting] = useState(false);
 
-  const handleExportPDF = useCallback(() => {
-    exportToPDF(filteredData, columns, exportTitle, exportFilename);
-  }, [filteredData, columns, exportTitle, exportFilename]);
+  const exportPeriodLabel = useMemo(() => {
+    const { startDate, endDate } = appliedDateRange || {};
+    if (startDate && endDate) return `${startDate} to ${endDate}`;
+    if (startDate) return `From ${startDate}`;
+    if (endDate) return `Through ${endDate}`;
+    return 'All time';
+  }, [appliedDateRange]);
 
-  const handleExportExcel = useCallback(() => {
-    exportToExcel(filteredData, columns, exportFilename);
-  }, [filteredData, columns, exportFilename]);
+  const exportMetadata = useMemo(() => ({
+    periodLabel: exportPeriodLabel,
+    signoff: exportSignoff,
+    ...(appliedFilters.status && appliedFilters.status !== 'all'
+      ? { infoFields: [{ label: 'Status Filter', value: formatLabel(appliedFilters.status) }] }
+      : {}),
+  }), [exportPeriodLabel, exportSignoff, appliedFilters.status]);
+
+  const runExport = useCallback(async (task) => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await task();
+    } catch (err) {
+      console.error('Export failed:', err);
+      showError('Export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting]);
+
+  const handleExportCSV = useCallback(() =>
+    runExport(() => exportToCSV(filteredData, columns, exportFilename, exportMetadata)),
+  [runExport, filteredData, columns, exportFilename, exportMetadata]);
+
+  const handleExportDataCSV = useCallback(() =>
+    runExport(() => exportToCSV(filteredData, columns, exportFilename, { csvStyle: 'data' })),
+  [runExport, filteredData, columns, exportFilename]);
+
+  const handleExportPDF = useCallback(() =>
+    runExport(() => exportToPDF(filteredData, columns, exportTitle, exportFilename, exportMetadata)),
+  [runExport, filteredData, columns, exportTitle, exportFilename, exportMetadata]);
+
+  const handleExportExcel = useCallback(() =>
+    runExport(() => exportToExcel(filteredData, columns, exportFilename, exportMetadata)),
+  [runExport, filteredData, columns, exportFilename, exportMetadata]);
 
   // Export actions
   const exportActions = exportEnabled ? (
     <>
-      <button type="button" onClick={handleExportCSV} title="Export CSV">
+      <button type="button" onClick={handleExportCSV} disabled={exporting} title="Export formal CSV report">
         CSV
       </button>
-      <button type="button" onClick={handleExportExcel} title="Export Excel">
+      <button type="button" onClick={handleExportDataCSV} disabled={exporting} title="Export data-only CSV (column headers and records)">
+        Data CSV
+      </button>
+      <button type="button" onClick={handleExportExcel} disabled={exporting} title="Export Excel">
         Excel
       </button>
-      <button type="button" onClick={handleExportPDF} title="Export PDF">
-        PDF
+      <button type="button" onClick={handleExportPDF} disabled={exporting} title="Export PDF">
+        {exporting ? 'Exporting…' : 'PDF'}
       </button>
     </>
   ) : null;

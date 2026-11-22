@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use App\Services\ServiceDurationService;
 
 class Holiday extends Model
 {
@@ -85,7 +86,7 @@ class Holiday extends Model
     /** Forget cached blocked-date maps for the years a change touched. */
     public static function clearCache(int ...$years): void
     {
-        foreach ($years ?: [(int) now()->year] as $year) {
+        foreach ($years ?: [(int) now(ServiceDurationService::STORE_TIMEZONE)->year] as $year) {
             Cache::forget("holidays_blocked_{$year}");
         }
     }

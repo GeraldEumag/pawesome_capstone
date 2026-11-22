@@ -21,6 +21,14 @@ class AppointmentTimezoneContractTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_application_timezone_remains_utc_for_stored_instants(): void
+    {
+        // Datetimes are persisted as UTC instants. If app.timezone is set to a
+        // non-UTC zone, Eloquent hydrates naive DB values as local time and
+        // every serialization/read-back shifts by the offset.
+        $this->assertSame('UTC', config('app.timezone'));
+    }
+
     public function test_customer_iso_schedule_uses_store_timezone_and_persists_the_utc_instant(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-10-13 12:00:00', 'Asia/Manila'));

@@ -15,6 +15,7 @@ use App\Models\Sale;
 use App\Models\Service;
 use App\Models\ServiceRequest;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\StoreFacts;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -705,7 +706,7 @@ class PremiumChatbotService
         }
 
         $query = Appointment::with(['pet', 'service', 'customer'])
-            ->whereDate('scheduled_at', Carbon::today())
+            ->whereDate('scheduled_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE))
             ->orderBy('scheduled_at');
 
         if ($role === 'veterinary') {
@@ -775,7 +776,7 @@ class PremiumChatbotService
             return $this->workflowExplanationResponse($role);
         }
 
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $salesToday = Sale::whereDate('created_at', $today)->sum('amount');
         $paymentsPending = ServiceRequest::where('payment_status', 'pending')->count()
             + (Schema::hasTable('customer_orders') ? CustomerOrder::where('payment_status', 'pending')->count() : 0)
@@ -1112,7 +1113,7 @@ class PremiumChatbotService
      */
     private function premiumSummaryResponse(string $role): array
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $now = now();
         
         $data = match ($role) {
@@ -1762,7 +1763,7 @@ class PremiumChatbotService
             'admin', 'manager' => [
                 'type' => 'stats_preview',
                 'stats' => [
-                    'today_appointments' => Appointment::whereDate('scheduled_at', today())->count(),
+                    'today_appointments' => Appointment::whereDate('scheduled_at', \App\Services\ServiceDurationService::storeToday())->count(),
                     'active_users' => User::where('is_active', true)->count(),
                 ],
             ],

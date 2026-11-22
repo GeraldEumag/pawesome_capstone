@@ -125,7 +125,9 @@ test.describe('Inventory Dashboard end-to-end', () => {
     }
 
     test.setTimeout(90000); // inventory list fetch can starve under parallel load
-    await page.goto(frontendUrl + dashboardPath + '/products');
+    // Stock controls live on the Stock Management page after the
+    // product/stock separation — /products intentionally has no stock actions.
+    await page.goto(frontendUrl + dashboardPath + '/stock');
     await page.waitForLoadState('domcontentloaded');
 
     // Rows render only after the inventory fetch resolves — wait for the
@@ -150,6 +152,42 @@ test.describe('Inventory Dashboard end-to-end', () => {
     }
 
     expect(hasStockAction).toBeTruthy();
+  });
+
+  test('product and stock management pages are separated', async ({ page }) => {
+    const mockItems = {
+      items: [{ id: 1, name: 'Dog Food', stock: 50, reorder_level: 10, sku: 'FOO-001' }]
+    };
+    if (!process.env.E2E_LIVE) {
+      const json = { contentType: 'application/json' };
+      await page.route((url) => url.pathname.startsWith('/api/inventory'), route => route.fulfill({ status: 200, ...json, body: JSON.stringify(mockItems) }));
+    }
+
+    test.setTimeout(90000);
+
+    // Product Management: has Add New Item, but no stock-adjust control.
+    await page.goto(frontendUrl + dashboardPath + '/products');
+    await page.waitForLoadState('domcontentloaded');
+    await page.locator('text=Loading inventory').waitFor({ state: 'hidden', timeout: 45000 }).catch(() => {});
+    await page.getByRole("button", { name: /actions for/i }).first().click().catch(() => {});
+    await page.waitForTimeout(500);
+    const productAdjust = page.locator('.btn-icon.adjust, button[title*="adjust" i]');
+    expect(await productAdjust.count()).toBe(0);
+    const addBtn = page.locator('button:has-text("Add New Item")').first();
+    expect(await addBtn.isVisible().catch(() => false)).toBeTruthy();
+
+    // Stock Management: has stock-adjust control, but no product creation/edit/archive.
+    await page.goto(frontendUrl + dashboardPath + '/stock');
+    await page.waitForLoadState('domcontentloaded');
+    await page.locator('text=Loading inventory').waitFor({ state: 'hidden', timeout: 45000 }).catch(() => {});
+    await page.getByRole("button", { name: /actions for/i }).first().click().catch(() => {});
+    await page.waitForTimeout(500);
+    const stockAddItem = page.locator('button:has-text("Add New Item")');
+    expect(await stockAddItem.count()).toBe(0);
+    const stockEdit = page.locator('.btn-icon.edit, button[title="Edit"]');
+    expect(await stockEdit.count()).toBe(0);
+    const stockAdjust = page.locator('.btn-icon.adjust, button[title*="adjust" i]').first();
+    expect(await stockAdjust.isVisible().catch(() => false)).toBeTruthy();
   });
 
   test('forbidden pages redirect or block', async ({ page }) => {

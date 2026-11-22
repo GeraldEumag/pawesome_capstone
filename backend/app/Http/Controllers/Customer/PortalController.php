@@ -64,7 +64,7 @@ class PortalController extends Controller
             ]);
         }
 
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
 
         $activeBookings = Appointment::where('customer_id', $cust->id)
             ->whereIn('status', ['scheduled','confirmed'])
@@ -507,7 +507,7 @@ class PortalController extends Controller
         $hasActiveGrooming = $pet->groomingAppointments()
             ->whereIn('status', ['pending', 'pending_review', 'approved', 'scheduled'])
             ->where(function ($query) {
-                $today = now()->toDateString();
+                $today = ServiceDurationService::storeToday();
                 $query->whereDate('request_date', '>=', $today)
                       ->orWhereDate('preferred_date', '>=', $today);
             })

@@ -641,12 +641,13 @@ const ChatbotLogs = () => {
 
     const filename = `chatbot-logs-${new Date().toISOString().slice(0, 10)}`;
 
+    const exportMetadata = { signoff: false };
     if (format === "csv") {
-      exportToCSV(filteredLogs, exportColumns, filename);
+      exportToCSV(filteredLogs, exportColumns, filename, exportMetadata);
     } else if (format === "excel") {
-      exportToExcel(filteredLogs, exportColumns, filename);
+      exportToExcel(filteredLogs, exportColumns, filename, exportMetadata);
     } else if (format === "pdf") {
-      exportToPDF(filteredLogs, exportColumns, "Chatbot Logs", filename);
+      exportToPDF(filteredLogs, exportColumns, "Chatbot Logs", filename, exportMetadata);
     }
 
     showMessage("success", "Chatbot logs exported successfully.");
@@ -680,7 +681,7 @@ const ChatbotLogs = () => {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-");
 
-    exportToCSV(rows, columns, `chatbot-conversation-${safeName}`);
+    exportToCSV(rows, columns, `chatbot-conversation-${safeName}`, { csvStyle: "data" });
     showMessage("success", "Conversation exported successfully.");
   };
 

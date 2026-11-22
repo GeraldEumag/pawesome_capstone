@@ -110,7 +110,6 @@ class InventoryTest extends TestCase
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'name' => 'Updated Name',
                 'price' => 450,
-                'stock' => 15,
                 'category' => 'Food',
             ]);
 
@@ -307,14 +306,28 @@ class InventoryTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Quantity decreases can still be set directly; increases require
-        // the batch receiving action.
+        // 'quantity' is a stock-mutation field: product updates now reject it
+        // outright. Decreases go through the stock adjustment endpoint.
         $response = $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'quantity' => 10, // Using 'quantity' instead of 'stock'
             ]);
 
-        $response->assertStatus(200);
+        $response->assertStatus(422);
+
+        $this->assertDatabaseHas('inventory_items', [
+            'id' => $item->id,
+            'stock' => 15,
+        ]);
+
+        $adjustResponse = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/{$item->id}/adjust-stock", [
+                'type' => 'remove',
+                'quantity' => 5,
+                'reason' => 'Test decrement',
+            ]);
+
+        $adjustResponse->assertOk();
 
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
@@ -386,7 +399,7 @@ class InventoryTest extends TestCase
         ]);
     }
 
-    public function test_expired_item_stock_always_replaces(): void
+    public function test_expired_item_stock_replaced_through_dedicated_workflow(): void
     {
         $item = InventoryItem::create([
             'sku' => 'EXPIRED-STOCK-TEST',
@@ -399,29 +412,70 @@ class InventoryTest extends TestCase
             'expiry_date' => now()->subDays(5), // Expired 5 days ago
         ]);
 
-        // Try to add 25 - but since expired, it should REPLACE to 25
-        $response = $this->actingAs($this->admin)
+        $expiredBatch = $item->batches()->create([
+            'batch_no' => 'B-EXPIRED-001',
+            'received_date' => now()->subMonths(6)->toDateString(),
+            'expiration_date' => now()->subDays(5)->toDateString(),
+            'quantity' => 50,
+            'remaining_quantity' => 50,
+            'status' => 'expired',
+        ]);
+
+        // Product updates can no longer carry stock fields — even for expired
+        // items. Replacement is done through the dedicated stock workflow.
+        $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'stock' => 25,
-                'add_stock' => true, // This would normally add, but item is expired
+                'add_stock' => true,
+            ])
+            ->assertStatus(422);
+
+        // Step 1: dispose the expired batch — the batch row is preserved as
+        // 'disposed' and the write-off is logged.
+        $disposeResponse = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/batches/{$expiredBatch->id}/dispose", [
+                'reason' => 'Expired',
             ]);
 
-        $response->assertStatus(200)
-            ->assertJsonPath('stock_action', 'replaced_expired')
-            ->assertJsonPath('previous_stock', 50)
-            ->assertJsonPath('new_stock', 25); // Replaced, not added
+        $disposeResponse->assertOk();
+
+        $this->assertDatabaseHas('inventory_batches', [
+            'id' => $expiredBatch->id,
+            'status' => 'disposed',
+            'remaining_quantity' => 0,
+        ]);
 
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
-            'stock' => 25, // Replaced, not 75
+            'stock' => 0,
         ]);
 
-        // Verify inventory log shows replacement
         $this->assertDatabaseHas('inventory_logs', [
             'inventory_item_id' => $item->id,
-            'delta' => -25, // 25 - 50 = -25
-            'reason' => 'Stock replacement (expired inventory cleared)',
-            'reference_type' => 'expired_replacement',
+            'movement_type' => 'batch_disposal',
+            'delta' => -50,
+        ]);
+
+        // Step 2: receive the replacement stock as a new batch.
+        $receiveResponse = $this->actingAs($this->admin)
+            ->postJson("/api/admin/inventory/items/{$item->id}/batches", [
+                'batch_no' => 'B-REPLACE-001',
+                'received_date' => now()->toDateString(),
+                'expiration_date' => now()->addMonths(6)->toDateString(),
+                'quantity' => 25,
+            ]);
+
+        $receiveResponse->assertOk();
+
+        $this->assertDatabaseHas('inventory_items', [
+            'id' => $item->id,
+            'stock' => 25,
+        ]);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'inventory_item_id' => $item->id,
+            'movement_type' => 'batch_restock',
+            'delta' => 25,
         ]);
     }
 
@@ -437,21 +491,17 @@ class InventoryTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Without add_stock flag, should replace to 25
+        // Stock fields are prohibited on product updates — 422, stock stays 50.
         $response = $this->actingAs($this->admin)
             ->putJson("/api/admin/inventory/items/{$item->id}", [
                 'stock' => 25,
-                // add_stock not specified, defaults to false
             ]);
 
-        $response->assertStatus(200)
-            ->assertJsonPath('stock_action', 'replaced')
-            ->assertJsonPath('previous_stock', 50)
-            ->assertJsonPath('new_stock', 25);
+        $response->assertStatus(422);
 
         $this->assertDatabaseHas('inventory_items', [
             'id' => $item->id,
-            'stock' => 25, // Replaced
+            'stock' => 50,
         ]);
     }
 
@@ -763,5 +813,152 @@ class InventoryTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['price']);
+    }
+
+    // ============================================
+    // ZERO-STOCK PRODUCT CREATION
+    // ============================================
+
+    public function test_can_create_product_with_zero_stock(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/admin/inventory/items', [
+                'sku' => 'ZERO-STOCK-001',
+                'barcode' => 'ZEROSTOCK001',
+                'name' => 'Catalog Only Product',
+                'category' => 'Accessories',
+                'price' => 350,
+                'stock' => 0,
+                'reorder_level' => 5,
+                'status' => 'active',
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('item.sku', 'ZERO-STOCK-001');
+
+        $item = InventoryItem::where('sku', 'ZERO-STOCK-001')->firstOrFail();
+
+        $this->assertSame(0, (int) $item->stock);
+        $this->assertSame(0, $item->batches()->count());
+
+        // A catalog-only product must not fabricate an opening-stock movement.
+        $this->assertSame(0, InventoryLog::where('inventory_item_id', $item->id)->count());
+    }
+
+    public function test_can_create_product_without_stock_field(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->postJson('/api/admin/inventory/items', [
+                'sku' => 'ZERO-STOCK-002',
+                'barcode' => 'ZEROSTOCK002',
+                'name' => 'No Stock Field Product',
+                'category' => 'Accessories',
+                'price' => 350,
+                'reorder_level' => 5,
+                'status' => 'active',
+            ]);
+
+        $response->assertStatus(201);
+
+        $item = InventoryItem::where('sku', 'ZERO-STOCK-002')->firstOrFail();
+
+        $this->assertSame(0, (int) $item->stock);
+        $this->assertSame(0, $item->batches()->count());
+        $this->assertSame(0, InventoryLog::where('inventory_item_id', $item->id)->count());
+    }
+
+    // ============================================
+    // PRODUCT UPDATES CANNOT MOVE STOCK
+    // ============================================
+
+    public function test_product_update_rejects_all_stock_fields(): void
+    {
+        foreach (['stock', 'quantity', 'stock_quantity', 'add_stock'] as $field) {
+            $item = InventoryItem::create([
+                'sku' => 'NO-STOCK-UPD-' . strtoupper($field),
+                'name' => 'Stock Field Probe ' . $field,
+                'category' => 'Food',
+                'price' => 400,
+                'stock' => 15,
+                'reorder_level' => 5,
+                'status' => 'active',
+            ]);
+
+            $value = $field === 'add_stock' ? true : 10;
+
+            $response = $this->actingAs($this->admin)
+                ->putJson("/api/admin/inventory/items/{$item->id}", [
+                    $field => $value,
+                ]);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['stock']);
+
+            // Nothing may move: stock, batches and logs all stay untouched.
+            $this->assertSame(15, (int) $item->fresh()->stock);
+            $this->assertSame(0, InventoryLog::where('inventory_item_id', $item->id)
+                ->where('movement_type', '!=', 'initial_stock')
+                ->count());
+        }
+    }
+
+    public function test_product_update_rejects_stock_even_with_other_changes(): void
+    {
+        $item = InventoryItem::create([
+            'sku' => 'NO-PARTIAL-WRITE',
+            'name' => 'Original Name',
+            'category' => 'Food',
+            'price' => 400,
+            'stock' => 15,
+            'reorder_level' => 5,
+            'status' => 'active',
+        ]);
+
+        // A payload mixing a valid product change with a prohibited stock
+        // field must fail entirely — no partial product write either.
+        $response = $this->actingAs($this->admin)
+            ->putJson("/api/admin/inventory/items/{$item->id}", [
+                'name' => 'Renamed',
+                'stock' => 10,
+            ]);
+
+        $response->assertStatus(422);
+
+        $fresh = $item->fresh();
+        $this->assertSame('Original Name', $fresh->name);
+        $this->assertSame(15, (int) $fresh->stock);
+    }
+
+    public function test_product_update_leaves_stock_and_logs_untouched(): void
+    {
+        $item = InventoryItem::create([
+            'sku' => 'EDIT-NO-STOCK',
+            'name' => 'Before Edit',
+            'category' => 'Food',
+            'price' => 400,
+            'stock' => 15,
+            'reorder_level' => 5,
+            'status' => 'active',
+        ]);
+
+        $logCountBefore = InventoryLog::where('inventory_item_id', $item->id)->count();
+
+        $response = $this->actingAs($this->admin)
+            ->putJson("/api/admin/inventory/items/{$item->id}", [
+                'name' => 'After Edit',
+                'description' => 'Updated description',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('stock_action', 'unchanged')
+            ->assertJsonPath('new_stock', 15);
+
+        $fresh = $item->fresh();
+        $this->assertSame('After Edit', $fresh->name);
+        $this->assertSame(15, (int) $fresh->stock);
+        $this->assertSame(
+            $logCountBefore,
+            InventoryLog::where('inventory_item_id', $item->id)->count()
+        );
     }
 }

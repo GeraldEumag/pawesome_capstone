@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\BiometricCredential;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -143,7 +144,7 @@ class FingerprintController extends Controller
         }
 
         $user = $bioCred->user;
-        $today = Carbon::today()->toDateString();
+        $today = ServiceDurationService::storeToday();
         $now = Carbon::now();
 
         // Update last used
@@ -392,7 +393,7 @@ class FingerprintController extends Controller
      */
     public function todaySummary(): JsonResponse
     {
-        $today = Carbon::today()->toDateString();
+        $today = ServiceDurationService::storeToday();
 
         $totalBio = Attendance::where('date', $today)
             ->whereIn('source', ['biometric', 'fingerprint_terminal'])

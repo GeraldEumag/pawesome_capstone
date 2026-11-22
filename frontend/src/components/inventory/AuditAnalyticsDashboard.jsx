@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { inventoryApi } from "../../api/inventory.jsx";
 import { exportToCSV } from "../../utils/reportExport";
+import { exportFormalReportPDF } from "../../utils/formalReportPdf";
 import { showAlert } from "../../utils/alert.jsx";
 import {
   LineChart,
@@ -134,7 +135,7 @@ const AuditAnalyticsDashboard = () => {
       };
     });
 
-    exportToCSV(exportData, columns, `audit-analytics-${months}-months`);
+    exportToCSV(exportData, columns, `audit-analytics-${months}-months`, { csvStyle: "data", signoff: false });
   };
 
   const handleExportPDF = () => {
@@ -143,139 +144,48 @@ const AuditAnalyticsDashboard = () => {
       return;
     }
 
-    const printContent = `
-      <html>
-        <head>
-          <title>Audit Analytics Dashboard - Last ${months} Months</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-              color: #333;
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-              border-bottom: 2px solid #ff5f93;
-              padding-bottom: 20px;
-            }
-            .header h1 {
-              color: #ff5f93;
-              margin: 0;
-              font-size: 24px;
-            }
-            .header p {
-              margin: 5px 0;
-              color: #666;
-            }
-            .stats {
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 15px;
-              margin-bottom: 30px;
-            }
-            .stat-card {
-              border: 1px solid #ddd;
-              padding: 15px;
-              text-align: center;
-              border-radius: 8px;
-            }
-            .stat-card h3 {
-              margin: 0 0 5px 0;
-              color: #ff5f93;
-              font-size: 24px;
-            }
-            .stat-card p {
-              margin: 0;
-              font-size: 14px;
-              color: #666;
-            }
-            .trend-${stats.trendDirection} {
-              background-color: ${stats.trendDirection === 'improving' ? '#d4edda' : stats.trendDirection === 'declining' ? '#f8d7da' : '#fff3cd'};
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 12px;
-              text-align: center;
-            }
-            th {
-              background-color: #f5f5f5;
-              font-weight: bold;
-            }
-            @media print {
-              .no-print {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Audit Analytics Dashboard</h1>
-            <p>Analysis for the Last ${months} Months</p>
-            <p>Generated: ${new Date().toLocaleDateString()}</p>
-          </div>
-          
-          <div class="stats">
-            <div class="stat-card">
-              <h3>${stats.totalDiscrepancies}</h3>
-              <p>Total Discrepancies</p>
-            </div>
-            <div class="stat-card">
-              <h3>${stats.totalMatched}</h3>
-              <p>Total Matched</p>
-            </div>
-            <div class="stat-card">
-              <h3>${stats.totalVariance}</h3>
-              <p>Total Variance</p>
-            </div>
-            <div class="stat-card trend-${stats.trendDirection}">
-              <h3>${stats.averageAccuracy}%</h3>
-              <p>Avg Accuracy (${stats.trendDirection})</p>
-            </div>
-          </div>
+    const rows = auditData.map((audit) => {
+      const totalAudited = Number(audit.total_discrepancies || 0) + Number(audit.total_matched || 0);
+      const accuracyRate = totalAudited > 0 ? ((Number(audit.total_matched || 0) / totalAudited) * 100).toFixed(1) : 0;
+      return {
+        month: `${new Date(audit.year, audit.month - 1).toLocaleString("default", { month: "long" })} ${audit.year}`,
+        total_discrepancies: audit.total_discrepancies,
+        total_matched: audit.total_matched,
+        total_variance: audit.total_variance,
+        accuracy_rate: `${accuracyRate}%`,
+      };
+    });
 
-          <table>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th>Year</th>
-                <th>Discrepancies</th>
-                <th>Matched</th>
-                <th>Total Variance</th>
-                <th>Accuracy Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${auditData.map((audit) => {
-                const totalAudited = Number(audit.total_discrepancies || 0) + Number(audit.total_matched || 0);
-                const accuracyRate = totalAudited > 0 ? ((Number(audit.total_matched || 0) / totalAudited) * 100).toFixed(1) : 0;
-                return `
-                  <tr>
-                    <td>${new Date(audit.year, audit.month - 1).toLocaleString('default', { month: 'long' })}</td>
-                    <td>${audit.year}</td>
-                    <td>${audit.total_discrepancies}</td>
-                    <td>${audit.total_matched}</td>
-                    <td>${audit.total_variance}</td>
-                    <td>${accuracyRate}%</td>
-                  </tr>
-                `;
-              }).join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.print();
+    exportFormalReportPDF({
+      docRef: `AUDIT-ANALYTICS-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
+      title: "Inventory Audit Analytics",
+      subtitle: `Audit trend analysis for the last ${months} months`,
+      periodLabel: `Last ${months} months`,
+      signoff: false,
+      infoFields: [
+        { label: "Months Covered", value: months },
+        { label: "Audit Cycles", value: auditData.length },
+        { label: "Accuracy Trend", value: stats.trendDirection },
+      ],
+      summaryCards: [
+        { label: "Total Discrepancies", value: stats.totalDiscrepancies },
+        { label: "Total Matched", value: stats.totalMatched },
+        { label: "Total Variance", value: stats.totalVariance },
+        { label: "Avg Accuracy", value: `${stats.averageAccuracy}%` },
+      ],
+      table: {
+        title: "Monthly Audit Performance",
+        columns: [
+          { header: "Month", key: "month" },
+          { header: "Discrepancies", key: "total_discrepancies", align: "right" },
+          { header: "Matched", key: "total_matched", align: "right" },
+          { header: "Total Variance", key: "total_variance", align: "right" },
+          { header: "Accuracy Rate", key: "accuracy_rate", align: "right" },
+        ],
+        rows,
+      },
+      filename: `audit-analytics-${months}-months`,
+    });
   };
 
   if (loading) {

@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Pet;
 use App\Services\InventoryService;
+use App\Services\ServiceDurationService;
 use App\Services\WorkflowNotifier;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class DashboardController extends Controller
 {
     public function overview()
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         
         return response()->json([
             'today_appointments' => Appointment::whereDate('scheduled_at', $today)->count(),

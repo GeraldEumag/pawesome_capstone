@@ -12,12 +12,13 @@ use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\ServiceDurationService;
 
 class DashboardController extends Controller
 {
     public function overview()
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $staffRoles = ['receptionist', 'veterinary', 'vet_tech', 'inventory', 'cashier'];
         
         // Count service requests with different payment statuses
@@ -229,7 +230,7 @@ class DashboardController extends Controller
 
     public function executiveSummary()
     {
-        $today = Carbon::today();
+        $today = Carbon::today(ServiceDurationService::STORE_TIMEZONE);
         $monthStart = $today->copy()->startOfMonth();
         
         return response()->json([
@@ -301,7 +302,7 @@ class DashboardController extends Controller
                 'sales.created_at',
             ]);
 
-        if ($dateFilter === 'today')  $salesQuery->whereDate('sales.created_at', Carbon::today());
+        if ($dateFilter === 'today')  $salesQuery->whereDate('sales.created_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE));
         if ($dateFilter === 'week')   $salesQuery->where('sales.created_at', '>=', Carbon::now()->subDays(7));
         if ($dateFilter === 'month')  $salesQuery->where('sales.created_at', '>=', Carbon::now()->subDays(30));
         if ($search) $salesQuery->where(function ($q) use ($search) {
@@ -328,7 +329,7 @@ class DashboardController extends Controller
                 DB::raw('COALESCE(appointments.scheduled_at, appointments.created_at) as created_at'),
             ]);
 
-        if ($dateFilter === 'today')  $apptQuery->whereDate('appointments.created_at', Carbon::today());
+        if ($dateFilter === 'today')  $apptQuery->whereDate('appointments.created_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE));
         if ($dateFilter === 'week')   $apptQuery->where('appointments.created_at', '>=', Carbon::now()->subDays(7));
         if ($dateFilter === 'month')  $apptQuery->where('appointments.created_at', '>=', Carbon::now()->subDays(30));
         if ($search) $apptQuery->where(function ($q) use ($search) {
@@ -354,7 +355,7 @@ class DashboardController extends Controller
                     'service_requests.created_at',
                 ]);
 
-            if ($dateFilter === 'today')  $srQuery->whereDate('service_requests.created_at', Carbon::today());
+            if ($dateFilter === 'today')  $srQuery->whereDate('service_requests.created_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE));
             if ($dateFilter === 'week')   $srQuery->where('service_requests.created_at', '>=', Carbon::now()->subDays(7));
             if ($dateFilter === 'month')  $srQuery->where('service_requests.created_at', '>=', Carbon::now()->subDays(30));
             if ($search) $srQuery->where(function ($q) use ($search) {
@@ -382,7 +383,7 @@ class DashboardController extends Controller
                     'customer_orders.created_at',
                 ]);
 
-            if ($dateFilter === 'today')  $ordQuery->whereDate('customer_orders.created_at', Carbon::today());
+            if ($dateFilter === 'today')  $ordQuery->whereDate('customer_orders.created_at', Carbon::today(ServiceDurationService::STORE_TIMEZONE));
             if ($dateFilter === 'week')   $ordQuery->where('customer_orders.created_at', '>=', Carbon::now()->subDays(7));
             if ($dateFilter === 'month')  $ordQuery->where('customer_orders.created_at', '>=', Carbon::now()->subDays(30));
             if ($search) $ordQuery->where(function ($q) use ($search) {

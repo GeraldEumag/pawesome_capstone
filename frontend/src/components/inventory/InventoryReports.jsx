@@ -179,7 +179,7 @@ const InventoryReports = () => {
       ...item,
       status: getItemStatus(item),
     }));
-    exportToCSV(exportData, exportColumns, "inventory-report");
+    exportToCSV(exportData, exportColumns, "inventory-report", { csvStyle: "data", signoff: false });
   };
 
   const handleExportPDF = () => {
@@ -187,7 +187,7 @@ const InventoryReports = () => {
       ...item,
       status: getItemStatus(item),
     }));
-    exportToPDF(exportData, exportColumns, "Inventory Report", "inventory-report");
+    exportToPDF(exportData, exportColumns, "Inventory Report", "inventory-report", { signoff: false });
   };
 
   const handleExportExcel = () => {
@@ -195,7 +195,7 @@ const InventoryReports = () => {
       ...item,
       status: getItemStatus(item),
     }));
-    exportToExcel(exportData, exportColumns, "inventory-report");
+    exportToExcel(exportData, exportColumns, "inventory-report", { signoff: false });
   };
 
   // Prepare summary cards data - real values only, no fake trends

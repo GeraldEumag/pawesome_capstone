@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -43,6 +44,7 @@ class InventoryItem extends Model
         'is_service_consumable',
         'requires_expiry_tracking',
         'issue_method',
+        'unit',
     ];
 
     protected $appends = ['photo_url'];
@@ -270,7 +272,7 @@ class InventoryItem extends Model
      * @return array Batch deductions
      * @throws \Exception When insufficient batch stock
      */
-    public function deductStockFefo(int $amount, string $reason = '', string $movementType = 'stock_deduction', string $referenceType = 'sale', ?int $referenceId = null, ?int $batchId = null): array
+    public function deductStockFefo(int $amount, string $reason = '', string $movementType = 'stock_deduction', string $referenceType = 'sale', ?int $referenceId = null, ?int $batchId = null, array $logExtra = []): array
     {
         $deductions = [];
         $remainingToDeduct = $amount;
@@ -345,7 +347,7 @@ class InventoryItem extends Model
         $this->save();
 
         // Create log entry
-        InventoryLog::create([
+        InventoryLog::create(array_merge([
             'inventory_item_id' => $this->id,
             'delta' => -$amount,
             'quantity' => $amount,
@@ -361,8 +363,8 @@ class InventoryItem extends Model
             'performed_by' => Auth::user()?->name,
             'role' => Auth::user()?->role,
             'user_id' => Auth::id(),
-            'details' => json_encode(['batch_deductions' => $deductions]),
-        ]);
+            'details' => json_encode(array_merge(['batch_deductions' => $deductions], (array) ($logExtra['details'] ?? []))),
+        ], \Illuminate\Support\Arr::except($logExtra, 'details')));
 
         return $deductions;
     }
@@ -420,7 +422,8 @@ class InventoryItem extends Model
         ?string $supplier = null,
         ?float $unitCost = null,
         ?string $proofPhoto = null,
-        ?string $receivedDate = null
+        ?string $receivedDate = null,
+        array $logExtra = []
     ): InventoryBatch {
         if ($expirationDate) {
             $this->requires_expiry_tracking = true;
@@ -449,7 +452,7 @@ class InventoryItem extends Model
         }
 
         // Create log entry
-        InventoryLog::create([
+        InventoryLog::create(array_merge([
             'inventory_item_id' => $this->id,
             'delta' => $amount,
             'quantity' => $amount,
@@ -464,14 +467,14 @@ class InventoryItem extends Model
             'performed_by' => Auth::user()?->name,
             'role' => Auth::user()?->role,
             'user_id' => Auth::id(),
-            'details' => json_encode([
+            'details' => json_encode(array_merge([
                 'batch_id' => $batch->id,
                 'expiration_date' => $expirationDate,
                 'manufacturing_date' => $manufacturingDate,
                 'supplier' => $supplier,
                 'unit_cost' => $unitCost,
-            ]),
-        ]);
+            ], (array) ($logExtra['details'] ?? []))),
+        ], \Illuminate\Support\Arr::except($logExtra, 'details')));
 
         return $batch;
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\ServiceDurationService;
 use App\Support\CompanySchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -240,7 +241,7 @@ class AttendanceController extends Controller
 
     public function today(Request $request): JsonResponse
     {
-        $today = Carbon::today()->toDateString();
+        $today = ServiceDurationService::storeToday();
         $query = Attendance::with('user')->forDate($today);
 
         if ($request->has('department')) {
@@ -271,8 +272,8 @@ class AttendanceController extends Controller
 
     public function statistics(Request $request): JsonResponse
     {
-        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
-        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
+        $startDate = $request->get('start_date', Carbon::now(ServiceDurationService::STORE_TIMEZONE)->startOfMonth()->toDateString());
+        $endDate = $request->get('end_date', Carbon::now(ServiceDurationService::STORE_TIMEZONE)->endOfMonth()->toDateString());
 
         $query = Attendance::forPeriod($startDate, $endDate);
 
@@ -311,8 +312,8 @@ class AttendanceController extends Controller
     {
         $request->validate(['location' => 'nullable|string|max:255']);
         $userId = auth()->id();
-        $today = Carbon::today()->toDateString();
-        $now = Carbon::now()->format('H:i');
+        $today = ServiceDurationService::storeToday();
+        $now = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->format('H:i');
 
         $result = DB::transaction(function () use ($userId, $today, $now, $request) {
             $user = User::lockForUpdate()->findOrFail($userId);
@@ -373,8 +374,8 @@ class AttendanceController extends Controller
     public function checkOut(Request $request): JsonResponse
     {
         $userId = auth()->id();
-        $today = Carbon::today()->toDateString();
-        $now = Carbon::now()->format('H:i');
+        $today = ServiceDurationService::storeToday();
+        $now = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->format('H:i');
 
         $result = DB::transaction(function () use ($userId, $today, $now) {
             $user = User::lockForUpdate()->findOrFail($userId);
@@ -394,7 +395,7 @@ class AttendanceController extends Controller
             // A previous-date punch is treated as overnight only when its
             // check-in is later than the configured daytime shift end.
             if (!$attendance || !$attendance->check_in) {
-                $yesterday = Carbon::yesterday()->toDateString();
+                $yesterday = Carbon::yesterday(ServiceDurationService::STORE_TIMEZONE)->toDateString();
                 $overnight = Attendance::where('user_id', $userId)
                     ->whereDate('date', $yesterday)
                     ->whereNull('check_out')
@@ -493,7 +494,7 @@ class AttendanceController extends Controller
      */
     public function todayStatus(): JsonResponse
     {
-        $today = Carbon::today()->toDateString();
+        $today = ServiceDurationService::storeToday();
 
         // Load today's attendance keyed by user_id and employee_id
         $byUser = Attendance::where('date', $today)
@@ -529,7 +530,7 @@ class AttendanceController extends Controller
             } elseif (!$rec) {
                 // If past shift end, mark absent; otherwise not yet
                 $shiftEnd = CompanySchedule::shiftEnd();
-                $status   = Carbon::now()->format('H:i') > $shiftEnd ? 'absent' : 'not_yet';
+                $status   = Carbon::now(ServiceDurationService::STORE_TIMEZONE)->format('H:i') > $shiftEnd ? 'absent' : 'not_yet';
             } elseif ($rec->status === 'on_leave') {
                 $status = $halfDayLeave ? 'half_day_leave' : 'on_leave';
             } elseif ($rec->check_out) {

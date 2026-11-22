@@ -118,11 +118,20 @@ const CustomerReport = () => {
         { key: "balance_amount", label: "Balance", format: "currency" },
       ];
 
+      const periodLabel = filters.startDate && filters.endDate
+        ? `${filters.startDate} to ${filters.endDate}`
+        : filters.startDate
+          ? `From ${filters.startDate}`
+          : filters.endDate
+            ? `Through ${filters.endDate}`
+            : "All time";
+      const exportMetadata = { signoff: false, periodLabel };
+
       if (format === "csv") {
-        exportToCSV(filteredCustomers, columns, "customer-reports");
+        exportToCSV(filteredCustomers, columns, "customer-reports", exportMetadata);
       } else if (format === "pdf") {
         await apiRequest(`/admin/reports/customers/export-pdf?${buildParams()}`);
-        exportToPDF(filteredCustomers, columns, "Customer Reports", "customer-reports");
+        exportToPDF(filteredCustomers, columns, "Customer Reports", "customer-reports", exportMetadata);
       }
     } catch (err) {
       console.error("Export error:", err);

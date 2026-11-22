@@ -279,9 +279,10 @@ const PayrollReports = () => {
       return;
     }
     const filename = `payroll-${report.periodLabel || selectedPeriod}`;
-    if (format === "csv") exportToCSV(sortedRecords, exportColumns, filename);
-    else if (format === "excel") exportToExcel(sortedRecords, exportColumns, filename);
-    else if (format === "pdf") exportToPDF(sortedRecords, exportColumns, "Payroll Report", filename);
+    const exportMetadata = { periodLabel: report.periodLabel || selectedPeriod || "Selected period" };
+    if (format === "csv") exportToCSV(sortedRecords, exportColumns, filename, exportMetadata);
+    else if (format === "excel") exportToExcel(sortedRecords, exportColumns, filename, exportMetadata);
+    else if (format === "pdf") exportToPDF(sortedRecords, exportColumns, "Payroll Report", filename, exportMetadata);
     showSuccess("Payroll report exported.");
   };
 

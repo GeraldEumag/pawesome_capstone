@@ -8,7 +8,7 @@ import { showWarning, showError } from './alert.jsx';
 import { sanitizeCsvCell } from './csvSanitize';
 import { getRole, getUserData } from './auth';
 import { exportFormalReportPDF } from './formalReportPdf';
-import { exportToCSV as exportFormalCSV, exportToExcel as exportFormalExcel, formalReportRows } from './reportExport';
+import { exportToCSV as exportFormalCSV, exportToExcel as exportFormalExcel, formalReportRows, normalizeExportFilename } from './reportExport';
 
 import { formatCurrency } from "./currency";
 const columnsFromHeaders = (data, headers) =>
@@ -24,7 +24,9 @@ export const exportToCSV = (data, filename, headers, metadata = {}) => {
     return;
   }
 
-  exportFormalCSV(data, columnsFromHeaders(data, headers), filename, metadata);
+  // Analytics exports are "formal without sign-off" — callers may opt back
+  // into certification/signature blocks via metadata.signoff === true.
+  exportFormalCSV(data, columnsFromHeaders(data, headers), filename, { signoff: false, ...metadata });
 };
 
 /**
@@ -37,7 +39,7 @@ export const exportToExcel = async (data, filename, sheetName = 'Data', metadata
   }
 
   try {
-    exportFormalExcel(data, columnsFromHeaders(data, null), filename, { ...metadata, sheetName });
+    exportFormalExcel(data, columnsFromHeaders(data, null), filename, { signoff: false, ...metadata, sheetName });
   } catch (err) {
     console.error('Excel export error:', err);
     showError('Excel export failed. Please try again.');
@@ -74,7 +76,8 @@ export const exportToPDF = async (data, filename, title, headers) => {
         `${data.length} record(s) are included in the detailed schedule. Review the source records and supporting documentation before approval.`,
       ],
       recommendations: ["Retain this report with its source records and obtain the required review and approval signatures."],
-      filename: `${filename}_${format(new Date(), "yyyy-MM-dd")}`,
+      signoff: false,
+      filename: `${normalizeExportFilename(filename)}_${format(new Date(), "yyyy-MM-dd")}`,
     });
   } catch (err) {
     console.error('PDF export error:', err);
@@ -232,7 +235,7 @@ const exportExecutiveCSV = (report, periodLabel, preparedBy, preparedRole, docRe
     return /[",\n\r]/.test(safeValue) ? `"${safeValue.replace(/"/g, '""')}"` : safeValue;
   };
   const csvContent = '\uFEFF' + csvRows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
-  downloadFile(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), `Executive_Dashboard_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  downloadFile(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }), `${normalizeExportFilename('Executive_Dashboard')}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
 };
 
 const exportExecutiveExcel = async (report, periodLabel, preparedBy, preparedRole, docRef) => {
@@ -268,7 +271,7 @@ const exportExecutiveExcel = async (report, periodLabel, preparedBy, preparedRol
   narrativeSheet['!cols'] = [{ width: 110 }];
   XLSX.utils.book_append_sheet(workbook, narrativeSheet, 'Narrative & Signatures');
   const { saveWorkbookAsLandscapeXlsx } = await import('./reportExport');
-  await saveWorkbookAsLandscapeXlsx(workbook, `Executive_Dashboard_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  await saveWorkbookAsLandscapeXlsx(workbook, `${normalizeExportFilename('Executive_Dashboard')}_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
 
 /** Export all Executive Dashboard data in one selected format. */

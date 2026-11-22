@@ -28,8 +28,8 @@ class MyAttendanceCorrectionController extends Controller
     public function attendance(Request $request): JsonResponse
     {
         $user      = auth()->user();
-        $today     = now()->toDateString();
-        $startDate = $request->query('start_date', now()->startOfMonth()->toDateString());
+        $today     = ServiceDurationService::storeToday();
+        $startDate = $request->query('start_date', now(ServiceDurationService::STORE_TIMEZONE)->startOfMonth()->toDateString());
         $endDate   = $request->query('end_date', $today);
 
         $records = Attendance::where('user_id', $user->id)

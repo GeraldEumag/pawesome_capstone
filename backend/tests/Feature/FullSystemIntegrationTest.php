@@ -352,16 +352,17 @@ class FullSystemIntegrationTest extends TestCase
         $updateNormal->assertOk();
         $this->assertEquals(58, $updateNormal->json('item.stock'));
 
-        // Expired item: clear expired stock (replace with 0), then receive
-        // a fresh batch of 50 units.
-        $updateExpired = $this->putJson("/api/admin/inventory/items/{$expiredId}", [
-            'stock' => 0,
-            'add_stock' => true,
+        // Expired item: clear expired stock through the stock adjustment
+        // endpoint (product updates can no longer carry stock fields), then
+        // receive a fresh batch of 50 units.
+        $updateExpired = $this->postJson("/api/admin/inventory/{$expiredId}/adjust-stock", [
+            'type' => 'set',
+            'quantity' => 0,
+            'reason' => 'Expired inventory cleared',
         ], $this->withAuth($this->admin, $this->adminToken));
 
-        $updateExpired->assertStatus(200);
-        $this->assertEquals(0, $updateExpired->json('item.stock'));
-        $this->assertEquals('replaced_expired', $updateExpired->json('stock_action'));
+        $updateExpired->assertOk();
+        $this->assertEquals(0, $updateExpired->json('new_stock'));
 
         $restockExpired = $this->postJson("/api/admin/inventory/items/{$expiredId}/batches", [
             'batch_no' => 'B-EXP-001',
@@ -662,22 +663,47 @@ class FullSystemIntegrationTest extends TestCase
             'expiry_date' => now()->subDays(10),
         ]);
         
-        // Attempt to add stock (should replace instead)
+        // Attempt to add stock through a product update — stock fields are
+        // prohibited on product updates even for expired items.
         $update = $this->putJson("/api/admin/inventory/items/{$expiredItem->id}", [
             'stock' => 25,
             'add_stock' => true, // User wants to add
         ], $this->withAuth($this->admin, $this->adminToken));
-        
-        $update->assertStatus(200);
-        
-        // Should be 25 (replacement), not 55 (30+25)
-        $this->assertEquals(25, $update->json('item.stock'));
-        $this->assertEquals('replaced_expired', $update->json('stock_action'));
-        
-        // Verify log entry
+
+        $update->assertStatus(422);
+        $this->assertEquals(30, $expiredItem->fresh()->stock);
+
+        // The dedicated workflow clears the expired stock first, then
+        // receives the replacement as a new batch.
+        $clear = $this->postJson("/api/admin/inventory/{$expiredItem->id}/adjust-stock", [
+            'type' => 'set',
+            'quantity' => 0,
+            'reason' => 'Expired inventory cleared',
+        ], $this->withAuth($this->admin, $this->adminToken));
+
+        $clear->assertOk();
+        $this->assertEquals(0, $clear->json('new_stock'));
+
+        $restock = $this->postJson("/api/admin/inventory/items/{$expiredItem->id}/batches", [
+            'batch_no' => 'B-REPL-001',
+            'received_date' => now()->toDateString(),
+            'expiration_date' => now()->addMonths(6)->toDateString(),
+            'quantity' => 25,
+        ], $this->withAuth($this->admin, $this->adminToken));
+
+        $restock->assertOk();
+        $this->assertEquals(25, $restock->json('item.stock'));
+
+        // Verify both sides of the replacement are logged.
         $this->assertDatabaseHas('inventory_logs', [
             'inventory_item_id' => $expiredItem->id,
-            'reason' => 'Stock replacement (expired inventory cleared)',
+            'movement_type' => 'stock_adjustment_set',
+            'delta' => -30,
+        ]);
+        $this->assertDatabaseHas('inventory_logs', [
+            'inventory_item_id' => $expiredItem->id,
+            'movement_type' => 'batch_restock',
+            'delta' => 25,
         ]);
     }
 

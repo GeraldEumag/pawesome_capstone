@@ -57,6 +57,11 @@ const ManagerSidebar = ({ mobileOpen, onMobileMenuToggle }) => {
             </NavLink>
           </li>
           <li className="nav-item">
+            <NavLink to="/manager/stock-approvals" onClick={handleNavClick}>
+              Stock Approvals
+            </NavLink>
+          </li>
+          <li className="nav-item">
             <NavLink to="/manager/services" onClick={handleNavClick}>
               Services &amp; Rooms
             </NavLink>

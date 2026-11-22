@@ -52,7 +52,7 @@ class ChatbotController extends Controller
             'data' => [
                 'total_chats' => $base()->count(),
                 'unique_users' => $base()->distinct('user_id')->count('user_id'),
-                'chats_today' => $base()->whereDate('created_at', today())->count(),
+                'chats_today' => $base()->whereDate('created_at', \App\Services\ServiceDurationService::storeToday())->count(),
                 'top_intents' => $base()
                     ->selectRaw('intent, COUNT(*) as count')
                     ->groupBy('intent')

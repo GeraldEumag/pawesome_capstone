@@ -1645,7 +1645,7 @@ class BoardingController extends Controller
                 'bookingAddOns.addOn',
             ])
             ->whereIn('status', ['approved', 'scheduled', 'confirmed', 'checked_in', 'in_care'])
-            ->whereDate('check_out', '>=', now()->toDateString())
+            ->whereDate('check_out', '>=', ServiceDurationService::storeToday())
             ->orderBy('check_out', 'asc')
             ->get();
 
@@ -1660,7 +1660,7 @@ class BoardingController extends Controller
      */
     public function todayActivity(): JsonResponse
     {
-        $today = now()->format('Y-m-d');
+        $today = now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m-d');
 
         $checkIns = Boarding::with(['pet', 'customer', 'hotelRoom'])
             ->whereDate('check_in', $today)

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Services\ServiceDurationService;
 
 class ComprehensiveEndToEndTest extends Command
 {
@@ -336,7 +337,7 @@ class ComprehensiveEndToEndTest extends Command
         $this->testEndpoint('/api/veterinary/vaccinations', 'POST', $vet->api_token, 'Veterinary - Vaccination', [
             'pet_id' => $this->testData['pet']->id,
             'vaccine_name' => 'Test Vaccine',
-            'administered_date' => now()->format('Y-m-d'),
+            'administered_date' => now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m-d'),
             'next_due_date' => now()->addYear()->format('Y-m-d'),
         ]);
         
@@ -587,7 +588,7 @@ class ComprehensiveEndToEndTest extends Command
         $this->testEndpoint('/api/veterinary/vaccinations', 'POST', $vet->api_token, 'Vet - Vaccination', [
             'pet_id' => $this->testData['pet']->id,
             'vaccine_name' => 'Test Vaccine',
-            'administered_date' => now()->format('Y-m-d'),
+            'administered_date' => now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m-d'),
             'next_due_date' => now()->addYear()->format('Y-m-d'),
             'veterinarian_id' => $vet->id,
         ]);
@@ -665,7 +666,7 @@ class ComprehensiveEndToEndTest extends Command
         }
         
         // Test Date Range Reports
-        $this->testEndpoint('/api/admin/reports/revenue?start_date=' . now()->subDays(30)->format('Y-m-d') . '&end_date=' . now()->format('Y-m-d'), 
+        $this->testEndpoint('/api/admin/reports/revenue?start_date=' . now(ServiceDurationService::STORE_TIMEZONE)->subDays(30)->format('Y-m-d') . '&end_date=' . now(ServiceDurationService::STORE_TIMEZONE)->format('Y-m-d'), 
             'GET', $admin->api_token, 'Reports - Date Range Revenue');
         
         $this->info('✅ Reports Module testing completed');
