@@ -1,0 +1,637 @@
+{
+  "result": "PASS",
+  "item_id": 4,
+  "before": {
+    "item": {
+      "id": 4,
+      "sku": "P12NEG40142817",
+      "barcode": "P12NBC40142817",
+      "name": "Phase12 Negative 40142817",
+      "category": "Accessories",
+      "brand": "Phase12",
+      "supplier": null,
+      "stock": 5,
+      "reorder_level": 1,
+      "price": "25.00",
+      "cost": "10.00",
+      "status": "active",
+      "is_sellable": 1,
+      "requires_expiry_tracking": 0,
+      "issue_method": "FIFO",
+      "archived_at": null,
+      "created_at": "2026-11-23 14:22:24",
+      "updated_at": "2026-11-23 14:22:24"
+    },
+    "batches": [
+      {
+        "id": 3,
+        "inventory_item_id": 4,
+        "batch_no": "P12-DUP-40142817",
+        "received_date": "2026-11-23",
+        "manufacturing_date": null,
+        "expiration_date": null,
+        "quantity": 5,
+        "remaining_quantity": 5,
+        "status": "active",
+        "supplier": null,
+        "unit_cost": null,
+        "notes": "Phase 12 fixture batch",
+        "created_at": "2026-11-23 14:22:24",
+        "updated_at": "2026-11-23 14:22:24"
+      }
+    ],
+    "logs": [],
+    "audits": []
+  },
+  "after": {
+    "item": {
+      "id": 4,
+      "sku": "P12NEG40142817",
+      "barcode": "P12NBC40142817",
+      "name": "Phase12 Negative 40142817",
+      "category": "Accessories",
+      "brand": "Phase12",
+      "supplier": null,
+      "stock": 7,
+      "reorder_level": 1,
+      "price": "25.00",
+      "cost": "10.00",
+      "status": "active",
+      "is_sellable": 1,
+      "requires_expiry_tracking": 0,
+      "issue_method": "FIFO",
+      "archived_at": null,
+      "created_at": "2026-11-23 14:22:24",
+      "updated_at": "2026-11-23 21:22:29"
+    },
+    "batches": [
+      {
+        "id": 3,
+        "inventory_item_id": 4,
+        "batch_no": "P12-DUP-40142817",
+        "received_date": "2026-11-23",
+        "manufacturing_date": null,
+        "expiration_date": null,
+        "quantity": 5,
+        "remaining_quantity": 5,
+        "status": "active",
+        "supplier": null,
+        "unit_cost": null,
+        "notes": "Phase 12 fixture batch",
+        "created_at": "2026-11-23 14:22:24",
+        "updated_at": "2026-11-23 14:22:24"
+      },
+      {
+        "id": 4,
+        "inventory_item_id": 4,
+        "batch_no": "P12-IDEM-40142817",
+        "received_date": "2026-11-23",
+        "manufacturing_date": null,
+        "expiration_date": null,
+        "quantity": 2,
+        "remaining_quantity": 2,
+        "status": "active",
+        "supplier": null,
+        "unit_cost": null,
+        "notes": "idempotent receive check",
+        "created_at": "2026-11-23 21:22:29",
+        "updated_at": "2026-11-23 21:22:29"
+      }
+    ],
+    "logs": [
+      {
+        "id": 5,
+        "inventory_item_id": 4,
+        "delta": 2,
+        "quantity": 2,
+        "type": "restock",
+        "movement_type": "batch_restock",
+        "reference_type": "restock",
+        "reference_id": null,
+        "stock_before": 5,
+        "stock_after": 7,
+        "previous_stock": 5,
+        "new_stock": 7,
+        "reason": "idempotent receive check",
+        "performed_by": "INVENTORY MANAGER",
+        "role": "inventory",
+        "user_id": 6,
+        "details": "{\"batch_id\":4,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
+        "created_at": "2026-11-23 21:22:29",
+        "updated_at": "2026-11-23 21:22:29"
+      }
+    ],
+    "audits": []
+  },
+  "responses": {
+    "customer_adjust": {
+      "status": 403,
+      "body": {
+        "message": "Forbidden.",
+        "success": false
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:25 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "cashier_batch": {
+      "status": 403,
+      "body": {
+        "message": "Forbidden.",
+        "success": false
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:26 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "customer_audit_save": {
+      "status": 403,
+      "body": {
+        "message": "Forbidden.",
+        "success": false
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:26 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "manager_stock_adjust": {
+      "status": 403,
+      "body": {
+        "message": "Forbidden.",
+        "success": false
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:27 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "missing_item": {
+      "status": 422,
+      "body": {
+        "errors": [
+          "No query results for model [App\\Models\\InventoryItem] 999999999"
+        ],
+        "success": false,
+        "message": "Unprocessable Content"
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:27 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "invalid_quantity": {
+      "status": 422,
+      "body": {
+        "message": "The quantity field must be at least 0.",
+        "errors": {
+          "quantity": [
+            "The quantity field must be at least 0."
+          ]
+        },
+        "success": false
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:28 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "insufficient_stock": {
+      "status": 422,
+      "body": {
+        "errors": [
+          "Adjustment would result in negative stock"
+        ],
+        "success": false,
+        "message": "Unprocessable Content"
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:28 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "missing_batch": {
+      "status": 404,
+      "body": {
+        "message": "The route api/inventory/batches/999999999/adjust could not be found."
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:29 GMT",
+        "content-type": "application/json",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "idempotent_batch_first": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "message": "Batch received successfully",
+        "batch": {
+          "batch_no": "P12-IDEM-40142817",
+          "received_date": "2026-11-22T16:00:00.000000Z",
+          "manufacturing_date": null,
+          "expiration_date": null,
+          "quantity": 2,
+          "remaining_quantity": 2,
+          "supplier": null,
+          "unit_cost": null,
+          "proof_photo": null,
+          "status": "active",
+          "notes": "idempotent receive check",
+          "inventory_item_id": 4,
+          "updated_at": "2026-11-23T13:22:29.000000Z",
+          "created_at": "2026-11-23T13:22:29.000000Z",
+          "id": 4,
+          "proof_photo_url": null
+        },
+        "item": {
+          "id": 4,
+          "sku": "P12NEG40142817",
+          "barcode": "P12NBC40142817",
+          "name": "Phase12 Negative 40142817",
+          "category": "Accessories",
+          "item_class": "retail",
+          "brand": "Phase12",
+          "generic_name": null,
+          "supplier": null,
+          "supplier_id": null,
+          "description": null,
+          "photo": null,
+          "stock": 7,
+          "reorder_level": 1,
+          "threshold": 10,
+          "price": "25.00",
+          "cost": "10.00",
+          "expiry_date": null,
+          "status": "active",
+          "archived_at": null,
+          "archived_by": null,
+          "archive_reason": null,
+          "is_sellable": 1,
+          "is_service_consumable": 0,
+          "requires_expiry_tracking": 0,
+          "issue_method": "FIFO",
+          "created_at": "2026-11-23T06:22:24.000000Z",
+          "updated_at": "2026-11-23T13:22:29.000000Z",
+          "unit": null,
+          "photo_url": null,
+          "batches": [
+            {
+              "id": 3,
+              "inventory_item_id": 4,
+              "batch_no": "P12-DUP-40142817",
+              "received_date": "2026-11-22T16:00:00.000000Z",
+              "manufacturing_date": null,
+              "supplier": null,
+              "unit_cost": null,
+              "proof_photo": null,
+              "expiration_date": null,
+              "quantity": 5,
+              "remaining_quantity": 5,
+              "status": "active",
+              "notes": "Phase 12 fixture batch",
+              "created_at": "2026-11-23T06:22:24.000000Z",
+              "updated_at": "2026-11-23T06:22:24.000000Z",
+              "proof_photo_url": null
+            },
+            {
+              "id": 4,
+              "inventory_item_id": 4,
+              "batch_no": "P12-IDEM-40142817",
+              "received_date": "2026-11-22T16:00:00.000000Z",
+              "manufacturing_date": null,
+              "supplier": null,
+              "unit_cost": null,
+              "proof_photo": null,
+              "expiration_date": null,
+              "quantity": 2,
+              "remaining_quantity": 2,
+              "status": "active",
+              "notes": "idempotent receive check",
+              "created_at": "2026-11-23T13:22:29.000000Z",
+              "updated_at": "2026-11-23T13:22:29.000000Z",
+              "proof_photo_url": null
+            }
+          ]
+        }
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:29 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "idempotent_batch_retry": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "message": "Batch received successfully",
+        "batch": {
+          "batch_no": "P12-IDEM-40142817",
+          "received_date": "2026-11-22T16:00:00.000000Z",
+          "manufacturing_date": null,
+          "expiration_date": null,
+          "quantity": 2,
+          "remaining_quantity": 2,
+          "supplier": null,
+          "unit_cost": null,
+          "proof_photo": null,
+          "status": "active",
+          "notes": "idempotent receive check",
+          "inventory_item_id": 4,
+          "updated_at": "2026-11-23T13:22:29.000000Z",
+          "created_at": "2026-11-23T13:22:29.000000Z",
+          "id": 4,
+          "proof_photo_url": null
+        },
+        "item": {
+          "id": 4,
+          "sku": "P12NEG40142817",
+          "barcode": "P12NBC40142817",
+          "name": "Phase12 Negative 40142817",
+          "category": "Accessories",
+          "item_class": "retail",
+          "brand": "Phase12",
+          "generic_name": null,
+          "supplier": null,
+          "supplier_id": null,
+          "description": null,
+          "photo": null,
+          "stock": 7,
+          "reorder_level": 1,
+          "threshold": 10,
+          "price": "25.00",
+          "cost": "10.00",
+          "expiry_date": null,
+          "status": "active",
+          "archived_at": null,
+          "archived_by": null,
+          "archive_reason": null,
+          "is_sellable": 1,
+          "is_service_consumable": 0,
+          "requires_expiry_tracking": 0,
+          "issue_method": "FIFO",
+          "created_at": "2026-11-23T06:22:24.000000Z",
+          "updated_at": "2026-11-23T13:22:29.000000Z",
+          "unit": null,
+          "photo_url": null,
+          "batches": [
+            {
+              "id": 3,
+              "inventory_item_id": 4,
+              "batch_no": "P12-DUP-40142817",
+              "received_date": "2026-11-22T16:00:00.000000Z",
+              "manufacturing_date": null,
+              "supplier": null,
+              "unit_cost": null,
+              "proof_photo": null,
+              "expiration_date": null,
+              "quantity": 5,
+              "remaining_quantity": 5,
+              "status": "active",
+              "notes": "Phase 12 fixture batch",
+              "created_at": "2026-11-23T06:22:24.000000Z",
+              "updated_at": "2026-11-23T06:22:24.000000Z",
+              "proof_photo_url": null
+            },
+            {
+              "id": 4,
+              "inventory_item_id": 4,
+              "batch_no": "P12-IDEM-40142817",
+              "received_date": "2026-11-22T16:00:00.000000Z",
+              "manufacturing_date": null,
+              "supplier": null,
+              "unit_cost": null,
+              "proof_photo": null,
+              "expiration_date": null,
+              "quantity": 2,
+              "remaining_quantity": 2,
+              "status": "active",
+              "notes": "idempotent receive check",
+              "created_at": "2026-11-23T13:22:29.000000Z",
+              "updated_at": "2026-11-23T13:22:29.000000Z",
+              "proof_photo_url": null
+            }
+          ]
+        }
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:29 GMT",
+        "content-type": "application/json",
+        "idempotent-replayed": "true",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "idempotent_batch_conflict": {
+      "status": 409,
+      "body": {
+        "message": "This Idempotency-Key was already used with a different request payload.",
+        "success": false
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:30 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    },
+    "duplicate_batch_no": {
+      "status": 422,
+      "body": {
+        "success": false,
+        "message": "This batch number already exists for this product."
+      },
+      "headers": {
+        "host": "127.0.0.1:8001",
+        "connection": "close",
+        "x-powered-by": "PHP/8.2.12",
+        "cache-control": "no-cache, private",
+        "date": "Mon, 23 Nov 2026 13:22:31 GMT",
+        "content-type": "application/json",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "59",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.app https://*.vercel.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-CSRF-TOKEN, X-Kiosk-Pin, Idempotency-Key",
+        "access-control-allow-credentials": "true",
+        "transfer-encoding": "chunked"
+      }
+    }
+  }
+}

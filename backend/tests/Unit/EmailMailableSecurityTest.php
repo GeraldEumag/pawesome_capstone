@@ -141,6 +141,7 @@ class EmailMailableSecurityTest extends TestCase
             'customer_name' => '<Test Customer>',
             'customer_email' => 'test@example.com',
             'total_amount' => '120.00',
+            'vat_amount' => '12.86',
             'payment_method' => 'GCash',
             'payment_reference' => 'REF123456',
             'paid_at' => now(),
@@ -155,6 +156,8 @@ class EmailMailableSecurityTest extends TestCase
         $this->assertStringContainsString('REC-TEST-1', $html);
         $this->assertStringContainsString('Persisted Item', $html);
         $this->assertStringContainsString('120.00', $html);
+        $this->assertStringContainsString('VAT 12% (included)', $html);
+        $this->assertStringContainsString('TOTAL (VAT INCLUDED)', $html);
         $this->assertStringContainsString('&lt;Test Customer&gt;', $html);
         $this->assertStringNotContainsString('test@example.com', $html);
     }

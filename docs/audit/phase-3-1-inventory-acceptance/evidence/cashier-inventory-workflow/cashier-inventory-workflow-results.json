@@ -1,0 +1,255 @@
+{
+  "startedAt": "2026-11-23T13:30:21.947Z",
+  "completedAt": "2026-11-23T13:31:49.276Z",
+  "frontendUrl": "http://127.0.0.1:3001",
+  "apiUrl": "http://127.0.0.1:8001/api",
+  "status": "PASSED",
+  "pages": [
+    {
+      "route": "/cashier/pos",
+      "label": "01-cashier-pos",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "browser-evidence/cashier-inventory-workflow/01-cashier-pos.png"
+    },
+    {
+      "route": "/cashier/transactions",
+      "label": "02-cashier-transactions",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "browser-evidence/cashier-inventory-workflow/02-cashier-transactions.png"
+    },
+    {
+      "route": "/inventory/history",
+      "label": "03-inventory-stock-history",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "browser-evidence/cashier-inventory-workflow/03-inventory-stock-history.png"
+    },
+    {
+      "route": "/manager",
+      "label": "04-manager-dashboard-after-pos",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "browser-evidence/cashier-inventory-workflow/04-manager-dashboard-after-pos.png"
+    },
+    {
+      "route": "/manager/reports",
+      "label": "05-manager-reports-after-pos",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "browser-evidence/cashier-inventory-workflow/05-manager-reports-after-pos.png"
+    }
+  ],
+  "actions": [
+    {
+      "name": "Login as cashier",
+      "status": "PASS",
+      "detail": "cashier@example.com"
+    },
+    {
+      "name": "Verify sellable inventory items load",
+      "status": "PASS",
+      "detail": "2 product candidates"
+    },
+    {
+      "name": "Complete POS transaction via API",
+      "status": "PASS",
+      "detail": "0000 Phase12 Inventory 40101701 transaction #1"
+    },
+    {
+      "name": "Verify POS transaction receipt/detail",
+      "status": "PASS",
+      "detail": "TRX-6B043FF7BBC4A"
+    },
+    {
+      "name": "Verify item stock decreased",
+      "status": "PASS",
+      "detail": "0000 Phase12 Inventory 40101701: 13 -> 12"
+    },
+    {
+      "name": "Login as inventory",
+      "status": "PASS",
+      "detail": "inventory@example.com"
+    },
+    {
+      "name": "Verify inventory stock log for POS sale",
+      "status": "PASS",
+      "detail": "log #22 pos_sale"
+    },
+    {
+      "name": "Login as manager",
+      "status": "PASS",
+      "detail": "manager@example.com"
+    },
+    {
+      "name": "Verify Manager reports after POS activity",
+      "status": "PASS",
+      "detail": "sales and inventory report APIs loaded"
+    }
+  ],
+  "screenshots": [
+    "browser-evidence/cashier-inventory-workflow/01-cashier-pos.png",
+    "browser-evidence/cashier-inventory-workflow/02-cashier-transactions.png",
+    "browser-evidence/cashier-inventory-workflow/03-inventory-stock-history.png",
+    "browser-evidence/cashier-inventory-workflow/04-manager-dashboard-after-pos.png",
+    "browser-evidence/cashier-inventory-workflow/05-manager-reports-after-pos.png"
+  ],
+  "records": {
+    "productId": 3,
+    "productName": "0000 Phase12 Inventory 40101701",
+    "stockBefore": 13,
+    "transactionId": 1,
+    "transactionNumber": "TRX-6B043FF7BBC4A",
+    "stockAfter": 12,
+    "inventoryLogId": 22,
+    "inventoryLogMovement": "pos_sale"
+  },
+  "console": [],
+  "httpFailures": [],
+  "navigationAborts": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications",
+      "page": "http://127.0.0.1:3001/inventory/history",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/settings/public",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/history",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/history",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/dashboard",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/notifications",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/dashboard",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/veterinary-services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/dashboard",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/services",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/settings/public",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/inventory",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8001/api/manager/reports/payments",
+      "page": "http://127.0.0.1:3001/manager",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "limitations": [
+    "Boarding/hotel workflow not included because latest DB has hotel_rooms=0.",
+    "Payment proof verification is separate from POS cash sale validation and remains pending if seeded proof data is unavailable.",
+    "Playwright net::ERR_ABORTED entries are recorded separately as navigation/background request aborts."
+  ]
+}

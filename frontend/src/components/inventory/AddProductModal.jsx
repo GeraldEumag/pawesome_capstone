@@ -214,8 +214,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     const newErrors = {};
     if (step === 1) {
       if (!formData.name.trim()) newErrors.name = "Product name is required";
-      if (!formData.sku.trim()) newErrors.sku = "SKU is required";
       if (!formData.category) newErrors.category = "Category is required";
+      if (!editItem && !formData.barcode.trim()) {
+        newErrors.barcode = "Barcode is required for new sellable products";
+      }
     } else if (step === 2) {
       if (!formData.price || parseFloat(formData.price) <= 0) {
         newErrors.price = "Valid price is required";
@@ -387,22 +389,22 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     </div>
 
                     <div className="form-group">
-                      <label>
-                        SKU <span className="required">*</span>
-                      </label>
+                      <label>SKU</label>
                       <input
                         type="text"
                         name="sku"
                         value={formData.sku}
                         onChange={handleChange}
-                        placeholder="e.g., PET-001"
+                        placeholder="Leave blank to generate automatically"
                         className={errors.sku ? "error" : ""}
                       />
                       {errors.sku && <span className="error-text">{errors.sku}</span>}
                     </div>
 
                     <div className="form-group">
-                      <label>Barcode</label>
+                      <label>
+                        Barcode {!editItem && <span className="required">*</span>}
+                      </label>
                       <div className="barcode-input-row">
                         <input
                           type="text"
@@ -424,11 +426,14 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                         </button>
                       </div>
 
+                      {errors.barcode && <span className="error-text">{errors.barcode}</span>}
                       {barcodeChecking && <small className="helper-text">Checking barcode…</small>}
                       {barcodeError && <span className="error-text">{barcodeError}</span>}
                       {!barcodeError && !barcodeChecking && (
                         <small className="helper-text">
-                          Unique product barcode for POS scanning. Leave blank if none. Click 📷 to scan with webcam.
+                          {editItem
+                            ? "Unique product barcode for POS scanning. Click the camera to scan."
+                            : "Required for new sellable products. Enter a unique barcode or scan it with the camera."}
                         </small>
                       )}
 

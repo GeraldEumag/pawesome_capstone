@@ -2072,30 +2072,34 @@ class InventoryService
 
     public function createReturn(array $payload): array
     {
-        $item = InventoryItem::findOrFail($payload['inventory_item_id']);
-        $this->validateReturnSource($payload, $item);
+        return DB::transaction(function () use ($payload) {
+            // Serialize source-quantity checks for this item so simultaneous
+            // returns cannot both consume the same remaining sold quantity.
+            $item = InventoryItem::lockForUpdate()->findOrFail($payload['inventory_item_id']);
+            $this->validateReturnSource($payload, $item);
 
-        $return = InventoryReturn::create([
-            'return_no' => $this->nextTransactionNo('RET'),
-            'source_type' => $payload['source_type'] ?? 'manual',
-            'source_id' => $payload['source_id'] ?? null,
-            'inventory_item_id' => $item->id,
-            'quantity' => (int) $payload['quantity'],
-            'return_reason' => $payload['return_reason'] ?? null,
-            'photo' => $payload['photo'] ?? null,
-            'received_by' => auth()->id(),
-        ]);
+            $return = InventoryReturn::create([
+                'return_no' => $this->nextTransactionNo('RET'),
+                'source_type' => $payload['source_type'] ?? 'manual',
+                'source_id' => $payload['source_id'] ?? null,
+                'inventory_item_id' => $item->id,
+                'quantity' => (int) $payload['quantity'],
+                'return_reason' => $payload['return_reason'] ?? null,
+                'photo' => $payload['photo'] ?? null,
+                'received_by' => auth()->id(),
+            ]);
 
-        WorkflowNotifier::notifyRole(
-            'inventory',
-            'Product Return Received',
-            "{$item->name}: {$return->quantity} unit(s) returned — pending inspection ({$return->return_no}).",
-            'info',
-            'inventory_return',
-            $return->id
-        );
+            WorkflowNotifier::notifyRole(
+                'inventory',
+                'Product Return Received',
+                "{$item->name}: {$return->quantity} unit(s) returned — pending inspection ({$return->return_no}).",
+                'info',
+                'inventory_return',
+                $return->id
+            );
 
-        return ['return' => $return->fresh(['item', 'receiver'])];
+            return ['return' => $return->fresh(['item', 'receiver'])];
+        });
     }
 
     /**

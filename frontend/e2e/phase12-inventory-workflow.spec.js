@@ -6,7 +6,9 @@ const { apiLogin } = require("./test-utils");
 
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
-const evidenceDir = path.resolve(__dirname, "../../browser-evidence/system-security-audit-20261108/phase12-inventory");
+const evidenceDir = process.env.E2E_EVIDENCE_DIR
+  ? path.resolve(process.env.E2E_EVIDENCE_DIR)
+  : path.resolve(__dirname, "../../browser-evidence/system-security-audit-20261108/phase12-inventory");
 
 // The inventory API is currently mounted on one PHP process in the audit stack.
 // Parallel requests against :8001 are sufficient to test row-lock serialization.

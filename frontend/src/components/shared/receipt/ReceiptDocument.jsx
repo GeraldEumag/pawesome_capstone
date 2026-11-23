@@ -3,6 +3,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPaw } from "@fortawesome/free-solid-svg-icons";
 import { STORE_INFO } from "../../../utils/storeInfo";
 import { formatCurrency } from "../../../utils/currency";
+import {
+  RECEIPT_NET_AMOUNT_LABEL,
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+  RECEIPT_VAT_INCLUDED_LABEL,
+} from "../../../utils/receiptLabels";
 import brandLogo from "../../../assets/pawesome.jpg";
 import "./ReceiptDocument.css";
 
@@ -47,6 +52,8 @@ const ReceiptDocument = ({
 }) => {
   const statusKey = String(paymentStatus || "").toLowerCase();
   const statusVariant = STATUS_VARIANT[statusKey] || "neutral";
+  const vatAmount = vat == null ? null : Math.abs(Number(vat) || 0);
+  const netBase = netAmount ?? (vatAmount != null ? Number(total) - vatAmount : subtotal);
   const meta = [
     ["Receipt #", receiptNumber],
     ["Date", date],
@@ -120,13 +127,13 @@ const ReceiptDocument = ({
       {/* ── Totals ── */}
       <div className="rcd-totals">
         <div className="rcd-total-row">
-          <span>{netAmount == null ? "Subtotal" : "Net Amount (ex-VAT)"}</span>
-          <span>{money(netAmount ?? subtotal)}</span>
+          <span>{netAmount == null && vatAmount == null ? "Subtotal" : RECEIPT_NET_AMOUNT_LABEL}</span>
+          <span>{money(netBase)}</span>
         </div>
-        {vat !== null && vat !== undefined && (
+        {vatAmount != null && (
           <div className="rcd-total-row">
-            <span>VAT 12%</span>
-            <span>{money(Math.abs(Number(vat) || 0))}</span>
+            <span>{RECEIPT_VAT_INCLUDED_LABEL}</span>
+            <span>{money(vatAmount)}</span>
           </div>
         )}
         {Number(discount) > 0 && (
@@ -136,7 +143,7 @@ const ReceiptDocument = ({
           </div>
         )}
         <div className="rcd-total-row rcd-total-row--grand">
-          <span>TOTAL</span>
+          <span>{RECEIPT_TOTAL_VAT_INCLUDED_LABEL}</span>
           <span>{money(total)}</span>
         </div>
       </div>

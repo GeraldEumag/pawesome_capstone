@@ -201,11 +201,11 @@ class CustomerStoreController extends Controller
                 'breakdown' => ReceiptBreakdown::forSettleable(
                     'customer_order',
                     (int) $order->id,
-                    $orderTotal,
+                    $totalAmount,
                     0,
                     [
                         'method' => $order->payment_method,
-                        'amount' => $orderTotal,
+                        'amount' => $totalAmount,
                         'reference_number' => $order->reference_number ?? $order->payment_reference ?? null,
                         'receipt_number' => $order->receipt_number,
                         'paid_at' => $order->paid_at,

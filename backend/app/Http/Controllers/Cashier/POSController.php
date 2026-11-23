@@ -30,9 +30,6 @@ class POSController extends Controller
         $payload['items'] = collect($payload['items'] ?? [])->map(function ($item) {
             if (($item['item_type'] ?? null) === 'product') {
                 $item['item_id'] = $item['item_id'] ?? ($item['id'] ?? null);
-                if (empty($item['item_name']) && !empty($item['item_id'])) {
-                    $item['item_name'] = InventoryItem::find($item['item_id'])?->name;
-                }
             }
 
             return $item;
@@ -46,9 +43,9 @@ class POSController extends Controller
             'items.*.item_type' => 'required|in:product,service',
             'items.*.item_id' => 'required_if:items.*.item_type,product|exists:inventory_items,id',
             'items.*.service_id' => 'required_if:items.*.item_type,service|exists:services,id',
-            'items.*.item_name' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
+            // Client-supplied labels and prices are display hints only; they
+            // are intentionally not validated or used for persistence.
             'items.*.discount_amount' => 'nullable|numeric|min:0',
             'payment_method' => 'required|in:cash,credit_card,debit_card,gcash,maya,bank_transfer,check',
             'card_type' => 'nullable|required_if:payment_method,credit_card|in:visa,mastercard,amex',
@@ -85,6 +82,7 @@ class POSController extends Controller
             // discounts are never honored: applying them would let any cashier
             // arbitrarily reduce recorded sale amounts while stock is deducted.
             $serverUnitPrices = [];
+            $serverItemNames = [];
             $serverItems = [];
 
             foreach ($payload['items'] as $item) {
@@ -108,6 +106,7 @@ class POSController extends Controller
                 }
 
                 $serverUnitPrices['product:' . $item['item_id']] = (float) $inventoryItem->price;
+                $serverItemNames['product:' . $item['item_id']] = $inventoryItem->name;
             }
 
             foreach ($payload['items'] as $index => $item) {
@@ -115,23 +114,32 @@ class POSController extends Controller
 
                 if (($item['item_type'] ?? null) === 'product') {
                     $unitPrice = $serverUnitPrices['product:' . $item['item_id']];
+                    $itemName = $serverItemNames['product:' . $item['item_id']];
                 } else {
-                    $service = Service::find($item['service_id']);
-                    $unitPrice = (float) ($service->price ?? 0);
+                    $service = Service::query()
+                        ->where('is_active', true)
+                        ->lockForUpdate()
+                        ->find($item['service_id']);
+                    if (!$service) {
+                        throw new \Exception('Service is not available for POS sale.');
+                    }
+                    $unitPrice = (float) $service->price;
+                    $itemName = $service->name;
                 }
 
-                $lineGross = $unitPrice * $quantity;
+                $lineGross = round($unitPrice * $quantity, 2);
                 // Discounts require a server-side policy engine; client input is ignored.
                 $lineDiscount = 0.0;
 
                 $serverItems[$index] = [
+                    'item_name' => $itemName,
                     'unit_price' => $unitPrice,
                     'discount_amount' => $lineDiscount,
                     'total_price' => $lineGross - $lineDiscount,
                 ];
             }
 
-            $subtotal = array_sum(array_column($serverItems, 'total_price'));
+            $subtotal = round(array_sum(array_column($serverItems, 'total_price')), 2);
             $taxAmount = round($subtotal * 0.12 / 1.12, 2);
             // Sale-level discounts are likewise not client-authoritative.
             $discountAmount = 0.0;
@@ -168,7 +176,7 @@ class POSController extends Controller
                     'sale_id' => $sale->id,
                     'product_id' => $item['item_type'] === 'product' ? ($item['item_id'] ?? null) : null,
                     'service_id' => $item['item_type'] === 'service' ? ($item['service_id'] ?? null) : null,
-                    'item_name' => $item['item_name'],
+                    'item_name' => $serverItem['item_name'],
                     'item_type' => $item['item_type'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $serverItem['unit_price'],
@@ -241,7 +249,7 @@ class POSController extends Controller
                             'payment_reference' => $payload['reference_number'] ?? null,
                             'paid_at' => $payment->paid_at,
                             'items' => array_map(fn ($item, $server) => [
-                                'product_name' => $item['item_name'],
+                                'product_name' => $server['item_name'],
                                 'quantity' => (int) $item['quantity'],
                                 'price' => (float) $server['unit_price'],
                                 'subtotal' => (float) $server['total_price'],

@@ -22,6 +22,9 @@ import { formatCurrency } from "../../utils/currency";
 import { posApi } from "../../api/pos";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
+import {
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+} from "../../utils/receiptLabels";
 import ReceiptDocument from "../shared/receipt/ReceiptDocument";
 import { useNavigate } from "react-router-dom";
 import RowActionPopover from "../shared/RowActionPopover";
@@ -421,8 +424,13 @@ const CashierTransactions = () => {
           ? receipt.payments
           : (selectedTransaction.raw_data?.payments || []);
         const total = Number(receipt?.total ?? selectedTransaction.amount ?? 0);
-        const netAmount = Number(breakdown.net_amount ?? sale?.subtotal ?? total);
         const vatAmount = Number(breakdown.vat_amount ?? sale?.tax_amount ?? 0);
+        const netAmount = Number(
+          breakdown.net_amount ??
+          receipt?.net_amount ??
+          sale?.net_amount ??
+          (total - Math.abs(vatAmount))
+        );
         const discount = Number(receipt?.discount ?? sale?.discount_amount ?? 0);
         const amountPaid = Number(breakdown.amount_paid ?? receipt?.payment?.amount ?? total);
         const balanceDue = Number(breakdown.balance_due ?? Math.max(0, total - amountPaid));
@@ -550,7 +558,7 @@ const CashierTransactions = () => {
                       </tr>
                     )}
                     <tr className="total-row">
-                      <td colSpan="3">Total:</td>
+                      <td colSpan="3">{RECEIPT_TOTAL_VAT_INCLUDED_LABEL}:</td>
                       <td className="total-amount">{formatCurrency(total)}</td>
                     </tr>
                     <tr>

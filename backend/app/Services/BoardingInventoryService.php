@@ -100,6 +100,19 @@ class BoardingInventoryService
                 ];
             }
             
+            if (!empty($errors)) {
+                DB::rollBack();
+
+                return [
+                    'success' => false,
+                    'message' => 'Some items could not be processed.',
+                    'usages' => [],
+                    'errors' => $errors,
+                    'total_items' => count($items),
+                    'processed_items' => 0,
+                ];
+            }
+
             DB::commit();
             
             return [

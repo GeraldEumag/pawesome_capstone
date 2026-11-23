@@ -13,6 +13,11 @@ import {
 import { showError } from "../../utils/alert.jsx";
 import { printReceipt } from "../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../utils/receiptPdf";
+import { normalizeAuthoritativePosReceipt } from "../../utils/posReceipt";
+import {
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+  RECEIPT_VAT_INCLUDED_LABEL,
+} from "../../utils/receiptLabels";
 import PaymentApprovals from "./components/PaymentApprovals";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -506,19 +511,18 @@ const CashierPOS = ({ initialTab }) => {
         headers: { "Idempotency-Key": pendingSaleKeyRef.current },
         body: JSON.stringify(payload),
       });
-      // Confirmed result — rotate the key so the next cart is a distinct sale.
-      pendingSaleKeyRef.current = null;
       const receiptData = res?.receipt || {};
+      const authoritativeReceipt = normalizeAuthoritativePosReceipt(res);
       const txId = receiptData.transaction_number
         || res?.transaction?.transaction_number
         || res?.transaction?.id
         || res?.transaction_id
         || res?.id
         || `TRX-${Date.now()}`;
-      const sourceItems = Array.isArray(receiptData.items) && receiptData.items.length > 0
-        ? receiptData.items
-        : payload.items;
-      const receiptTotal = Number(receiptData.total ?? receiptData.total_amount ?? res?.transaction?.total_amount ?? total);
+      // Rotate only after authoritative receipt data is complete; if the
+      // response is incomplete, a retry replays the same server transaction.
+      pendingSaleKeyRef.current = null;
+      const receiptTotal = authoritativeReceipt.total;
       const receipt = {
         transaction_id: String(txId).startsWith("TRX-") ? String(txId) : `TRX-${String(txId).padStart(4, "0")}`,
         receipt_number: receiptData.receipt_number || receiptData.invoice_number || null,
@@ -526,17 +530,12 @@ const CashierPOS = ({ initialTab }) => {
         customer_name: receiptData.customer?.name || payload.customer_name,
         payment_method: receiptData.payment?.method || paymentMethod,
         amount_received: Number(amountReceived) || receiptTotal,
-        subtotal: Number(receiptData.subtotal ?? subtotal),
-        net_amount: receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? netAmount,
-        vat_amount: receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? receiptData.tax ?? vatAmount,
+        subtotal: authoritativeReceipt.subtotal,
+        net_amount: authoritativeReceipt.netAmount,
+        vat_amount: authoritativeReceipt.vatAmount,
         total: receiptTotal,
         change: Number(receiptData.payment?.change ?? Math.max((Number(amountReceived) || receiptTotal) - receiptTotal, 0)),
-        items: sourceItems.map((item) => ({
-          item_name: item.item_name || item.name || "Item",
-          quantity: Number(item.quantity || 1),
-          unit_price: Number(item.unit_price ?? item.price ?? 0),
-          total_price: Number(item.total_price ?? item.total ?? (item.unit_price || item.price || 0) * (item.quantity || 1)),
-        })),
+        items: authoritativeReceipt.items,
         reference_number: receiptData.payment?.reference || receiptData.payment?.reference_number || ((paymentMethod === "GCash" || paymentMethod === "Maya") ? referenceNumber : null),
         date: receiptData.date || new Date().toLocaleString("en-PH", { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       };
@@ -547,6 +546,11 @@ const CashierPOS = ({ initialTab }) => {
       fetchProducts({ silent: true });
       fetchServices();
     } catch (err) {
+      // A deterministic 4xx response is cached for this key, but no sale was
+      // committed. A corrected cart/tender must begin a new logical request.
+      if (Number(err?.status) >= 400 && Number(err?.status) < 500) {
+        pendingSaleKeyRef.current = null;
+      }
       addToast(err.message || "Checkout failed. Please try again.", "error");
     } finally {
       setCheckoutLoading(false);
@@ -976,11 +980,11 @@ const CashierPOS = ({ initialTab }) => {
                 <span>{fmt(netAmount)}</span>
               </div>
               <div className="pos-totals-row">
-                <span>VAT 12%</span>
+                <span>{RECEIPT_VAT_INCLUDED_LABEL}</span>
                 <span>{fmt(vatAmount)}</span>
               </div>
               <div className="pos-totals-grand">
-                <span>Total</span>
+                <span>{RECEIPT_TOTAL_VAT_INCLUDED_LABEL}</span>
                 <span>{fmt(total)}</span>
               </div>
             </div>

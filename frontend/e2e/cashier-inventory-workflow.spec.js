@@ -3,7 +3,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const rootDir = path.resolve(__dirname, "../..");
-const evidenceDir = path.join(rootDir, "browser-evidence", "cashier-inventory-workflow");
+const evidenceDir = process.env.E2E_EVIDENCE_DIR
+  ? path.resolve(process.env.E2E_EVIDENCE_DIR)
+  : path.join(rootDir, "docs", "audit", "phase-3-1-inventory-acceptance", "evidence", "cashier-inventory-workflow");
 const resultPath = path.join(evidenceDir, "cashier-inventory-workflow-results.json");
 const frontendUrl = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 const apiUrl = process.env.E2E_API_URL || "http://127.0.0.1:8000/api";
@@ -253,7 +255,10 @@ async function createPosSale(request, cashierSession, products) {
       notes: `CASHIER_INVENTORY_WORKFLOW ${Date.now()}`,
     };
 
-    const result = await apiMaybe(request, cashierSession, "POST", "/cashier/pos/transaction", { data: payload });
+    const result = await apiMaybe(request, cashierSession, "POST", "/cashier/pos/transaction", {
+      data: payload,
+      headers: { "Idempotency-Key": `phase3-1-pos-${product.id}-${Date.now()}` },
+    });
     if (result.ok && result.body?.success) {
       return { product, transaction: result.body.transaction, receipt: result.body.receipt };
     }

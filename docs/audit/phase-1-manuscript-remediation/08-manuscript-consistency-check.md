@@ -1,0 +1,25 @@
+# Manuscript-Wide Consistency Check
+
+**Status:** Evidence review completed against the latest PDF; correction pass blocked by missing editable manuscript and source records. The original audit statuses are not overwritten.
+
+| Area | Finding in `PAPER_updated-2.pdf` | Required consistency action |
+|---|---|---|
+| Official title | Cover/title uses "Web-Based Management Information System with Chatbot-Driven Veterinary and Hotel Services Reservation for Pawesome Retreat Inc." | Preserve the approved title; do not substitute placeholder text or rename the project. |
+| Abstract and conclusions | 43 respondents (30/3/10) conflicts with Table 4/Chapter IV's 48 (30/8/10). Abstract reports group means and lowest-rated items without accessible raw data. | Recompute only from original anonymized responses; update every occurrence together. |
+| Methods/results | Current PDF describes purposive sampling in participant text; sampling validity and actual selection remain unverified. Statistical treatment mentions Slovin while no population N/calculation is supplied in extracted text. | Confirm the actual process with researchers/adviser; align design, sample, treatment, and results. Do not change to random sampling or assert Slovin appropriateness without evidence. |
+| Online payment | Scope says no payment gateway. Customer service-billing route takes GCash/Maya selection, reference and proof, then returns "proof submitted" for cashier verification. No gateway integration/automated provider confirmation was established by this source review. | Describe proof/reference submission and manual cashier verification accurately; separate from future gateway integration. |
+| Chatbot | Scope text emphasizes predefined answers; current configuration supports FAQ/rule paths and optional Groq/Gemini AI for eligible general/help/FAQ/advice intents, with critical payment/booking intents rule-based. Live deployment configuration is not verified. | Describe the implemented hybrid capability and limitations; do not claim live provider, accuracy, veterinary diagnosis, or medical advice. |
+| Veterinary scope | Vaccination-card upload/verification is part of the accepted project scope and backend workflow. | Keep it; do not remove, weaken, or describe it as a gap. |
+| Development stack | Main narrative names Laravel/React/MySQL; partial drafts agree generally. Current architecture source is not necessarily the one embedded in the thesis. | Align tool names and versions to dated project records; distinguish current repository versions from project-period versions. |
+| Placeholder text | Chapter III extracted text contains `[System Name]`, `[Clinic Name]`, `Figure __`, and unresolved Appendix references in development-method sections. | Replace only with confirmed approved names and real figure/appendix identifiers in the editable thesis. |
+| Deployment claims | Manuscript methodology claims Vercel/Railway deployment and production configuration verification. Prior in-repo alignment notes caution against claiming deployment/training without direct proof; current audit did not validate a production deployment. | Obtain deployment/release records and author confirmation; otherwise qualify or remove unsupported historical claims. |
+| Chapter placement | Actual interface figure captions and discussion occur in Chapter III; Chapter IV also begins showing implemented screenshots. | Retain wireframes in Chapter III and move actual interface screenshots/discussion to Chapter IV with one consistent figure sequence. |
+| Figure list | List of Figures and body captions appear to disagree on Figures 71 and 72 (architecture vs Agile Model). | Regenerate figure list and check every number/title/page cross-reference after moving figures. |
+| Tables | Chapter III uses Table 4 for participants; results section uses table numbers for software-quality results. Numbering/context may be ambiguous and must be checked in editable layout. | Confirm one numbering scheme (chapter-based or continuous) and update all cross-references. |
+| Appendices | Table of contents and body disagree: Appendix 7 is used for evaluation instrument and photo documentation; body includes Appendix 10 STAT Certification not listed in the extracted contents. | Reconcile appendix numbering, titles, table/list entries, and in-text references. |
+| Scheduling | Appendix 4 remains Gantt Chart; contents page lists p. 134, while body extraction places its heading at printed p. 124. | Replace only after actual timeline and activities are documented; correct page/list references. |
+| References | Rajkumar placeholder; author omissions in two checked entries; some reference URLs are broad or lack DOI. | Complete source-level verification and citation matching; see report 04. |
+
+## Current non-claims
+
+This review does not certify live production deployment, training, actual external payment-gateway integration, the accuracy of any survey mean, or real-world use. It does not establish that every method activity recorded in the manuscript was performed. No system implementation or source change was made.

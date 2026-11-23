@@ -28,6 +28,10 @@ import {
 import { showSuccess, showError, showWarning } from "../../../utils/alert.jsx";
 import { printReceipt } from "../../../utils/receiptPrinter";
 import { downloadReceiptPdf } from "../../../utils/receiptPdf";
+import {
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+  RECEIPT_VAT_INCLUDED_LABEL,
+} from "../../../utils/receiptLabels";
 import { STORE_INFO } from "../../../utils/storeInfo";
 import brandLogo from "../../../assets/pawesome.jpg";
 import { usePaymentApprovals, paymentKey } from "../hooks/usePaymentApprovals.jsx";
@@ -1031,10 +1035,14 @@ const PaymentApprovals = () => {
               )}
 
               {/* VAT-inclusive breakdown — authoritative values from the backend */}
-              <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>{formatCurrency(receiptData.breakdown?.net_amount ?? receiptData.net_amount ?? receiptData.amount)}</span></div>
-              <div className="pa-receipt-row"><span>VAT (12%)</span><span>{formatCurrency(receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? 0)}</span></div>
+              <div className="pa-receipt-row"><span>Net Amount (ex-VAT)</span><span>{formatCurrency(
+                receiptData.breakdown?.net_amount ??
+                receiptData.net_amount ??
+                (Number(receiptData.amount || 0) - Math.abs(Number(receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? 0)))
+              )}</span></div>
+              <div className="pa-receipt-row"><span>{RECEIPT_VAT_INCLUDED_LABEL}</span><span>{formatCurrency(receiptData.breakdown?.vat_amount ?? receiptData.vat_amount ?? 0)}</span></div>
               <div className="pa-receipt-total">
-                <span>TOTAL</span>
+                <span>{RECEIPT_TOTAL_VAT_INCLUDED_LABEL}</span>
                 <span>{formatCurrency(receiptData.amount)}</span>
               </div>
 

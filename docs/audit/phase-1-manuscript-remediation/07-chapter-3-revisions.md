@@ -1,0 +1,28 @@
+# Chapter III Methodology and Figure Findings
+
+**Execution status for MS-10-MS-15, MS-20, and MS-21: BLOCKED for manuscript editing.** The PDF and partial in-repository methodology documents were inspected. No complete editable thesis, raw respondent data, source wireframes, original schedule file, or adviser-selected replacement tool was found.
+
+| ID | Current evidence / issue | Revision direction | Blocker |
+|---|---|---|---|
+| MS-10 Research design, time/place, participants | Current PDF describes September 2025-October 2026, Cavite State University-Bacoor Campus, and coordination with Pawesome. It names purposive sampling in the current extracted participant text. | Keep research design distinct from software development methodology. Confirm actual activities, study location, project period, participant selection, and category definitions with the researchers. | Dates and selection process need source records/author confirmation; editable thesis absent. |
+| MS-11 Respondents | Abstract reports 43 (30/3/10); Table 4 and results report 48 (30/8/10). | Reconcile only from anonymized original forms and disposition log; synchronize the abstract, methodology, results, summary, and conclusions. | No raw survey dataset or workbook. See reports 02-03. |
+| MS-12 Statistics | Frequency, percentage, weighted mean, and Slovin's formula are named. Text extraction shows a malformed weighted-mean symbol/description and no usable N-based Slovin calculation; one scale table lists verbal ranges. | Recalculate all values from validated data, state formula inputs/weights/missing-data handling/rounding, and use Slovin only if the population and sampling design justify it. | Data, codebook, original workbook, and sampling-frame evidence absent. |
+| MS-13 Agile/Incremental | PDF describes three increments and Agile/Scrum concepts. Partial `docs/increment_*.docx` drafts add activities but include claims that require documentary evidence. | Preserve the approved rationale; explain iteration, feedback, testing, incremental delivery, and contrast with Waterfall only to the extent shown in project records. Do not claim Scrum ceremonies or a practiced process without evidence. | Complete thesis and dated evidence of actual activities/reviews/tests not supplied. |
+| MS-14 Phases/appendices | PDF describes phases and appendices; partial methodology drafts contain placeholders such as `[System Name]`, `[Clinic Name]`, `Figure __`, and Appendix blanks. | Map each phase to purpose, actual activities, outputs, and an existing supporting artifact. Remove placeholders only after confirming exact names/evidence. | No complete source documents or evidence for every stated activity. |
+| MS-15 Tools | PDF names React, Tailwind CSS, Laravel, PHP, MySQL, HTML, CSS, JavaScript, and XAMPP. Repository manifests confirm the current stack generally; package/framework versions must be tied to the study's actual development period. | Keep actual tools only and cite versions from project manifests/configuration, distinguishing current repo version from historical version used during research. | Full manuscript source and dated project environment records absent. |
+| MS-20 Figures and chapter placement | List of Figures labels figures 17 onward as implemented interfaces, and Chapter III contains actual system-interface captions/discussion. Chapter IV begins with system screenshots as figures 73 onward. | Chapter III should retain actual wireframes/design representations only; move implemented screenshots/discussion to Chapter IV, update references, tables/lists, and figure numbering. Never rename screenshots as wireframes. | No complete DOCX and no source wireframe files for the thesis figures. |
+| MS-21 Schedule replacement | Appendix 4 remains "Gantt Chart." The current PDF body places it at printed p. 124, but the contents list gives p. 134. The chart content is not recoverable from text extraction. | After adviser preference and supporting records are confirmed, use a monitoring/schedule artifact that preserves the one-year chronology and evidenced activities. A milestone schedule/tracking matrix is a candidate, not yet selected or created. | No editable schedule, source activity records, or adviser direction. Cannot invent dates/progress. |
+
+## Timeline evidence and limits
+
+The current PDF narrates project milestones between September 2025 and October 2026, including title approval on January 17, 2026, review/revision dates, and evaluation endorsement on October 17, 2026. These are manuscript claims; primary records were not supplied to independently establish dates or completion. Preserve this chronology until records support corrections.
+
+## Additional figure and appendix consistency issues
+
+- The List of Figures appears to label Figure 71 as system architecture and Figure 72 as Agile Model, while body text captions place Agile Incremental Model at Figure 71 and architecture at Figure 72.
+- The List of Appendices does not appear to include every appendix shown in the body; body text uses "Appendix 7" for both the evaluation instrument and photo documentation, and includes Appendix 10 STAT Certification after Appendix 9 source code.
+- These discrepancies must be resolved in the editable document, including cross-references and all lists. No numbering was changed here.
+
+## Existing editable artifacts
+
+`docs/diagrams/Pawesome_System_Architecture.drawio` and `docs/diagrams/system-architecture.drawio` are editable architecture diagrams, but neither was established as the source for all thesis figures. The latter includes a Telegram Bot API box, which conflicts with current in-app chatbot scope. These user-maintained assets were inspected only and left unchanged.

@@ -1,6 +1,11 @@
 import jsPDF from "jspdf";
 import { STORE_INFO } from "./storeInfo";
 import { loadBrandLogo } from "./brandAssets";
+import {
+  RECEIPT_NET_AMOUNT_LABEL,
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+  RECEIPT_VAT_INCLUDED_LABEL,
+} from "./receiptLabels";
 
 /* A4 branded invoice. Same exports + opts contract as before so every
    caller (POS, transactions, history, customer payments, vet, verification)
@@ -265,10 +270,12 @@ export const createReceiptPdf = async (opts = {}) => {
   };
 
   const drawTotals = () => {
+    const vatAmount = vat == null ? null : Math.abs(safeAmount(vat));
+    const netBase = netAmount ?? (vatAmount != null ? safeAmount(total) - vatAmount : subtotal);
     const rows = [
-      [netAmount == null ? "Subtotal" : "Net amount (ex-VAT)", formatAmount(netAmount ?? subtotal)],
+      [netAmount == null && vatAmount == null ? "Subtotal" : RECEIPT_NET_AMOUNT_LABEL, formatAmount(netBase)],
     ];
-    if (vat !== null && vat !== undefined) rows.push(["VAT 12%", formatAmount(Math.abs(safeAmount(vat)))]);
+    if (vatAmount != null) rows.push([RECEIPT_VAT_INCLUDED_LABEL, formatAmount(vatAmount)]);
     if (safeAmount(discount) > 0) rows.push(["Discount", `-${formatAmount(discount)}`]);
 
     const boxW = 84;
@@ -294,7 +301,7 @@ export const createReceiptPdf = async (opts = {}) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(255, 255, 255);
-    doc.text("TOTAL", boxX + 4, y + 7.2);
+    doc.text(RECEIPT_TOTAL_VAT_INCLUDED_LABEL, boxX + 4, y + 7.2);
     doc.setFontSize(11);
     doc.text(formatAmount(total), RIGHT - 4, y + 7.2, { align: "right" });
     y += 15;

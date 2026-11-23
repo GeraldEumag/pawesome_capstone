@@ -4,9 +4,10 @@ import { apiRequest } from "./client";
  * Process a new transaction
  * @param {Object} transactionData
  */
-export const processTransaction = async (transactionData) => {
+export const processTransaction = async (transactionData, idempotencyKey = crypto.randomUUID()) => {
   const response = await apiRequest("/cashier/pos/transaction", {
     method: "POST",
+    headers: { "Idempotency-Key": idempotencyKey },
     body: JSON.stringify(transactionData),
   });
   return response;

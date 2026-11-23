@@ -456,6 +456,27 @@ class StockMovementTest extends TestCase
         $this->assertSame('disposed', $return->fresh()->status);
     }
 
+    public function test_return_create_replays_with_the_same_idempotency_key(): void
+    {
+        $staff = $this->user('inventory');
+        $item = $this->item(10);
+        $headers = array_merge($this->headers($staff), ['Idempotency-Key' => 'return-once-123']);
+        $payload = [
+            'inventory_item_id' => $item->id,
+            'quantity' => 1,
+            'source_type' => 'manual',
+            'return_reason' => 'Customer changed mind',
+        ];
+
+        $first = $this->postJson('/api/inventory/returns', $payload, $headers);
+        $first->assertStatus(201);
+
+        $replay = $this->postJson('/api/inventory/returns', $payload, $headers);
+        $replay->assertStatus(201)->assertHeader('Idempotent-Replayed', 'true');
+        $this->assertSame($first->json('return.id'), $replay->json('return.id'));
+        $this->assertSame(1, InventoryReturn::where('inventory_item_id', $item->id)->count());
+    }
+
     // ---------------------------------------------------------------
     // Search + auth + idempotency
     // ---------------------------------------------------------------

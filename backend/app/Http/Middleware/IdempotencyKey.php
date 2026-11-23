@@ -18,10 +18,21 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class IdempotencyKey
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $requirement = 'optional'): Response
     {
         $key = trim((string) $request->header('Idempotency-Key', ''));
-        if ($key === '' || !in_array($request->method(), ['POST', 'PUT', 'PATCH'], true) || !$request->user()) {
+        $isWriteRequest = in_array($request->method(), ['POST', 'PUT', 'PATCH'], true);
+        if (!$isWriteRequest || !$request->user()) {
+            return $next($request);
+        }
+
+        if ($key === '' && $requirement === 'required') {
+            return response()->json([
+                'message' => 'Idempotency-Key is required for this transaction.',
+            ], 422);
+        }
+
+        if ($key === '') {
             return $next($request);
         }
 

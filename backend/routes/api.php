@@ -449,7 +449,7 @@ Route::middleware(['auth.api', 'throttle:api', 'role:cashier'])->prefix('cashier
     Route::post('visit-invoices/{appointmentId}/adjustments', [VisitInvoiceController::class, 'requestAdjustment']);
 
     // POS Operations
-    Route::post('pos/transaction', [POSController::class, 'processTransaction'])->middleware('idempotency');
+    Route::post('pos/transaction', [POSController::class, 'processTransaction'])->middleware('idempotency:required');
     
     // Dynamic routes with ID parameters
     Route::get('receipt/{id}', [CashierDashboardController::class, 'generateReceipt']);

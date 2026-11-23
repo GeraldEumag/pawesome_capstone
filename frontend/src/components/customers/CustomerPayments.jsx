@@ -366,7 +366,7 @@ const CustomerPayments = () => {
     const outputReceipt = async (options) => {
       if (output === "view") return setReceiptView({ options, payment });
       if (output === "pdf") return await downloadReceiptPdf(options);
-      return printReceipt({ ...options, vat: undefined });
+      return printReceipt(options);
     };
     try {
       if (payment.payment_source === "service_billing_payment") {
@@ -709,7 +709,7 @@ const CustomerPayments = () => {
             <>
               <button type="button" className="receipt-btn" onClick={() => setReceiptView(null)}>Close</button>
               <button type="button" className="receipt-btn" onClick={() => downloadReceiptPdf(receiptView.options)}>PDF</button>
-              <button type="button" className="receipt-btn" onClick={() => printReceipt({ ...receiptView.options, vat: undefined })}>Print</button>
+              <button type="button" className="receipt-btn" onClick={() => printReceipt(receiptView.options)}>Print</button>
             </>
           }
         >

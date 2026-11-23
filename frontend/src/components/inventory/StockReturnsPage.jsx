@@ -53,6 +53,8 @@ const StockReturnsPage = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnPhoto, setReturnPhoto] = useState("");
   const [inspectPhoto, setInspectPhoto] = useState("");
+  const [createIdemKey, setCreateIdemKey] = useState(() => newIdemKey());
+  const [dispositionIdemKey, setDispositionIdemKey] = useState(() => newIdemKey());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,7 +72,15 @@ const StockReturnsPage = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const resetCreate = () => { setSelItem(null); setQty(1); setSourceType("manual"); setSourceId(""); setReturnReason(""); setReturnPhoto(""); };
+  const resetCreate = () => {
+    setSelItem(null);
+    setQty(1);
+    setSourceType("manual");
+    setSourceId("");
+    setReturnReason("");
+    setReturnPhoto("");
+    setCreateIdemKey(newIdemKey());
+  };
 
   const submitCreate = async () => {
     if (!selItem) { showError("Select the returned item first.", "Record Return"); return; }
@@ -85,7 +95,7 @@ const StockReturnsPage = () => {
         source_id: sourceId ? parseInt(sourceId, 10) : null,
         return_reason: returnReason.trim(),
         photo: returnPhoto || null,
-      }, { headers: { "Idempotency-Key": newIdemKey() } });
+      }, { headers: { "Idempotency-Key": createIdemKey } });
       setCreateOpen(false);
       resetCreate();
       setToast({ show: true, type: "success", title: "Return Recorded", message: "Item is now pending inspection — stock is unchanged until dispositioned." });
@@ -93,6 +103,11 @@ const StockReturnsPage = () => {
       setPage(1);
       load();
     } catch (err) {
+      if (err?.status >= 400 && err.status < 500) {
+        // The middleware may cache deterministic 4xx responses; corrected
+        // submissions need a fresh key, while uncertain failures reuse theirs.
+        setCreateIdemKey(newIdemKey());
+      }
       showError(err.message, "Record Return");
     } finally {
       setSubmitting(false);
@@ -105,9 +120,10 @@ const StockReturnsPage = () => {
       await inventoryApi.submitReturnDisposition(
         inspectTarget.id,
         { disposition, inspection_notes: inspectNotes.trim() || null, photo: inspectPhoto || null },
-        { headers: { "Idempotency-Key": newIdemKey() } }
+        { headers: { "Idempotency-Key": dispositionIdemKey } }
       );
       setInspectTarget(null);
+      setDispositionIdemKey(newIdemKey());
       setInspectNotes("");
       setInspectPhoto("");
       setDisposition("restock");
@@ -119,6 +135,9 @@ const StockReturnsPage = () => {
       });
       load();
     } catch (err) {
+      if (err?.status >= 400 && err.status < 500) {
+        setDispositionIdemKey(newIdemKey());
+      }
       showError(err.message, "Inspect Return");
     } finally {
       setSubmitting(false);
@@ -193,7 +212,7 @@ const StockReturnsPage = () => {
                     </td>
                     <td>
                       {canInspect(r) && (
-                        <button type="button" className="sm-link-btn" onClick={() => { setInspectTarget(r); setDisposition("restock"); setInspectPhoto(""); setInspectNotes(""); }}>
+                        <button type="button" className="sm-link-btn" onClick={() => { setInspectTarget(r); setDisposition("restock"); setInspectPhoto(""); setInspectNotes(""); setDispositionIdemKey(newIdemKey()); }}>
                           <FontAwesomeIcon icon={faMagnifyingGlass} /> Inspect
                         </button>
                       )}

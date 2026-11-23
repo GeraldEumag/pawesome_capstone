@@ -16,6 +16,11 @@ import { STORE_INFO } from "./storeInfo";
 import { showWarning } from "./alert.jsx";
 import { printRawViaQZ } from "./qzPrinter";
 import { buildEscPos, buildTestReceipt } from "./escpos";
+import {
+  RECEIPT_NET_AMOUNT_LABEL,
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+  RECEIPT_VAT_INCLUDED_LABEL,
+} from "./receiptLabels";
 import brandLogo from "../assets/pawesome.jpg";
 
 /**
@@ -59,7 +64,7 @@ if (import.meta.env.DEV && typeof window !== "undefined") {
 
 // ── HTML builder ─────────────────────────────────────────────────────────────
 
-function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
+export function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
   const {
     title = "Invoice",
     receiptNumber = "",
@@ -71,6 +76,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
     referenceNumber = "",
     items = [],
     subtotal = 0,
+    netAmount,
     vat,
     discount = 0,
     total = 0,
@@ -85,6 +91,8 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
   // When the payload does not include a VAT amount, the line is omitted
   // rather than fabricating one.
   const vatAmount    = vat != null ? Number(vat) : null;
+  const grossAmount  = Number(total) || Number(subtotal) || 0;
+  const netBase      = netAmount ?? (vatAmount != null ? grossAmount - Math.abs(vatAmount) : subtotal);
 
   const EQ = `<div class="dv">&nbsp;</div>`;
 
@@ -114,8 +122,8 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
 
   // ── Totals block: subtotal, VAT, discount, TOTAL, cash, change ──
   const totalsHtml = [
-    rw("Subtotal", php(subtotal)),
-    vatAmount != null ? rw("VAT 12%", `-${php(Math.abs(vatAmount))}`) : "",
+    rw(netAmount != null || vatAmount != null ? RECEIPT_NET_AMOUNT_LABEL : "Subtotal", php(netBase)),
+    vatAmount != null ? rw(RECEIPT_VAT_INCLUDED_LABEL, php(Math.abs(vatAmount))) : "",
     discount > 0 ? rw("Discount", `-${php(discount)}`) : "",
   ].filter(Boolean).join("");
 
@@ -200,7 +208,7 @@ function buildReceiptHtml(opts = {}, { includePrintButton = false } = {}) {
 
     ${EQ}
 
-    <div class="tt"><span>TOTAL</span><span>${php(total)}</span></div>
+    <div class="tt"><span>${RECEIPT_TOTAL_VAT_INCLUDED_LABEL}</span><span>${php(total)}</span></div>
 
     ${cashHtml}
 

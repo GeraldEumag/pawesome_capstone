@@ -1,16 +1,14 @@
 /**
  * Stock Movement & Control — browser E2E coverage.
  *
- * Exercises the real UI + real API on the dev stack (backend :8000,
- * frontend :3000). Every test creates its own uniquely-named fixture item
- * (SKU prefix E2ESM-) so it never touches live products; fixture items are
- * identifiable for cleanup.
+ * Exercises the real UI + real API on an explicitly isolated audit stack.
+ * Every test creates its own uniquely-named fixture item (SKU prefix E2ESM-).
  *
- * Requires: `php artisan serve` (or the worker pool) on :8000 and the Vite
- * dev server on :3000.
+ * Requires E2E_API_URL/E2E_AUDIT_DATABASE plus a live audit API and frontend.
  */
 const { test, expect } = require('@playwright/test');
 const { loginAs, apiLogin } = require('./test-utils');
+const { enforceAuditStack } = require('./audit-guard');
 
 const apiUrl = process.env.E2E_API_URL || 'http://127.0.0.1:8000/api';
 const stamp = Date.now().toString(36).toUpperCase();
@@ -70,9 +68,10 @@ async function pickItem(page, name) {
   await option.click();
 }
 
-test.describe('Stock Movement & Control — browser E2E', () => {
-  test.describe.configure({ mode: 'serial' });
-  test.setTimeout(120000);
+test.setTimeout(120000);
+test.beforeEach(async ({ request }) => {
+  await enforceAuditStack(request, test, { role: 'inventory', apiLogin });
+});
 
   test('stock in via browser posts a transaction and updates stock', async ({ page, request }) => {
     const inv = await apiLogin(request, 'inventory');
@@ -278,4 +277,3 @@ test.describe('Stock Movement & Control — browser E2E', () => {
     const res = await api(request, inv.token, 'post', '/manager/inventory/stock-requests/1/approve', {});
     expect(res.status).toBe(403);
   });
-});

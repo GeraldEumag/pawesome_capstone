@@ -117,12 +117,15 @@ class PaymentReceiptOutboxTest extends TestCase
         $this->assertSame('service_request', $delivery->source_type);
         $this->assertSame($sr->id, $delivery->source_id);
         $this->assertSame('accepted', $delivery->fresh()->status);
-
         Mail::assertSent(PaymentReceiptMail::class, function ($mail) use ($sr) {
+            $renderedReceipt = $mail->render();
+
             return $mail->receipt['receipt_number'] === $sr->receipt_number
                 && (float) $mail->receipt['total_amount'] === 500.0
                 && (float) $mail->receipt['vat_amount'] === 53.57
-                && str_contains($mail->render(), '-₱53.57')
+                && str_contains($renderedReceipt, 'VAT 12% (included)')
+                && str_contains($renderedReceipt, 'TOTAL (VAT INCLUDED)')
+                && !str_contains($renderedReceipt, '-₱53.57')
                 && $mail->receipt['service_name'] === 'Full Groom'
                 && $mail->receipt['customer_email'] === $this->users['customer']->email;
         });

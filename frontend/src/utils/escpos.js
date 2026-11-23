@@ -13,6 +13,11 @@
  * encoding-safe regardless of the transport charset.
  */
 import { STORE_INFO } from "./storeInfo";
+import {
+  RECEIPT_NET_AMOUNT_LABEL,
+  RECEIPT_TOTAL_VAT_INCLUDED_LABEL,
+  RECEIPT_VAT_INCLUDED_LABEL,
+} from "./receiptLabels";
 
 // ── ESC/POS commands ─────────────────────────────────────────────────────────
 const INIT     = "\x1B@";        // initialize printer
@@ -92,6 +97,7 @@ export function buildEscPos(opts = {}) {
     referenceNumber = "",
     items           = [],
     subtotal        = 0,
+    netAmount,
     vat,
     discount        = 0,
     total           = 0,
@@ -103,6 +109,8 @@ export function buildEscPos(opts = {}) {
 
   // VAT comes from the backend receipt payload — never recompute it here.
   const vatAmount    = vat != null ? Number(vat) : null;
+  const grossAmount  = Number(total) || Number(subtotal) || 0;
+  const netBase      = netAmount ?? (vatAmount != null ? grossAmount - Math.abs(vatAmount) : subtotal);
 
   let out = INIT;
 
@@ -141,11 +149,11 @@ export function buildEscPos(opts = {}) {
 
   // ── Totals ──
   out += "\n";
-  out += row("Subtotal", php(subtotal)) + "\n";
-  if (vatAmount != null) out += row("VAT 12%", "-" + php(Math.abs(vatAmount))) + "\n";
+  out += row(netAmount != null || vatAmount != null ? RECEIPT_NET_AMOUNT_LABEL : "Subtotal", php(netBase)) + "\n";
+  if (vatAmount != null) out += row(RECEIPT_VAT_INCLUDED_LABEL, php(Math.abs(vatAmount))) + "\n";
   if (discount > 0) out += row("Discount", "-" + php(discount)) + "\n";
   out += "\n";
-  out += DBL + row("TOTAL", php(total), COLS_DBL) + NORMAL + "\n";
+  out += BOLD_ON + row(RECEIPT_TOTAL_VAT_INCLUDED_LABEL, php(total)) + BOLD_OFF + "\n";
   if (amountReceived != null) out += row("Cash", php(amountReceived)) + "\n";
   if (change != null) out += row("Change", php(change)) + "\n";
 

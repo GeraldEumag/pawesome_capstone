@@ -1,0 +1,561 @@
+{
+  "result": "PASS",
+  "item_id": 3,
+  "product": {
+    "name": "0000 Phase12 Inventory 40101701",
+    "sku": "P12I40101701",
+    "barcode": "P12BC40101701"
+  },
+  "ui": {
+    "product_created": true,
+    "initial_batch": "Batch-001",
+    "stock_in_batch": "Batch-002",
+    "stock_out": 3,
+    "audit_month": "2026-11",
+    "audit_actual": 13,
+    "report_stock": 13
+  },
+  "database": {
+    "item": {
+      "id": 3,
+      "sku": "P12I40101701",
+      "barcode": "P12BC40101701",
+      "name": "0000 Phase12 Inventory 40101701",
+      "category": "Accessories",
+      "brand": "Phase12 Audit",
+      "supplier": null,
+      "stock": 13,
+      "reorder_level": 1,
+      "price": "25.00",
+      "cost": "10.00",
+      "status": "active",
+      "is_sellable": 1,
+      "requires_expiry_tracking": 0,
+      "issue_method": "FIFO",
+      "archived_at": null,
+      "created_at": "2026-11-23 21:21:52",
+      "updated_at": "2026-11-23 21:22:16"
+    },
+    "batches": [
+      {
+        "id": 1,
+        "inventory_item_id": 3,
+        "batch_no": "Batch-001",
+        "received_date": "2026-11-23",
+        "manufacturing_date": null,
+        "expiration_date": null,
+        "quantity": 12,
+        "remaining_quantity": 8,
+        "status": "active",
+        "supplier": null,
+        "unit_cost": null,
+        "notes": "New stock received",
+        "created_at": "2026-11-23 21:21:59",
+        "updated_at": "2026-11-23 21:22:16"
+      },
+      {
+        "id": 2,
+        "inventory_item_id": 3,
+        "batch_no": "Batch-002",
+        "received_date": "2026-11-23",
+        "manufacturing_date": null,
+        "expiration_date": null,
+        "quantity": 5,
+        "remaining_quantity": 5,
+        "status": "active",
+        "supplier": null,
+        "unit_cost": null,
+        "notes": "New stock received",
+        "created_at": "2026-11-23 21:22:02",
+        "updated_at": "2026-11-23 21:22:02"
+      }
+    ],
+    "logs": [
+      {
+        "id": 1,
+        "inventory_item_id": 3,
+        "delta": 12,
+        "quantity": 12,
+        "type": "restock",
+        "movement_type": "batch_restock",
+        "reference_type": "restock",
+        "reference_id": null,
+        "stock_before": 0,
+        "stock_after": 12,
+        "previous_stock": 0,
+        "new_stock": 12,
+        "reason": "New stock received",
+        "performed_by": "INVENTORY MANAGER",
+        "role": "inventory",
+        "user_id": 6,
+        "details": "{\"batch_id\":1,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
+        "created_at": "2026-11-23 21:22:00",
+        "updated_at": "2026-11-23 21:22:00"
+      },
+      {
+        "id": 2,
+        "inventory_item_id": 3,
+        "delta": 5,
+        "quantity": 5,
+        "type": "restock",
+        "movement_type": "batch_restock",
+        "reference_type": "restock",
+        "reference_id": null,
+        "stock_before": 12,
+        "stock_after": 17,
+        "previous_stock": 12,
+        "new_stock": 17,
+        "reason": "New stock received",
+        "performed_by": "INVENTORY MANAGER",
+        "role": "inventory",
+        "user_id": 6,
+        "details": "{\"batch_id\":2,\"expiration_date\":null,\"manufacturing_date\":null,\"supplier\":null,\"unit_cost\":null}",
+        "created_at": "2026-11-23 21:22:02",
+        "updated_at": "2026-11-23 21:22:02"
+      },
+      {
+        "id": 3,
+        "inventory_item_id": 3,
+        "delta": -3,
+        "quantity": 3,
+        "type": "stock_adjustment_decrement",
+        "movement_type": "stock_adjustment_decrement",
+        "reference_type": "stock_adjustment",
+        "reference_id": null,
+        "stock_before": 17,
+        "stock_after": 14,
+        "previous_stock": 17,
+        "new_stock": 14,
+        "reason": "Damaged/expired",
+        "performed_by": "INVENTORY MANAGER",
+        "role": "inventory",
+        "user_id": 6,
+        "details": "{\"reconciled_batch_id\":null,\"batch_written_off\":3,\"adjustment_type\":\"decrement\"}",
+        "created_at": "2026-11-23 21:22:08",
+        "updated_at": "2026-11-23 21:22:08"
+      },
+      {
+        "id": 4,
+        "inventory_item_id": 3,
+        "delta": -1,
+        "quantity": 1,
+        "type": "monthly_audit",
+        "movement_type": "monthly_audit",
+        "reference_type": "monthly_audit",
+        "reference_id": null,
+        "stock_before": 14,
+        "stock_after": 13,
+        "previous_stock": 14,
+        "new_stock": 13,
+        "reason": "Counting Error",
+        "performed_by": "INVENTORY MANAGER",
+        "role": "inventory",
+        "user_id": 6,
+        "details": "{\"reconciled_batch_id\":null,\"batch_written_off\":1,\"audit_month\":\"2026-11\",\"system_stock\":14,\"actual_stock\":13,\"variance\":-1}",
+        "created_at": "2026-11-23 21:22:16",
+        "updated_at": "2026-11-23 21:22:16"
+      }
+    ],
+    "audits": [
+      {
+        "id": 1,
+        "inventory_item_id": 3,
+        "system_stock": 14,
+        "actual_stock": 13,
+        "variance": -1,
+        "audit_month": "2026-11",
+        "status": "discrepancy",
+        "approval_status": "approved",
+        "reason": "Counting Error",
+        "checked_by": "INVENTORY MANAGER",
+        "approved_by": 2,
+        "approved_at": "2026-11-23 21:22:18",
+        "created_at": "2026-11-23 21:22:16",
+        "updated_at": "2026-11-23 21:22:18"
+      }
+    ]
+  },
+  "checks": {
+    "batch_and_item_stock_equal": true,
+    "audit_approval_actor": true,
+    "movement_actor": true,
+    "unauthorized_browser_errors": []
+  },
+  "screenshots": [
+    "phase12-inventory/01-inventory-overview.png",
+    "phase12-inventory/02-product-review.png",
+    "phase12-inventory/03-product-created.png",
+    "phase12-inventory/04-initial-batch.png",
+    "phase12-inventory/05-stock-in-batch.png",
+    "phase12-inventory/06-movement-history.png",
+    "phase12-inventory/07-audit-count.png",
+    "phase12-inventory/08-report-reconciliation.png"
+  ],
+  "network": [
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/chatbot/welcome",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/inventory/items",
+      "status": 201,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/products"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/inventory/items/3/batches",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/inventory/items/3/batches",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/3/batches",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/suppliers",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/inventory/items/3/adjust-stock",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/items/archived",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/logs",
+      "status": 200,
+      "page": "/inventory/stock"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/monthly-audit",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/monthly-audit",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "POST",
+      "path": "/api/inventory/monthly-audit",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/monthly-audit",
+      "status": 200,
+      "page": "/inventory/monthly-audit"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/reports"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "page": "/inventory/reports"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/inventory/reports",
+      "status": 200,
+      "page": "/inventory/reports"
+    },
+    {
+      "source": "browser",
+      "method": "GET",
+      "path": "/api/settings/public",
+      "status": 200,
+      "page": "/inventory/reports"
+    }
+  ],
+  "console": []
+}

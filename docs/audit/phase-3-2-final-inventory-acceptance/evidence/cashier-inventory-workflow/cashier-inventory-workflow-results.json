@@ -1,0 +1,243 @@
+{
+  "startedAt": "2026-11-23T14:46:59.466Z",
+  "completedAt": "2026-11-23T14:48:35.546Z",
+  "frontendUrl": "http://localhost:3002",
+  "apiUrl": "http://127.0.0.1:8020/api",
+  "status": "PASSED",
+  "pages": [
+    {
+      "route": "/cashier/pos",
+      "label": "01-cashier-pos",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/01-cashier-pos.png"
+    },
+    {
+      "route": "/cashier/transactions",
+      "label": "02-cashier-transactions",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/02-cashier-transactions.png"
+    },
+    {
+      "route": "/inventory/history",
+      "label": "03-inventory-stock-history",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/03-inventory-stock-history.png"
+    },
+    {
+      "route": "/manager",
+      "label": "04-manager-dashboard-after-pos",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/04-manager-dashboard-after-pos.png"
+    },
+    {
+      "route": "/manager/reports",
+      "label": "05-manager-reports-after-pos",
+      "rendered": true,
+      "containsExpected": true,
+      "screenshot": "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/05-manager-reports-after-pos.png"
+    }
+  ],
+  "actions": [
+    {
+      "name": "Login as cashier",
+      "status": "PASS",
+      "detail": "cashier@example.com"
+    },
+    {
+      "name": "Verify sellable inventory items load",
+      "status": "PASS",
+      "detail": "25 product candidates"
+    },
+    {
+      "name": "Complete POS transaction via API",
+      "status": "PASS",
+      "detail": "P32-POS-MWTCW8GH transaction #23"
+    },
+    {
+      "name": "Verify POS transaction receipt/detail",
+      "status": "PASS",
+      "detail": "TRX-6B0451F0579C1"
+    },
+    {
+      "name": "Verify item stock decreased",
+      "status": "PASS",
+      "detail": "P32-POS-MWTCW8GH: 10 -> 9"
+    },
+    {
+      "name": "Login as inventory",
+      "status": "PASS",
+      "detail": "inventory@example.com"
+    },
+    {
+      "name": "Verify inventory stock log for POS sale",
+      "status": "PASS",
+      "detail": "log #102 pos_sale"
+    },
+    {
+      "name": "Login as manager",
+      "status": "PASS",
+      "detail": "manager@example.com"
+    },
+    {
+      "name": "Verify Manager reports after POS activity",
+      "status": "PASS",
+      "detail": "sales and inventory report APIs loaded"
+    }
+  ],
+  "screenshots": [
+    "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/01-cashier-pos.png",
+    "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/02-cashier-transactions.png",
+    "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/03-inventory-stock-history.png",
+    "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/04-manager-dashboard-after-pos.png",
+    "docs/audit/phase-3-2-final-inventory-acceptance/evidence/cashier-inventory-workflow/05-manager-reports-after-pos.png"
+  ],
+  "records": {
+    "productId": 12,
+    "productName": "P32-POS-MWTCW8GH",
+    "stockBefore": 10,
+    "transactionId": 23,
+    "transactionNumber": "TRX-6B0451F0579C1",
+    "stockAfter": 9,
+    "inventoryLogId": 102,
+    "inventoryLogMovement": "pos_sale"
+  },
+  "console": [],
+  "httpFailures": [],
+  "navigationAborts": [
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/notifications",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/notifications",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/dashboard",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/inventory",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/services",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/veterinary-services",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/settings/public",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/veterinary-services",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/payments",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/payments",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/history",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/notifications",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/history",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/inventory",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/payments",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/dashboard",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/history",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/settings/public",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/veterinary-services",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/services",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    },
+    {
+      "method": "GET",
+      "url": "http://127.0.0.1:8020/api/manager/reports/services",
+      "page": "http://localhost:3002/manager",
+      "failure": "net::ERR_ABORTED"
+    }
+  ],
+  "limitations": [
+    "Boarding/hotel workflow not included because latest DB has hotel_rooms=0.",
+    "Payment proof verification is separate from POS cash sale validation and remains pending if seeded proof data is unavailable.",
+    "Playwright net::ERR_ABORTED entries are recorded separately as navigation/background request aborts."
+  ]
+}
