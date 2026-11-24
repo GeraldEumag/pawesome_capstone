@@ -43,6 +43,9 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     photoFile: null,
     requires_expiry_tracking: false,
     issue_method: "FIFO",
+    unit: "piece",
+    pack_size: "",
+    box_size: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -76,6 +79,9 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         photoFile: null,
         requires_expiry_tracking: requiresExpiry,
         issue_method: issueMethod,
+        unit: editItem.unit || "piece",
+        pack_size: editItem.pack_size?.toString() || "",
+        box_size: editItem.box_size?.toString() || "",
       });
       setPhotoPreview(editItem.photo_url || editItem.photo || null);
     } else {
@@ -97,6 +103,9 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
         photoFile: null,
         requires_expiry_tracking: false,
         issue_method: "FIFO",
+        unit: "piece",
+        pack_size: "",
+        box_size: "",
       });
       setPhotoPreview(null);
     }
@@ -215,13 +224,17 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
     if (step === 1) {
       if (!formData.name.trim()) newErrors.name = "Product name is required";
       if (!formData.category) newErrors.category = "Category is required";
-      if (!editItem && !formData.barcode.trim()) {
-        newErrors.barcode = "Barcode is required for new sellable products";
-      }
+      // Barcode is optional — the backend auto-generates a unique EAN-13
+      // for sellable items when the field is left blank.
     } else if (step === 2) {
       if (!formData.price || parseFloat(formData.price) <= 0) {
         newErrors.price = "Valid price is required";
       }
+      const pack = parseInt(formData.pack_size, 10);
+      const box = parseInt(formData.box_size, 10);
+      if (formData.pack_size !== "" && (!pack || pack < 2)) newErrors.pack_size = "At least 2 base units per pack.";
+      if (formData.box_size !== "" && (!box || box < 2)) newErrors.box_size = "At least 2 base units per box.";
+      if (pack >= 2 && box >= 2 && box < pack) newErrors.box_size = "A box must contain at least as many units as a pack.";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -249,6 +262,10 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
       cost: formData.cost ? parseFloat(formData.cost) : null,
       supplier_id: formData.supplier_id || null,
       requires_expiry_tracking: formData.requires_expiry_tracking ? 1 : 0,
+      unit: (formData.unit || "piece").trim() || "piece",
+      pack_size: formData.pack_size === "" ? null : parseInt(formData.pack_size, 10),
+      box_size: formData.box_size === "" ? null : parseInt(formData.box_size, 10),
+      barcode: formData.barcode.trim() || null,
     };
     delete data.photoFile;
     if (formData.photoFile instanceof File) {
@@ -402,9 +419,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     </div>
 
                     <div className="form-group">
-                      <label>
-                        Barcode {!editItem && <span className="required">*</span>}
-                      </label>
+                      <label>Barcode</label>
                       <div className="barcode-input-row">
                         <input
                           type="text"
@@ -433,7 +448,7 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                         <small className="helper-text">
                           {editItem
                             ? "Unique product barcode for POS scanning. Click the camera to scan."
-                            : "Required for new sellable products. Enter a unique barcode or scan it with the camera."}
+                            : "Optional — leave blank to auto-generate a unique barcode, or scan/type your own."}
                         </small>
                       )}
 
@@ -621,6 +636,51 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                   </div>
                 </div>
 
+                {/* Units of Measure */}
+                <div className="form-section">
+                  <h4>Units of Measure</h4>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Base Unit</label>
+                      <input
+                        type="text"
+                        name="unit"
+                        value={formData.unit}
+                        onChange={handleChange}
+                        placeholder="piece"
+                      />
+                      <small className="helper-text">Stock is always counted in this unit (e.g. piece, tablet, can).</small>
+                      {errors.unit && <span className="error-text">{errors.unit}</span>}
+                    </div>
+                    <div className="form-group">
+                      <label>Units per Pack</label>
+                      <input
+                        type="number"
+                        name="pack_size"
+                        value={formData.pack_size}
+                        onChange={handleChange}
+                        placeholder="e.g. 12"
+                        min="2"
+                      />
+                      <small className="helper-text">Leave blank if the item is not packed. Stock In/Out then offer a Pack option.</small>
+                      {errors.pack_size && <span className="error-text">{errors.pack_size}</span>}
+                    </div>
+                    <div className="form-group">
+                      <label>Units per Box</label>
+                      <input
+                        type="number"
+                        name="box_size"
+                        value={formData.box_size}
+                        onChange={handleChange}
+                        placeholder="e.g. 24"
+                        min="2"
+                      />
+                      <small className="helper-text">Optional larger packaging unit.</small>
+                      {errors.box_size && <span className="error-text">{errors.box_size}</span>}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Expiry Tracking Settings */}
                 <div className="form-section">
                   <h4>Expiry & Issue Method</h4>
@@ -739,6 +799,14 @@ const AddProductModal = ({ isOpen, onClose, onSuccess, editItem = null }) => {
                     <div className="review-row">
                       <span className="review-label">Cost:</span>
                       <span className="review-value">{formData.cost ? formatCurrency(parseFloat(formData.cost)) : "—"}</span>
+                    </div>
+                    <div className="review-row">
+                      <span className="review-label">Units:</span>
+                      <span className="review-value">
+                        {formData.unit || "piece"}
+                        {formData.pack_size ? ` · ${formData.pack_size}/pack` : ""}
+                        {formData.box_size ? ` · ${formData.box_size}/box` : ""}
+                      </span>
                     </div>
                     <div className="review-row">
                       <span className="review-label">Issue Method:</span>

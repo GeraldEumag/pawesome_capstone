@@ -7,6 +7,7 @@ import Modal from "../shared/Modal";
 import DatePickerInput from "../shared/DatePickerInput";
 import PremiumToast from "../shared/PremiumToast";
 import QuickItemSelector from "./QuickItemSelector";
+import { uomOptionsFor, uomMultiplier, formatUomHint } from "./uom";
 import "./StockMovement.css";
 
 const STOCK_IN_TYPES = [
@@ -31,6 +32,7 @@ const newIdemKey = () =>
 const blankLine = (item) => ({
   item,
   quantity: 1,
+  unit: "base",
   unit_cost: "",
   batch_no: "",
   received_date: new Date(),
@@ -51,7 +53,10 @@ const StockInPage = () => {
   const [lastTxn, setLastTxn] = useState(null);
   const [toast, setToast] = useState({ show: false, type: "success", title: "", message: "" });
 
-  const totalUnits = useMemo(() => lines.reduce((s, l) => s + (parseInt(l.quantity, 10) || 0), 0), [lines]);
+  const totalUnits = useMemo(
+    () => lines.reduce((s, l) => s + (parseInt(l.quantity, 10) || 0) * uomMultiplier(l.item, l.unit), 0),
+    [lines]
+  );
 
   const addItem = (item) => setLines((prev) => [...prev, blankLine(item)]);
   const removeLine = (itemId) => setLines((prev) => prev.filter((l) => l.item.id !== itemId));
@@ -85,6 +90,7 @@ const StockInPage = () => {
           items: lines.map((l) => ({
             inventory_item_id: l.item.id,
             quantity: parseInt(l.quantity, 10),
+            unit: l.unit || "base",
             batch_no: l.batch_no.trim() || null,
             received_date: toDateStr(l.received_date),
             manufacturing_date: toDateStr(l.manufacturing_date),
@@ -182,10 +188,27 @@ const StockInPage = () => {
                     </td>
                     <td>{l.item.stock}</td>
                     <td>
-                      <input
-                        type="number" min="1" value={l.quantity}
-                        onChange={(e) => updateLine(l.item.id, { quantity: e.target.value })}
-                      />
+                      <div className="sm-uom-row">
+                        <input
+                          type="number" min="1" value={l.quantity}
+                          onChange={(e) => updateLine(l.item.id, { quantity: e.target.value })}
+                        />
+                        {uomOptionsFor(l.item).length > 1 && (
+                          <select
+                            className="sm-uom-select"
+                            value={l.unit}
+                            onChange={(e) => updateLine(l.item.id, { unit: e.target.value })}
+                            title="Unit of measure"
+                          >
+                            {uomOptionsFor(l.item).map((o) => (
+                              <option key={o.unit} value={o.unit}>{o.label}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                      {formatUomHint(l.item, l.quantity, l.unit) && (
+                        <span className="sm-uom-hint">{formatUomHint(l.item, l.quantity, l.unit)}</span>
+                      )}
                       {errors[`qty_${l.item.id}`] && <span className="sm-error-text">{errors[`qty_${l.item.id}`]}</span>}
                     </td>
                     <td>
@@ -238,7 +261,7 @@ const StockInPage = () => {
               <span className="sm-summary-value">{lines.length}</span>
             </div>
             <div className="sm-summary-row">
-              <span className="sm-summary-label">Total units received</span>
+              <span className="sm-summary-label">Total base units received</span>
               <span className="sm-summary-value delta-pos">+{totalUnits}</span>
             </div>
           </div>

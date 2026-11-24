@@ -16,11 +16,11 @@ describe("AddProductModal inventory identity fields", () => {
     inventoryApi.createItem.mockReset();
   });
 
-  it("communicates server-generated SKU and required sellable barcode behavior", () => {
+  it("communicates server-generated SKU and auto-generated barcode behavior", () => {
     render(<AddProductModal isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
     expect(screen.getByPlaceholderText("Leave blank to generate automatically")).toBeInTheDocument();
     expect(screen.getByText(
-      "Required for new sellable products. Enter a unique barcode or scan it with the camera."
+      "Optional — leave blank to auto-generate a unique barcode, or scan/type your own."
     )).toBeInTheDocument();
     expect(inventoryApi.createItem).not.toHaveBeenCalled();
   });

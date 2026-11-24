@@ -45,6 +45,8 @@ class InventoryItem extends Model
         'requires_expiry_tracking',
         'issue_method',
         'unit',
+        'pack_size',
+        'box_size',
     ];
 
     protected $appends = ['photo_url'];
@@ -142,6 +144,50 @@ class InventoryItem extends Model
     public function isMedicine(): bool
     {
         return in_array($this->item_class, ['medicine', 'vaccine'], true);
+    }
+
+    /**
+     * Units of measure (panel §8.3). `unit` is the base-unit label;
+     * `pack_size`/`box_size` are base units per packaging unit. Stock
+     * transactions may be entered in 'base', 'pack' or 'box' and are always
+     * stored in base units.
+     */
+    public const UOM_BASE = 'base';
+    public const UOM_PACK = 'pack';
+    public const UOM_BOX = 'box';
+
+    public function baseUnitLabel(): string
+    {
+        return $this->unit ?: 'piece';
+    }
+
+    /** Base-unit multiplier for a transaction unit token, or null if unsupported. */
+    public function uomMultiplier(?string $unit): ?int
+    {
+        return match ($unit) {
+            null, '', self::UOM_BASE => 1,
+            self::UOM_PACK => $this->pack_size ? (int) $this->pack_size : null,
+            self::UOM_BOX => $this->box_size ? (int) $this->box_size : null,
+            default => null,
+        };
+    }
+
+    /** Units a transaction may use for this item, with their base-unit size. */
+    public function uomOptions(): array
+    {
+        $options = [[
+            'unit' => self::UOM_BASE,
+            'label' => ucfirst($this->baseUnitLabel()),
+            'base_units' => 1,
+        ]];
+        if ($this->pack_size) {
+            $options[] = ['unit' => self::UOM_PACK, 'label' => 'Pack', 'base_units' => (int) $this->pack_size];
+        }
+        if ($this->box_size) {
+            $options[] = ['unit' => self::UOM_BOX, 'label' => 'Box', 'base_units' => (int) $this->box_size];
+        }
+
+        return $options;
     }
 
     public function logs()

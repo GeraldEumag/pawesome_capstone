@@ -58,9 +58,19 @@ class InventoryService
         return DB::transaction(function () use ($data) {
             $validated = $this->validateItemData($data, true, null);
 
-        // Auto-generate SKU if not provided
+        // Auto-generate SKU if not provided (retry on the unlikely collision
+        // instead of failing the create with a uniqueness error).
         if (empty($validated['sku'])) {
-            $validated['sku'] = $this->generateSKU($validated['category']);
+            $validated['sku'] = $this->generateUniqueSKU($validated['category']);
+        }
+
+        // Sellable items must always carry a barcode for POS scanning; when
+        // the caller omits one, generate a unique EAN-13 automatically.
+        $isSellable = array_key_exists('is_sellable', $validated)
+            ? (bool) $validated['is_sellable']
+            : true;
+        if ($isSellable && empty($validated['barcode'])) {
+            $validated['barcode'] = $this->generateUniqueBarcode();
         }
 
         // Use quantity or stock_quantity if stock is not provided (frontend compatibility)
@@ -1012,6 +1022,9 @@ class InventoryService
             'is_service_consumable' => 'sometimes|boolean',
             'requires_expiry_tracking' => 'sometimes|boolean',
             'issue_method' => 'sometimes|in:FIFO,FEFO,Manual',
+            'unit' => 'sometimes|nullable|string|max:50',
+            'pack_size' => 'sometimes|nullable|integer|min:2',
+            'box_size' => 'sometimes|nullable|integer|min:2',
         ];
 
         // Normalize barcode before validation so scanner input such as
@@ -1057,22 +1070,25 @@ class InventoryService
             ? (bool) $validated['is_sellable']
             : (isset($data['is_sellable']) ? (bool) $data['is_sellable'] : true);
 
-        if ($isSellable) {
-            if ($isCreate) {
-                if (empty($validated['barcode'])) {
-                    throw ValidationException::withMessages([
-                        'barcode' => ['The barcode field is required for sellable items.'],
-                    ]);
-                }
-            } else {
-                // On update, only reject if barcode is explicitly being cleared.
-                // If barcode is not in the update payload, preserve the existing value.
-                if (array_key_exists('barcode', $validated) && empty($validated['barcode'])) {
-                    throw ValidationException::withMessages([
-                        'barcode' => ['The barcode field is required for sellable items.'],
-                    ]);
-                }
-            }
+        // Business rule: sellable items must always carry a barcode so POS
+        // scanning works. On create, an omitted barcode is auto-generated
+        // (see createItem); on update it must never be cleared to empty.
+        if (!$isCreate && $isSellable
+            && array_key_exists('barcode', $validated) && empty($validated['barcode'])) {
+            throw ValidationException::withMessages([
+                'barcode' => ['The barcode field is required for sellable items.'],
+            ]);
+        }
+
+        // Packaging sizes only make sense together with a base unit; keep
+        // them independent but reject a box smaller than a pack when both
+        // are configured — that ordering is never meaningful.
+        $packSize = $validated['pack_size'] ?? null;
+        $boxSize = $validated['box_size'] ?? null;
+        if ($packSize !== null && $boxSize !== null && (int) $boxSize < (int) $packSize) {
+            throw ValidationException::withMessages([
+                'box_size' => ['A box must contain at least as many units as a pack.'],
+            ]);
         }
 
         return $validated;
@@ -1214,6 +1230,54 @@ class InventoryService
         return "{$prefix}-{$random}{$timestamp}";
     }
 
+    /**
+     * SKU generation with collision retry — the unique index remains the
+     * final guard, but a random hit should regenerate, not 422 the create.
+     */
+    private function generateUniqueSKU(string $category): string
+    {
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            $sku = $this->generateSKU($category);
+            if (!InventoryItem::where('sku', $sku)->exists()) {
+                return $sku;
+            }
+        }
+
+        // Deterministic fallback: max existing numeric suffix + 1.
+        return $this->generateSKU($category) . '-' . strtoupper(Str::random(6));
+    }
+
+    /**
+     * Generate a unique EAN-13 barcode for in-store items (panel §8.4).
+     * Leading digit '2' marks it as an in-store code; the last digit is a
+     * valid GTIN check digit so the label scans with standard readers.
+     */
+    private function generateUniqueBarcode(): string
+    {
+        for ($attempt = 0; $attempt < 25; $attempt++) {
+            $body = '2' . str_pad((string) random_int(0, 99999999999), 11, '0', STR_PAD_LEFT);
+            $barcode = $body . $this->ean13CheckDigit($body);
+            if (!InventoryItem::where('barcode', $barcode)->exists()) {
+                return $barcode;
+            }
+        }
+
+        throw ValidationException::withMessages([
+            'barcode' => ['Could not generate a unique barcode. Please supply one manually.'],
+        ]);
+    }
+
+    /** GTIN-13 check digit (weights 1,3 alternating from the left). */
+    private function ean13CheckDigit(string $body12): string
+    {
+        $sum = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $sum += (int) $body12[$i] * ($i % 2 === 0 ? 1 : 3);
+        }
+
+        return (string) ((10 - ($sum % 10)) % 10);
+    }
+
     /*
     |----------------------------------------------------------------------
     | Stock Movement & Control System
@@ -1324,6 +1388,9 @@ class InventoryService
                 'category' => $item->category,
                 'stock' => (int) $item->stock,
                 'unit' => $item->unit,
+                'pack_size' => $item->pack_size ? (int) $item->pack_size : null,
+                'box_size' => $item->box_size ? (int) $item->box_size : null,
+                'uom_options' => $item->uomOptions(),
                 'status' => $item->status,
                 'reorder_level' => (int) ($item->reorder_level ?? 0),
                 'requires_expiry_tracking' => (bool) $item->requires_expiry_tracking,
@@ -1381,12 +1448,12 @@ class InventoryService
 
             foreach ($lines as $index => $line) {
                 $itemId = (int) ($line['inventory_item_id'] ?? $line['item_id'] ?? 0);
-                $quantity = (int) ($line['quantity'] ?? 0);
                 $item = InventoryItem::lockForUpdate()->findOrFail($itemId);
 
                 if ($item->status !== self::STATUS_ACTIVE || $item->archived_at) {
                     throw ValidationException::withMessages(["items.{$index}" => "{$item->name} is not an active inventory item."]);
                 }
+                $quantity = $this->resolveUomBaseQuantity($item, $line, $index);
                 if ($quantity <= 0) {
                     throw ValidationException::withMessages(["items.{$index}.quantity" => 'Quantity must be greater than zero.']);
                 }
@@ -1403,6 +1470,8 @@ class InventoryService
                     'item_id' => $item->id,
                     'name' => $item->name,
                     'quantity' => $quantity,
+                    'entered_quantity' => (int) ($line['quantity'] ?? $quantity),
+                    'unit' => $line['unit'] ?? InventoryItem::UOM_BASE,
                     'movement_id' => $movement->id,
                     'new_stock' => $movement->new_stock,
                 ];
@@ -1442,13 +1511,21 @@ class InventoryService
             'transaction_no' => $context['transaction_no'],
             'reference_type' => 'stock_in',
             'reference' => $context['reference'],
-            'details' => [
+            'details' => array_merge([
                 'transaction_type' => $context['transaction_type'],
                 'supplier' => $context['supplier'],
                 'reference' => $context['reference'],
                 'description' => $context['description'],
                 'line' => $batchFields,
-            ],
+            ], isset($line['unit']) && $line['unit'] !== InventoryItem::UOM_BASE ? [
+                // UOM traceability: quantity above is always base units;
+                // record what the operator actually entered.
+                'uom' => [
+                    'entered_quantity' => (int) ($line['quantity'] ?? $quantity),
+                    'unit' => $line['unit'],
+                    'base_quantity' => $quantity,
+                ],
+            ] : []),
         ];
 
         if ($needsBatch) {
@@ -1495,6 +1572,32 @@ class InventoryService
         $this->notifyInventoryMovement($item, $quantity, $reasonText, 'stock_in', null, $stockBefore, (int) $item->stock);
 
         return $movement;
+    }
+
+    /**
+     * Convert a transaction line's entered quantity into base units using
+     * the item's UOM configuration (panel §8.3). `unit` may be 'base'
+     * (default), 'pack' or 'box'; pack/box require the corresponding
+     * pack_size/box_size on the item. Returns the base-unit quantity.
+     */
+    private function resolveUomBaseQuantity(InventoryItem $item, array $line, int $index): int
+    {
+        $entered = (int) ($line['quantity'] ?? 0);
+        $unit = $line['unit'] ?? null;
+
+        if ($entered <= 0) {
+            return $entered;
+        }
+
+        $multiplier = $item->uomMultiplier($unit);
+        if ($multiplier === null) {
+            $allowed = implode(', ', array_column($item->uomOptions(), 'label'));
+            throw ValidationException::withMessages([
+                "items.{$index}.unit" => "{$item->name} does not support the \"{$unit}\" unit. Allowed: {$allowed}.",
+            ]);
+        }
+
+        return $entered * $multiplier;
     }
 
     private function validateStockOutReasonFields(string $reasonCode, array $payload): void
@@ -1572,7 +1675,7 @@ class InventoryService
                         ],
                     ];
                 } else {
-                    $quantity = (int) ($line['quantity'] ?? 0);
+                    $quantity = $this->resolveUomBaseQuantity($item, (array) $line, $index);
                     if ($quantity <= 0) {
                         throw ValidationException::withMessages(["items.{$index}.quantity" => 'Quantity must be greater than zero.']);
                     }
@@ -1586,7 +1689,10 @@ class InventoryService
                         'item' => $item,
                         'quantity' => $quantity,
                         'batch_id' => isset($line['batch_id']) ? (int) $line['batch_id'] : null,
-                        'line_details' => (array) $line,
+                        'line_details' => array_merge((array) $line, [
+                            'base_quantity' => $quantity,
+                            'base_unit' => $item->baseUnitLabel(),
+                        ]),
                     ];
                 }
             }

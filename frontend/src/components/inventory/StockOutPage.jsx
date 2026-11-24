@@ -8,6 +8,7 @@ import PremiumToast from "../shared/PremiumToast";
 import QuickItemSelector from "./QuickItemSelector";
 import StockApprovalQueue from "./StockApprovalQueue";
 import { EvidenceUpload } from "./EvidencePhoto";
+import { uomOptionsFor, baseQuantity, formatUomHint } from "./uom";
 import "./StockMovement.css";
 
 const REASONS = [
@@ -50,7 +51,7 @@ const StockOutPage = () => {
   const totalUnits = useMemo(
     () => lines.reduce((s, l) => s + (isCorrection
       ? Math.abs((parseInt(l.physical_count, 10) || 0) - (l.item.stock || 0))
-      : (parseInt(l.quantity, 10) || 0)), 0),
+      : baseQuantity(l.item, l.quantity, l.unit)), 0),
     [lines, isCorrection]
   );
 
@@ -67,7 +68,7 @@ const StockOutPage = () => {
   }, []);
 
   const addItem = useCallback(async (item) => {
-    const line = { item, quantity: 1, physical_count: item.stock, batch_id: "", batches: [] };
+    const line = { item, quantity: 1, unit: "base", physical_count: item.stock, batch_id: "", batches: [] };
     setLines((prev) => [...prev, line]);
     if (WRITE_OFF_REASONS.has(reasonCode)) {
       const batches = await fetchBatches(item.id);
@@ -116,7 +117,10 @@ const StockOutPage = () => {
       } else {
         const q = parseInt(l.quantity, 10);
         if (!q || q <= 0) errs[`qty_${l.item.id}`] = "Qty must be > 0.";
-        else if (q > l.item.stock) errs[`qty_${l.item.id}`] = `Only ${l.item.stock} available.`;
+        else {
+          const base = baseQuantity(l.item, l.quantity, l.unit);
+          if (base > l.item.stock) errs[`qty_${l.item.id}`] = `Only ${l.item.stock} ${l.item.unit || "units"} available.`;
+        }
       }
     });
     setErrors(errs);
@@ -133,6 +137,7 @@ const StockOutPage = () => {
         items: lines.map((l) => ({
           inventory_item_id: l.item.id,
           quantity: isCorrection ? null : parseInt(l.quantity, 10),
+          unit: isCorrection ? null : (l.unit || "base"),
           physical_count: isCorrection ? parseInt(l.physical_count, 10) : null,
           batch_id: l.batch_id || null,
         })),
@@ -282,7 +287,6 @@ const StockOutPage = () => {
                   </thead>
                   <tbody>
                     {lines.map((l) => {
-                      const qty = parseInt(l.quantity, 10) || 0;
                       const pc = parseInt(l.physical_count, 10);
                       const delta = isCorrection && !Number.isNaN(pc) ? pc - l.item.stock : 0;
                       return (
@@ -305,11 +309,28 @@ const StockOutPage = () => {
                             </td>
                           ) : (
                             <td>
-                              <input
-                                type="number" min="1" max={l.item.stock} value={l.quantity}
-                                onChange={(e) => updateLine(l.item.id, { quantity: e.target.value })}
-                              />
-                              <span className="sm-helper">New: {Math.max(0, l.item.stock - qty)}</span>
+                              <div className="sm-uom-row">
+                                <input
+                                  type="number" min="1" value={l.quantity}
+                                  onChange={(e) => updateLine(l.item.id, { quantity: e.target.value })}
+                                />
+                                {uomOptionsFor(l.item).length > 1 && (
+                                  <select
+                                    className="sm-uom-select"
+                                    value={l.unit}
+                                    onChange={(e) => updateLine(l.item.id, { unit: e.target.value })}
+                                    title="Unit of measure"
+                                  >
+                                    {uomOptionsFor(l.item).map((o) => (
+                                      <option key={o.unit} value={o.unit}>{o.label}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                              <span className="sm-helper">
+                                {formatUomHint(l.item, l.quantity, l.unit) && `${formatUomHint(l.item, l.quantity, l.unit)} · `}
+                                New: {Math.max(0, l.item.stock - baseQuantity(l.item, l.quantity, l.unit))}
+                              </span>
                               {errors[`qty_${l.item.id}`] && <span className="sm-error-text">{errors[`qty_${l.item.id}`]}</span>}
                             </td>
                           )}
@@ -395,7 +416,7 @@ const StockOutPage = () => {
           {lines.map((l) => {
             const qty = isCorrection
               ? (parseInt(l.physical_count, 10) || 0) - l.item.stock
-              : -(parseInt(l.quantity, 10) || 0);
+              : -baseQuantity(l.item, l.quantity, l.unit);
             return (
               <div className="sm-summary-row" key={l.item.id}>
                 <span className="sm-summary-label">{l.item.name} (now {l.item.stock})</span>

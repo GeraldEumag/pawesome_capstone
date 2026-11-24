@@ -247,22 +247,53 @@ class BarcodeLookupTest extends TestCase
      * Barcode required for sellable items
      * ---------------------------------------------------------------- */
 
-    public function test_create_sellable_item_without_barcode_is_rejected(): void
+    public function test_create_sellable_item_without_barcode_auto_generates_unique_ean13(): void
     {
         $service = new InventoryService();
 
-        $this->expectException(ValidationException::class);
-
-        // is_sellable defaults to true, so omitting barcode should fail
-        $service->createItem([
-            'name' => 'Sellable No Barcode',
-            'sku' => 'SELLNOBAR-1',
+        // is_sellable defaults to true; an omitted barcode is auto-generated
+        // (panel §8.4) instead of rejected.
+        $first = $service->createItem([
+            'name' => 'Sellable Auto Barcode A',
+            'sku' => null,
             'category' => 'Food',
             'price' => 50,
             'stock' => 5,
             'reorder_level' => 2,
             'status' => 'active',
         ]);
+        $second = $service->createItem([
+            'name' => 'Sellable Auto Barcode B',
+            'sku' => null,
+            'category' => 'Food',
+            'price' => 50,
+            'stock' => 5,
+            'reorder_level' => 2,
+            'status' => 'active',
+        ]);
+
+        $this->assertMatchesRegularExpression('/^\d{13}$/', $first['item']->barcode);
+        $this->assertMatchesRegularExpression('/^\d{13}$/', $second['item']->barcode);
+        $this->assertNotSame($first['item']->barcode, $second['item']->barcode);
+        $this->assertStringStartsWith('2', $first['item']->barcode);
+    }
+
+    public function test_update_cannot_clear_barcode_on_sellable_item(): void
+    {
+        $service = new InventoryService();
+        $created = $service->createItem([
+            'name' => 'Barcode Clear Guard',
+            'sku' => null,
+            'category' => 'Food',
+            'price' => 50,
+            'stock' => 5,
+            'reorder_level' => 2,
+            'status' => 'active',
+            'barcode' => 'KEEPBARCODE01',
+        ]);
+
+        $this->expectException(ValidationException::class);
+        $service->updateItem($created['item']->id, ['barcode' => '']);
     }
 
     public function test_create_non_sellable_item_without_barcode_is_allowed(): void
