@@ -22,6 +22,7 @@ class PublicRegistrationIntegrityTest extends TestCase
             'email' => 'juan@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
+            'date_of_birth' => '1990-01-15',
         ], $overrides);
     }
 
