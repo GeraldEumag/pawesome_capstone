@@ -14,6 +14,8 @@
 
 ## 2. Backend suite — MySQL 8 (authoritative)
 
+**FINAL: 1,288 tests / 6,420 assertions / 1 skipped / 0 failed — GREEN.**
+
 Command: `cd backend && ./vendor/bin/phpunit -c phpunit.mysql8.xml`
 
 | Run | Result | Notes |
@@ -21,7 +23,7 @@ Command: `cd backend && ./vendor/bin/phpunit -c phpunit.mysql8.xml`
 | Baseline-equivalent (default `phpunit.xml` → MariaDB 10.4 @3306) | NOT AUTHORITATIVE | Abandoned — wrong engine; produced `employee_no`-missing errors against a stale MariaDB `pawesome_test`. MySQL 8 @3307 is the required target per plan + prior audit. |
 | First MySQL 8 run (pre-fix) | 1,288 tests — 7 errors, 60 failures | Pollution + real defects documented above |
 | Targeted re-runs | concurrency pair 2/2, POS financial 10/10, payroll ordering 9/9 | Fixes verified in isolation |
-| **Final full run** | **see verdict below** | |
+| **Final full run** | **1,288 tests / 6,420 assertions / 1 skipped (GD) / 0 failed / 0 errors — PASS** in 7m27s | `./vendor/bin/phpunit -c phpunit.mysql8.xml`, MySQL 8.0.44 @3307 |
 
 > Final tally recorded in `FINAL_IMPLEMENTATION_SUMMARY.md` §verification.
 
