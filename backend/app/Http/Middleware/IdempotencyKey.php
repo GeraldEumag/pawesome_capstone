@@ -68,15 +68,12 @@ class IdempotencyKey
             ->where('created_at', '>=', $expiredBefore)
             ->first();
 
-        if (!$existing) {
-            DB::table('idempotency_keys')
-                ->where('user_id', $userId)
-                ->where('key', $key)
-                ->where('route', $route)
-                ->where('created_at', '<', $expiredBefore)
-                ->delete();
-        }
-
+        // Expired rows are ignored by the lookup above and removed by the
+        // scheduled `idempotency:prune-keys` job. A per-request DELETE here
+        // takes gap/supremum locks on the unique index early in the
+        // transaction; a concurrent request holding business-row locks then
+        // deadlocks against this transaction's final INSERT (users ↔
+        // idempotency_keys lock-order inversion).
         if ($existing) {
             if ($existing->request_hash !== $requestHash) {
                 return response()->json([

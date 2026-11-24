@@ -20,13 +20,57 @@ class PosConcurrentStockTest extends TestCase
         // dedicated test runs only against the disposable Phase 2 database.
     }
 
+    private array $committedUserIds = [];
+    private array $committedItemIds = [];
+    private ?\Illuminate\Support\Carbon $windowStart = null;
+
+    protected function tearDown(): void
+    {
+        // Workers run in separate processes outside the test transaction, so
+        // every row they (and this test) write is committed. Remove it again
+        // or later tests in the shared disposable database see phantom rows.
+        $saleIds = \App\Models\Sale::whereIn('cashier_id', $this->committedUserIds)->pluck('id');
+        \App\Models\SaleItem::whereIn('sale_id', $saleIds)
+            ->orWhereIn('product_id', $this->committedItemIds)
+            ->delete();
+        \App\Models\Payment::whereIn('sale_id', $saleIds)->delete();
+        \App\Models\Invoice::whereIn('sale_id', $saleIds)->delete();
+        \App\Models\Sale::whereIn('id', $saleIds)->delete();
+        \App\Models\InventoryReturn::whereIn('inventory_item_id', $this->committedItemIds)->delete();
+        \App\Models\InventoryLog::whereIn('inventory_item_id', $this->committedItemIds)
+            ->orWhereIn('user_id', $this->committedUserIds)
+            ->delete();
+        if ($this->windowStart) {
+            \App\Models\Notification::whereIn('user_id', $this->committedUserIds)
+                ->where('created_at', '>=', $this->windowStart)
+                ->delete();
+            \Illuminate\Support\Facades\DB::table('email_deliveries')
+                ->where('created_at', '>=', $this->windowStart)
+                ->delete();
+        }
+        \Illuminate\Support\Facades\DB::table('personal_access_tokens')
+            ->whereIn('tokenable_id', $this->committedUserIds)
+            ->delete();
+        \App\Models\InventoryItem::whereIn('id', $this->committedItemIds)->delete();
+        // Per-model delete: fires the `deleting` hook that tombstones
+        // employee_no/email/username off the unique indexes. A mass
+        // ->delete() would soft-delete without tombstoning and leave
+        // PAW-XXXX identifiers claimed for later tests.
+        \App\Models\User::whereIn('id', $this->committedUserIds)->get()
+            ->each(fn (\App\Models\User $u) => $u->delete());
+
+        parent::tearDown();
+    }
+
     public function test_two_concurrent_pos_requests_cannot_sell_the_last_unit_twice(): void
     {
+        $this->windowStart = now();
         if (!function_exists('proc_open')) {
             $this->markTestSkipped('proc_open is required for the separate-request concurrency test.');
         }
 
         $cashier = User::factory()->create(['role' => 'cashier', 'is_active' => true]);
+        $this->committedUserIds[] = $cashier->id;
         $token = $cashier->createToken('pos-concurrency')->plainTextToken;
         $product = InventoryItem::create([
             'sku' => 'P2-RACE-' . strtoupper(uniqid()),
@@ -38,6 +82,7 @@ class PosConcurrentStockTest extends TestCase
             'status' => 'active',
             'is_sellable' => true,
         ]);
+        $this->committedItemIds[] = $product->id;
 
         $payload = base64_encode(json_encode([
             'items' => [[

@@ -2247,9 +2247,13 @@ class InventoryService
             ]);
         }
 
+        // Locking read: the item row lock acquired above serializes returns
+        // for this item, but a plain consistent read would still use the
+        // transaction's pre-lock snapshot and miss a just-committed return.
         $alreadyReturned = (int) InventoryReturn::where('source_type', $sourceType)
             ->where('source_id', $sourceId)
             ->where('inventory_item_id', $item->id)
+            ->lockForUpdate()
             ->sum('quantity');
 
         $remaining = $sold - $alreadyReturned;

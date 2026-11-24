@@ -4,16 +4,26 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class WorkflowNotifier
 {
+    /**
+     * Notifications are always written after the outermost transaction
+     * commits (or immediately when none is active). Writing them inside the
+     * business transaction makes each insert take shared FK locks on the
+     * target `users` rows; combined with row locks already held by the
+     * request (idempotency middleware, stock/item locks) two concurrent
+     * requests can deadlock (users ↔ inventory_items lock-order inversion).
+     * Post-commit delivery also means rolled-back work never notifies.
+     */
     public static function notifyUser(?int $userId, string $title, string $message, string $type = 'info', ?string $relatedType = null, $relatedId = null, array $data = []): void
     {
         if (!$userId) {
             return;
         }
 
-        Notification::create([
+        DB::afterCommit(fn () => Notification::create([
             'user_id' => $userId,
             'title' => $title,
             'message' => $message,
@@ -22,7 +32,7 @@ class WorkflowNotifier
             'related_id' => $relatedId,
             'data' => $data,
             'read' => false,
-        ]);
+        ]));
     }
 
     public static function notifyEmail(?string $email, string $title, string $message, string $type = 'info', ?string $relatedType = null, $relatedId = null, array $data = []): void
@@ -31,35 +41,39 @@ class WorkflowNotifier
             return;
         }
 
-        $user = User::where('email', $email)->first();
-        self::notifyUser($user?->id, $title, $message, $type, $relatedType, $relatedId, array_merge($data, [
-            'customer_email' => $email,
-        ]));
+        DB::afterCommit(function () use ($email, $title, $message, $type, $relatedType, $relatedId, $data) {
+            $user = User::where('email', $email)->first();
+            self::notifyUser($user?->id, $title, $message, $type, $relatedType, $relatedId, array_merge($data, [
+                'customer_email' => $email,
+            ]));
+        });
     }
 
     public static function notifyRole(string $role, string $title, string $message, string $type = 'info', ?string $relatedType = null, $relatedId = null, array $data = []): void
     {
-        // Expand target role to include composite super roles that inherit it
-        $targetRoles = [$role];
-        if (in_array($role, ['receptionist', 'cashier', 'inventory'], true)) {
-            $targetRoles[] = 'super_receptionist';
-        }
+        DB::afterCommit(function () use ($role, $title, $message, $type, $relatedType, $relatedId, $data) {
+            // Expand target role to include composite super roles that inherit it
+            $targetRoles = [$role];
+            if (in_array($role, ['receptionist', 'cashier', 'inventory'], true)) {
+                $targetRoles[] = 'super_receptionist';
+            }
 
-        User::whereIn('role', $targetRoles)
-            ->where('is_active', true)
-            ->get()
-            ->each(function (User $user) use ($role, $title, $message, $type, $relatedType, $relatedId, $data) {
-            Notification::create([
-                'user_id' => $user->id,
-                'role' => $role,
-                'title' => $title,
-                'message' => $message,
-                'type' => $type,
-                'related_type' => $relatedType,
-                'related_id' => $relatedId,
-                'data' => $data,
-                'read' => false,
-            ]);
+            User::whereIn('role', $targetRoles)
+                ->where('is_active', true)
+                ->get()
+                ->each(function (User $user) use ($role, $title, $message, $type, $relatedType, $relatedId, $data) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'role' => $role,
+                    'title' => $title,
+                    'message' => $message,
+                    'type' => $type,
+                    'related_type' => $relatedType,
+                    'related_id' => $relatedId,
+                    'data' => $data,
+                    'read' => false,
+                ]);
+            });
         });
     }
 }

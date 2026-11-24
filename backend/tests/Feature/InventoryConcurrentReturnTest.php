@@ -18,8 +18,48 @@ class InventoryConcurrentReturnTest extends TestCase
         // Separate Laravel request workers must see committed fixture rows.
     }
 
+    private array $committedUserIds = [];
+    private array $committedItemIds = [];
+    private array $committedSaleIds = [];
+    private ?\Illuminate\Support\Carbon $windowStart = null;
+
+    protected function tearDown(): void
+    {
+        // Workers run in separate processes outside the test transaction, so
+        // every row they (and this test) write is committed. Remove it again
+        // or later tests in the shared disposable database see phantom rows.
+        DB::table('sale_items')->whereIn('sale_id', $this->committedSaleIds)
+            ->orWhereIn('product_id', $this->committedItemIds)
+            ->delete();
+        DB::table('payments')->whereIn('sale_id', $this->committedSaleIds)->delete();
+        DB::table('invoices')->whereIn('sale_id', $this->committedSaleIds)->delete();
+        DB::table('sales')->whereIn('id', $this->committedSaleIds)->delete();
+        InventoryReturn::whereIn('inventory_item_id', $this->committedItemIds)->delete();
+        InventoryReturn::where('source_type', 'sale')->whereIn('source_id', $this->committedSaleIds)->delete();
+        DB::table('inventory_logs')->whereIn('inventory_item_id', $this->committedItemIds)
+            ->orWhereIn('user_id', $this->committedUserIds)
+            ->delete();
+        if ($this->windowStart) {
+            DB::table('notifications')->whereIn('user_id', $this->committedUserIds)
+                ->where('created_at', '>=', $this->windowStart)
+                ->delete();
+            DB::table('email_deliveries')->where('created_at', '>=', $this->windowStart)->delete();
+        }
+        DB::table('personal_access_tokens')->whereIn('tokenable_id', $this->committedUserIds)->delete();
+        InventoryItem::whereIn('id', $this->committedItemIds)->delete();
+        // Per-model delete: fires the `deleting` hook that tombstones
+        // employee_no/email/username off the unique indexes. A mass
+        // ->delete() would soft-delete without tombstoning and leave
+        // PAW-XXXX identifiers claimed for later tests.
+        User::whereIn('id', $this->committedUserIds)->get()
+            ->each(fn (User $u) => $u->delete());
+
+        parent::tearDown();
+    }
+
     public function test_concurrent_returns_cannot_exceed_the_sold_quantity(): void
     {
+        $this->windowStart = now();
         if (!function_exists('proc_open')) {
             $this->markTestSkipped('proc_open is required for the separate-request concurrency test.');
         }
@@ -28,6 +68,7 @@ class InventoryConcurrentReturnTest extends TestCase
             'role' => 'inventory',
             'is_active' => true,
         ]));
+        $this->committedUserIds = $users->pluck('id')->all();
         $item = InventoryItem::create([
             'sku' => 'RET-RACE-' . strtoupper(uniqid()),
             'name' => 'Return Concurrency Item',
@@ -39,6 +80,7 @@ class InventoryConcurrentReturnTest extends TestCase
             'is_sellable' => false,
             'issue_method' => 'FIFO',
         ]);
+        $this->committedItemIds[] = $item->id;
 
         $saleId = DB::table('sales')->insertGetId([
             'amount' => 10,
@@ -52,6 +94,7 @@ class InventoryConcurrentReturnTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        $this->committedSaleIds[] = $saleId;
         DB::table('sale_items')->insert([
             'sale_id' => $saleId,
             'item_type' => 'product',
