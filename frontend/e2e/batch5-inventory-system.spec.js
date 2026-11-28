@@ -4,10 +4,7 @@ const { loginAs } = require('./test-utils');
 const INVENTORY_ROUTES = [
   '/inventory',
   '/inventory/products',
-  '/inventory/simplified',
   '/inventory/stock',
-  '/inventory/management',
-  '/inventory/legacy-products',
   '/inventory/history',
   '/inventory/analytics',
   '/inventory/reports',
@@ -40,6 +37,22 @@ test.describe('Batch 5: inventory role', () => {
       await expect(page).toHaveURL(new RegExp(`${path.replace(/\//g, '\\/')}$`));
       await expect(page.locator('#root')).not.toBeEmpty();
       expect(errors).toEqual([]);
+    });
+  }
+
+  // Legacy aliases intentionally redirect to canonical routes
+  // (frontend/src/routes/InventoryRoutes.jsx) — assert the redirect,
+  // not URL stability.
+  const LEGACY_REDIRECTS = {
+    '/inventory/simplified': '/inventory/stock',
+    '/inventory/management': '/inventory/products',
+    '/inventory/legacy-products': '/inventory/products',
+  };
+  for (const [from, to] of Object.entries(LEGACY_REDIRECTS)) {
+    test(`inventory opening ${from} redirects to ${to}`, async ({ page }) => {
+      await loginAs(page, 'inventory');
+      await page.goto(from);
+      await expect(page).toHaveURL(new RegExp(`${to.replace(/\//g, '\\/')}$`));
     });
   }
 
