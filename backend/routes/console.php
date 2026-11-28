@@ -20,6 +20,14 @@ Schedule::command('notifications:send-reminders')->hourly()->withoutOverlapping(
 Schedule::command('email-deliveries:dispatch')->everyMinute();
 Schedule::command('email-deliveries:reconcile')->everyTenMinutes();
 
+// Queue drain: the Railway service start command is managed in the dashboard
+// and does not include a dedicated queue worker, so the scheduler drains the
+// database queue once a minute. withoutOverlapping prevents pileup; jobs that
+// arrive mid-run are picked up on the next tick (worst-case ~60s latency).
+Schedule::command('queue:work database --queue=emails,receipts,default --stop-when-empty --max-time=55')
+    ->everyMinute()
+    ->withoutOverlapping();
+
 // HR & Payroll automated commands
 // Mark absent for all staff who had no punch on the previous workday
 Schedule::command('attendance:mark-absent')->dailyAt('23:30');
