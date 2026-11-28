@@ -1,0 +1,1 @@
+{"message":"Grooming service is not available for the selected pet species.","errors":{"pet_id":["Grooming service is not available for the selected pet species."]},"error_code":"service_not_allowed","success":false}
