@@ -27,7 +27,7 @@ class EmailContent
             return null;
         }
 
-        return round(((float) $grossAmount * 0.12) / 1.12, 2);
+        return round(((float) $grossAmount * ReceiptBreakdown::VAT_RATE) / (1 + ReceiptBreakdown::VAT_RATE), 2);
     }
 
     /** 'Oct 06, 2026' — null for missing/unparseable input. */

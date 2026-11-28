@@ -217,6 +217,25 @@ class PetServiceCompatibilityService
     }
 
     /**
+     * Map a services.category value to the compatibility service type
+     * ('grooming' | 'petHotel' | 'veterinary').
+     */
+    public static function serviceTypeForCategory(?string $category): string
+    {
+        $normalized = strtolower(trim((string) $category));
+
+        if ($normalized === 'grooming') {
+            return 'grooming';
+        }
+
+        if (in_array($normalized, ['hotel', 'boarding', 'boarding care', 'daycare', 'pet hotel'], true)) {
+            return 'petHotel';
+        }
+
+        return 'veterinary';
+    }
+
+    /**
      * Validate service compatibility for a pet
      */
     public static function validateServiceCompatibility(int $petId, string $serviceType): array

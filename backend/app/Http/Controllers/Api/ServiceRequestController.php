@@ -1107,7 +1107,7 @@ class ServiceRequestController extends Controller
                 'service_date' => $serviceRequest->request_date,
                 'net_amount' => $vatAmount !== null ? round($totalAmount - $vatAmount, 2) : null,
                 'vat_amount' => $vatAmount,
-                'vat_rate' => 0.12,
+                'vat_rate' => ReceiptBreakdown::VAT_RATE,
                 'total_amount' => $serviceRequest->total_amount ?? $serviceRequest->price,
                 'payment_status' => $serviceRequest->payment_status,
                 'payment_method' => $serviceRequest->payment_method,

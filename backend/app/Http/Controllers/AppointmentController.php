@@ -263,6 +263,22 @@ class AppointmentController extends Controller
         $time = $scheduledAtLocal->format('H:i');
         $service = Service::find($request->service_id);
 
+        // Animal-type rules are enforced server-side for every booking
+        // channel — grooming-category services reject incompatible species
+        // even when the client bypasses the UI filter.
+        $serviceType = strtolower((string) $service?->category) === 'grooming' ? 'grooming' : 'veterinary';
+        $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+            (int) $request->pet_id,
+            \App\Services\PetServiceCompatibilityService::serviceTypeForCategory($service?->category)
+        );
+        if (!($compatibility['valid'] ?? false)) {
+            return response()->json([
+                'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+            ], 422);
+        }
+
         $appointment = DB::transaction(function () use ($request, $date, $time, $service, $scheduledAtUtc) {
             BookingAvailabilityService::lockServiceSchedule();
             $lockedService = Service::find($request->service_id);

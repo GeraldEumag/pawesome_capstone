@@ -140,7 +140,7 @@ class POSController extends Controller
             }
 
             $subtotal = round(array_sum(array_column($serverItems, 'total_price')), 2);
-            $taxAmount = round($subtotal * 0.12 / 1.12, 2);
+            $taxAmount = round($subtotal * ReceiptBreakdown::VAT_RATE / (1 + ReceiptBreakdown::VAT_RATE), 2);
             // Sale-level discounts are likewise not client-authoritative.
             $discountAmount = 0.0;
             $totalAmount = $subtotal;

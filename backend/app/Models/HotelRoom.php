@@ -78,6 +78,19 @@ class HotelRoom extends Model
         });
     }
 
+    /**
+     * Species a legacy hotel room type can house — single source of truth so
+     * availability display and booking enforcement never disagree.
+     */
+    public static function allowedSpeciesForType(string $type): array
+    {
+        return match ($type) {
+            'kennel' => ['dog'],
+            'cattery' => ['cat'],
+            default => ['dog', 'cat', 'bird', 'other'],
+        };
+    }
+
     public function boardings(): HasMany
     {
         return $this->hasMany(Boarding::class);

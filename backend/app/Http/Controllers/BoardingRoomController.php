@@ -155,11 +155,6 @@ class BoardingRoomController extends Controller
 
             // ── Also query legacy hotel_rooms ─────────────────────────
             if (Schema::hasTable('hotel_rooms')) {
-                $hotelRoomSpeciesMap = [
-                    'kennel'   => ['dog'],
-                    'cattery'  => ['cat'],
-                ];
-
                 $hotelRoomCategoryMap = [
                     'kennel'   => 'dog_hotel',
                     'cattery'  => 'cat_hotel',
@@ -233,7 +228,7 @@ class BoardingRoomController extends Controller
                         'room_name'         => $hr->name,
                         'room_type'         => $hr->type,
                         'hotel_category'    => $hotelRoomCategoryMap[$hr->type] ?? 'other',
-                        'allowed_species'   => $hotelRoomSpeciesMap[$hr->type] ?? ['dog', 'cat', 'bird', 'other'],
+                        'allowed_species'   => \App\Models\HotelRoom::allowedSpeciesForType($hr->type),
                         'max_capacity'      => $capacity,
                         'total_rooms'       => $capacity,
                         'available_rooms'   => $statusOk && !$confined ? max(0, $capacity - $blocking) : 0,

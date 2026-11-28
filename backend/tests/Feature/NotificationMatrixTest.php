@@ -78,7 +78,7 @@ class NotificationMatrixTest extends TestCase
             'pet_id' => $pet->id,
             'request_type' => 'grooming',
             'service_name' => 'Full Groom',
-            'requested_date' => now()->addDays(2)->toDateString(),
+            'requested_date' => $this->nextBookableDate(2)->toDateString(),
             'requested_time' => '10:00',
         ]);
 
@@ -108,7 +108,7 @@ class NotificationMatrixTest extends TestCase
             'pet_name' => 'Bantay',
             'request_type' => 'grooming',
             'service_name' => 'Full Groom',
-            'request_date' => now()->addDays(2)->toDateString(),
+            'request_date' => $this->nextBookableDate(2)->toDateString(),
             'request_time' => '10:00',
             'status' => 'pending',
             'payment_status' => 'unpaid',
@@ -140,7 +140,7 @@ class NotificationMatrixTest extends TestCase
             'pet_name' => 'Bantay',
             'request_type' => 'grooming',
             'service_name' => 'Full Groom',
-            'request_date' => now()->addDays(2)->toDateString(),
+            'request_date' => $this->nextBookableDate(2)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
             'payment_status' => 'unpaid',
@@ -187,7 +187,7 @@ class NotificationMatrixTest extends TestCase
             'price' => 850.50,
             'total_amount' => 850.50,
             'payment_method' => 'gcash',
-            'request_date' => now()->addDays(2)->toDateString(),
+            'request_date' => $this->nextBookableDate(2)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
             'payment_status' => 'pending',
@@ -230,7 +230,7 @@ class NotificationMatrixTest extends TestCase
             'pet_name' => 'Bantay',
             'request_type' => 'grooming',
             'service_name' => 'Full Groom',
-            'request_date' => now()->addDays(2)->toDateString(),
+            'request_date' => $this->nextBookableDate(2)->toDateString(),
             'request_time' => '10:00',
             'status' => 'approved',
             'payment_status' => 'pending',
@@ -372,7 +372,7 @@ class NotificationMatrixTest extends TestCase
         $response = $this->as('customer')->post('/api/customer/boarding-requests', [
             'pet_id' => $pet->id,
             'hotel_room_id' => $room->id,
-            'check_in_date' => now()->addDays(3)->toDateString(),
+            'check_in_date' => $this->nextBookableDate(3)->toDateString(),
             'number_of_days' => 1,
             'vaccination_card' => UploadedFile::fake()->create('milo-card.png', 100, 'image/png'),
         ]);

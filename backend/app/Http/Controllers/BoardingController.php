@@ -417,6 +417,17 @@ class BoardingController extends Controller
             $totalAmount = $dailyRate * $numberOfDays;
             $roomName = $hotelRoom->name ?? $hotelRoom->room_number;
             $roomType = $hotelRoom->type;
+
+            // Legacy hotel rooms carry no allowed_species column — enforce the
+            // same type→species map the availability endpoint advertises so a
+            // client cannot book e.g. a fish into a dog kennel.
+            $petSpecies = strtolower(trim((string) ($pet->species ?? $pet->type ?? '')));
+            $allowedSpecies = array_map('strtolower', \App\Models\HotelRoom::allowedSpeciesForType((string) $hotelRoom->type));
+            if ($petSpecies === '' || !in_array($petSpecies, $allowedSpecies, true)) {
+                return response()->json([
+                    'errors' => ['hotel_room_id' => ['Selected room does not accept this pet species.']],
+                ], 422);
+            }
         } else {
             $pricingResult = $this->boardingRoomService->calculateTotalAmount(
                 $request->room_id,

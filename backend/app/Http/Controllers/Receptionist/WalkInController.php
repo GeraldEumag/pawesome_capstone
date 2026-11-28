@@ -14,6 +14,7 @@ use App\Models\Service;
 use App\Mail\AccountWelcomeMail;
 use App\Services\BookingAvailabilityService;
 use App\Services\EmailDeliveryService;
+use App\Services\PetServiceCompatibilityService;
 use App\Services\ServiceCatalog;
 use App\Services\WorkflowNotifier;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -237,6 +238,21 @@ class WalkInController extends Controller
                     }
                 }
 
+                // Animal-type rules are enforced server-side for every
+                // booking channel — a walk-in cannot seat a species the
+                // service catalog marks as incompatible.
+                if ($serviceType === 'grooming') {
+                    $compatibility = PetServiceCompatibilityService::validateServiceCompatibility($petId, 'grooming');
+                    if (!($compatibility['valid'] ?? false)) {
+                        throw new HttpResponseException(response()->json([
+                            'success' => false,
+                            'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                            'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                            'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+                        ], 422));
+                    }
+                }
+
                 // Step 2: Create service request
                 $serviceRequest = ServiceRequest::create([
                     'request_type' => $serviceType,
@@ -305,6 +321,19 @@ class WalkInController extends Controller
                             throw new HttpResponseException(response()->json([
                                 'success' => false,
                                 'message' => 'Selected room is not available.',
+                            ], 422));
+                        }
+
+                        // Legacy hotel rooms have no allowed_species column —
+                        // enforce the type→species map the availability feed
+                        // advertises (kennel=dog, cattery=cat, others=dog/cat/
+                        // bird/other) so staff cannot seat a fish in a kennel.
+                        $petSpecies = strtolower(trim((string) ($pet->species ?? '')));
+                        $allowedHotelSpecies = array_map('strtolower', \App\Models\HotelRoom::allowedSpeciesForType((string) $room->type));
+                        if ($petSpecies === '' || !in_array($petSpecies, $allowedHotelSpecies, true)) {
+                            throw new HttpResponseException(response()->json([
+                                'success' => false,
+                                'message' => 'Selected room does not accept this pet species.',
                             ], 422));
                         }
 

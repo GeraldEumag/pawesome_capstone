@@ -95,9 +95,10 @@ export const downloadInvoice = async (id) => {
  */
 export const generateReceipt = (transaction, items, payment) => {
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.12;
+  // Prices are VAT-inclusive: the 12% VAT is extracted from the gross total.
+  const tax = Math.round(subtotal * 0.12 / 1.12 * 100) / 100;
   const discount = payment?.discount || 0;
-  const total = subtotal + tax - discount;
+  const total = subtotal - discount;
 
   return {
     store_name: "Pawesome Pet Store",

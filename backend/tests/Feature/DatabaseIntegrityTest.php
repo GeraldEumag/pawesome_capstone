@@ -408,7 +408,7 @@ class DatabaseIntegrityTest extends TestCase
             'pet_id' => $this->pet->id,
             'service_id' => $service->id,
             'veterinarian_id' => $this->veterinary->id,
-            'scheduled_at' => now()->addDays(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
+            'scheduled_at' => $this->nextBookableDate(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
             'notes' => 'Regular checkup',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));
 
@@ -445,7 +445,7 @@ class DatabaseIntegrityTest extends TestCase
             'customer_id' => $this->customerRecord->id,
             'pet_id' => $this->pet->id,
             'hotel_room_id' => $room->id,
-            'check_in_date' => now()->addDay()->format('Y-m-d'),
+            'check_in_date' => $this->nextBookableDate(1)->format('Y-m-d'),
             'number_of_days' => 1,
             'special_requests' => 'Needs quiet room',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));
@@ -570,7 +570,7 @@ class DatabaseIntegrityTest extends TestCase
         $response = $this->postJson('/api/customer/appointments', [
             'pet_id' => $petId,
             'service_id' => $service->id,
-            'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
+            'scheduled_at' => $this->nextBookableDate(1)->setTime(10, 0)->format('Y-m-d H:i:s'),
         ], ['Authorization' => 'Bearer ' . $customerToken]);
 
         $response->assertStatus(201);
@@ -772,7 +772,7 @@ class DatabaseIntegrityTest extends TestCase
         $appointment = $this->postJson('/api/customer/appointments', [
             'pet_id' => $pet1->id,
             'service_id' => $service->id,
-            'scheduled_at' => now()->addDays(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
+            'scheduled_at' => $this->nextBookableDate(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
         ], ['Authorization' => 'Bearer ' . $customerToken]);
         
         $appointment->assertStatus(201);

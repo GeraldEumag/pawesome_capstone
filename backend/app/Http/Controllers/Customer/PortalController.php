@@ -580,6 +580,21 @@ class PortalController extends Controller
             return response()->json(['message' => 'Pet not found'], 404);
         }
 
+        // Animal-type rules are enforced server-side — grooming-category
+        // services reject incompatible species regardless of client input.
+        $service = Service::find($data['service_id']);
+        $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+            (int) $data['pet_id'],
+            \App\Services\PetServiceCompatibilityService::serviceTypeForCategory($service?->category)
+        );
+        if (!($compatibility['valid'] ?? false)) {
+            return response()->json([
+                'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+            ], 422);
+        }
+
         [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($data['scheduled_at']);
         if (!$scheduledAtUtc->isFuture()) {
             return response()->json(['errors' => ['scheduled_at' => ['The scheduled time must be in the future.']]], 422);

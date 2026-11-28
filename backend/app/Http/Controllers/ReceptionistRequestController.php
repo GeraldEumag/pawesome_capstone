@@ -265,6 +265,28 @@ class ReceptionistRequestController extends Controller
 
         $requestType = $validated['request_type'] ?? $validated['service_type'] ?? 'grooming';
 
+        // Animal-type rules are enforced server-side for staff-created
+        // requests too — same normalization as ServiceRequestController.
+        $compatType = match (strtolower(trim((string) $requestType))) {
+            'vet', 'veterinary', 'appointment', 'vet appointment' => 'veterinary',
+            'hotel', 'boarding', 'pet hotel', 'pet_hotel', 'pet hotel/boarding', 'pet hotel / boarding' => 'petHotel',
+            'grooming' => 'grooming',
+            default => null,
+        };
+        if ($compatType !== null) {
+            $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+                (int) $pet->id,
+                $compatType
+            );
+            if (!($compatibility['valid'] ?? false)) {
+                return response()->json([
+                    'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                    'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                    'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+                ], 422);
+            }
+        }
+
         $createData = [
             'request_type' => $requestType,
             'pet_id' => $pet->id,
@@ -535,6 +557,27 @@ class ReceptionistRequestController extends Controller
             }
             if ($pet && !$serviceRequest->pet_id) {
                 $serviceRequest->pet_id = $pet->id;
+            }
+
+            // Same promotion-time animal-type gate as performApprove —
+            // PATCH-approved requests must not bypass species rules.
+            if ($pet) {
+                $statusCompatType = $this->requestIsGrooming($serviceRequest)
+                    ? 'grooming'
+                    : ($this->requestIsHotel($serviceRequest) ? 'petHotel' : null);
+                if ($statusCompatType !== null) {
+                    $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+                        (int) $pet->id,
+                        $statusCompatType
+                    );
+                    if (!($compatibility['valid'] ?? false)) {
+                        return response()->json([
+                            'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                            'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                            'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+                        ], 422);
+                    }
+                }
             }
 
             // Grooming: create record if customer and pet resolved
@@ -921,6 +964,24 @@ class ReceptionistRequestController extends Controller
         }
         if ($pet && !$serviceRequest->pet_id) {
             $serviceRequest->pet_id = $pet->id;
+        }
+
+        // Re-validate animal-type compatibility at promotion time — requests
+        // created before enforcement (or via legacy paths) must not promote
+        // an incompatible species into a booking.
+        if ($pet) {
+            $approveCompatType = $isGroomingRequest ? 'grooming' : ($isHotelRequest ? 'petHotel' : 'veterinary');
+            $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+                (int) $pet->id,
+                $approveCompatType
+            );
+            if (!($compatibility['valid'] ?? false)) {
+                return response()->json([
+                    'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                    'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                    'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+                ], 422);
+            }
         }
 
         // --- Vet requests: create/update Appointment ---

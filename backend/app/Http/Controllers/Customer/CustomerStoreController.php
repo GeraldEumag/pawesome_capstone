@@ -191,7 +191,7 @@ class CustomerStoreController extends Controller
                 'items' => $items,
                 'net_amount' => $vatAmount !== null ? round($totalAmount - $vatAmount, 2) : null,
                 'vat_amount' => $vatAmount,
-                'vat_rate' => 0.12,
+                'vat_rate' => ReceiptBreakdown::VAT_RATE,
                 'total_amount' => $order->total_amount,
                 'payment_method' => $order->payment_method,
                 'payment_reference' => $order->reference_number ?? $order->payment_reference ?? null,

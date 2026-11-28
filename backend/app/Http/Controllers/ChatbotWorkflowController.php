@@ -71,6 +71,20 @@ class ChatbotWorkflowController extends Controller
         }
 
         $service = Service::findOrFail($data['service_id']);
+
+        // Animal-type rules are enforced server-side for chatbot bookings too.
+        $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+            (int) $pet->id,
+            \App\Services\PetServiceCompatibilityService::serviceTypeForCategory($service->category)
+        );
+        if (!($compatibility['valid'] ?? false)) {
+            return response()->json([
+                'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+            ], 422);
+        }
+
         [$scheduledAtUtc, $scheduledAtLocal] = BookingAvailabilityService::appointmentTimes($data['scheduled_at']);
         if (!$scheduledAtUtc->isFuture()) {
             return response()->json(['errors' => ['scheduled_at' => ['The scheduled time must be in the future.']]], 422);
@@ -346,6 +360,13 @@ class ChatbotWorkflowController extends Controller
             $room = HotelRoom::find($data['hotel_room_id']);
             if ($room->status !== 'available') {
                 return response()->json(['message' => 'Selected room is not available.'], 422);
+            }
+            // Legacy hotel rooms carry no allowed_species column — enforce the
+            // same type→species map used by availability and the boarding form.
+            $petSpecies = strtolower(trim((string) ($pet->species ?? '')));
+            $allowedHotelSpecies = array_map('strtolower', HotelRoom::allowedSpeciesForType((string) $room->type));
+            if ($petSpecies === '' || !in_array($petSpecies, $allowedHotelSpecies, true)) {
+                return response()->json(['message' => 'Selected room does not accept this pet species.'], 422);
             }
             // Check if room is booked for the selected date
             $conflict = Boarding::where('hotel_room_id', $room->id)

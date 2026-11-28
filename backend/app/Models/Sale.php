@@ -145,9 +145,11 @@ class Sale extends Model
     public function calculateTotals(): void
     {
         $subtotal = $this->items->sum('total_price');
-        $tax = $subtotal * 0.12; // 12% tax rate
+        // Prices are VAT-inclusive: tax_amount is the VAT portion extracted
+        // from the gross subtotal, never added on top of it.
+        $tax = round($subtotal * \App\Support\ReceiptBreakdown::VAT_RATE / (1 + \App\Support\ReceiptBreakdown::VAT_RATE), 2);
         $discount = $this->discount_amount ?? 0;
-        $total = max($subtotal + $tax - $discount, 0);
+        $total = max($subtotal - $discount, 0);
 
         $this->update([
             'subtotal' => $subtotal,

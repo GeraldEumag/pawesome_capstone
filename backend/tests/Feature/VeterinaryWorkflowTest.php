@@ -91,7 +91,7 @@ class VeterinaryWorkflowTest extends TestCase
                 'customer_id' => $customer->id,
                 'pet_id' => $pet->id,
                 'service_id' => $service->id,
-                'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
+                'scheduled_at' => $this->nextBookableDate(1)->setTime(10, 0)->format('Y-m-d H:i:s'),
                 'notes' => 'Initial consult',
             ])
             ->assertCreated()
@@ -132,8 +132,14 @@ class VeterinaryWorkflowTest extends TestCase
             ->postJson("/api/veterinary/appointments/{$appointmentId}/complete")
             ->assertNotFound();
 
-        $initialSchedule = Carbon::now('Asia/Manila')->addDay()->setTime(10, 0);
-        $updatedSchedule = Carbon::now('Asia/Manila')->addDays(2)->setTime(10, 0);
+        $initialSchedule = $this->nextBookableDate(1)->setTime(10, 0);
+        $updatedSchedule = $this->nextBookableDate(2)->setTime(10, 0);
+        while ($updatedSchedule->isSameDay($initialSchedule)) {
+            $updatedSchedule->addDay();
+            while (!\App\Services\BookingAvailabilityService::isBookableDate($updatedSchedule->toDateString())) {
+                $updatedSchedule->addDay();
+            }
+        }
         $editableAppointment = Appointment::factory()->create([
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
@@ -621,7 +627,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'pet_name' => $pet->name,
             'service_name' => $service->name,
-            'request_date' => now()->addDay()->toDateString(),
+            'request_date' => $this->nextBookableDate(1)->toDateString(),
             'request_time' => '10:00',
             'status' => 'pending',
             'payment_status' => 'pending',
@@ -662,7 +668,7 @@ class VeterinaryWorkflowTest extends TestCase
             'price' => 500,
             'duration_minutes' => 30,
         ]);
-        $scheduled = Carbon::now('Asia/Manila')->addDay()->setTime(10, 0);
+        $scheduled = $this->nextBookableDate(1)->setTime(10, 0);
         $request = ServiceRequest::create([
             'request_type' => 'vet',
             'customer_name' => $customer->name,
@@ -719,7 +725,7 @@ class VeterinaryWorkflowTest extends TestCase
             'pet_id' => $pet->id,
             'pet_name' => $pet->name,
             'service_name' => 'General Consultation',
-            'request_date' => Carbon::now('Asia/Manila')->addDay()->toDateString(),
+            'request_date' => $this->nextBookableDate(1)->toDateString(),
             'request_time' => '10:00',
             'status' => 'pending',
             'payment_status' => 'unpaid',
@@ -751,7 +757,7 @@ class VeterinaryWorkflowTest extends TestCase
             'customer_name' => 'Customer',
             'pet_name' => 'Buddy',
             'service_name' => 'vet',
-            'request_date' => now()->addDay()->toDateString(),
+            'request_date' => $this->nextBookableDate(1)->toDateString(),
             'request_time' => '14:00',
             'status' => 'pending',
             'payment_status' => 'pending',
@@ -810,7 +816,7 @@ class VeterinaryWorkflowTest extends TestCase
                 'pet_name' => $pet->name,
                 'request_type' => 'vet',
                 'service_name' => $service->name,
-                'requested_date' => now()->addDay()->toDateString(),
+                'requested_date' => $this->nextBookableDate(1)->toDateString(),
                 'requested_time' => '10:00',
                 'notes' => 'Annual wellness visit',
             ])
@@ -919,7 +925,7 @@ class VeterinaryWorkflowTest extends TestCase
                 'customer_id' => $customer->id,
                 'pet_id' => $pet->id,
                 'service_id' => $service->id,
-                'scheduled_at' => now()->addDay()->setTime(10, 0)->format('Y-m-d H:i:s'),
+                'scheduled_at' => $this->nextBookableDate(1)->setTime(10, 0)->format('Y-m-d H:i:s'),
                 'notes' => 'Scheduled consult',
             ])
             ->assertCreated();
@@ -996,7 +1002,7 @@ class VeterinaryWorkflowTest extends TestCase
             'duration_minutes' => 30,
             'price' => 500,
         ]);
-        $date = Carbon::now('Asia/Manila')->addDay()->toDateString();
+        $date = $this->nextBookableDate(1)->toDateString();
         $serviceRequest = ServiceRequest::create([
             'customer_id' => $customerUser->id,
             'customer_name' => $customer->name,
@@ -1076,7 +1082,7 @@ class VeterinaryWorkflowTest extends TestCase
             'category' => 'Consultation',
             'duration_minutes' => 30,
         ]);
-        $date = now()->addDay()->toDateString();
+        $date = $this->nextBookableDate(1)->toDateString();
         $appointment = Appointment::factory()->create([
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
@@ -1121,7 +1127,7 @@ class VeterinaryWorkflowTest extends TestCase
             'price' => 500,
             'duration_minutes' => 30,
         ]);
-        $date = Carbon::tomorrow('Asia/Manila')->toDateString();
+        $date = $this->nextBookableDate(1)->toDateString();
         $request = ServiceRequest::create([
             'request_type' => 'vet',
             'customer_name' => $customer->name,
@@ -1182,7 +1188,7 @@ class VeterinaryWorkflowTest extends TestCase
             'category' => 'Consultation',
             'duration_minutes' => 30,
         ]);
-        $scheduledAt = Carbon::tomorrow('Asia/Manila')->setTime(10, 0)->utc();
+        $scheduledAt = $this->nextBookableDate(1)->setTime(10, 0)->utc();
         $appointment = Appointment::factory()->create([
             'customer_id' => $customer->id,
             'pet_id' => $pet->id,
@@ -1221,7 +1227,7 @@ class VeterinaryWorkflowTest extends TestCase
             'category' => 'Consultation',
             'duration_minutes' => 30,
         ]);
-        $date = Carbon::tomorrow('Asia/Manila')->toDateString();
+        $date = $this->nextBookableDate(1)->toDateString();
         $firstTime = Carbon::parse($date . ' 10:00', 'Asia/Manila')->utc();
         $secondTime = Carbon::parse($date . ' 11:00', 'Asia/Manila')->utc();
         $first = Appointment::factory()->create([

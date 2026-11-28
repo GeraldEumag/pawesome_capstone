@@ -54,6 +54,21 @@ class GroomingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Animal-type rules are enforced server-side — staff cannot book
+        // grooming for a species the catalog marks incompatible.
+        $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+            (int) $validated['pet_id'],
+            'grooming'
+        );
+        if (!($compatibility['valid'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                'errors' => ['pet_id' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+            ], 422);
+        }
+
         // Price is server-authoritative from the service catalog — a client
         // supplied amount must never set the billable total.
         $resolvedAmount = ServiceCatalog::priceFor($validated['service'], 'grooming');

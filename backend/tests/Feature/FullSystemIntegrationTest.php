@@ -209,7 +209,7 @@ class FullSystemIntegrationTest extends TestCase
         $appointment = $this->postJson('/api/customer/appointments', [
             'pet_id' => Pet::where('customer_id', $this->customer->id)->first()->id,
             'service_id' => Service::where('name', 'Pet Grooming')->first()->id,
-            'scheduled_at' => now()->addDays(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
+            'scheduled_at' => $this->nextBookableDate(2)->setTime(10, 0)->format('Y-m-d H:i:s'),
             'notes' => 'First time grooming',
         ], $this->withAuth($this->customerUser, $this->customerToken));
         
@@ -232,7 +232,7 @@ class FullSystemIntegrationTest extends TestCase
             'pet_id' => Pet::where('customer_id', $this->customer->id)->first()->id,
             'customer_id' => $this->customer->id,
             'hotel_room_id' => $room->id,
-            'check_in_date' => now()->addDay()->format('Y-m-d'),
+            'check_in_date' => $this->nextBookableDate(1)->format('Y-m-d'),
             'number_of_days' => 1,
             'special_requests' => 'Needs medication twice daily',
         ], $this->withAuth($this->receptionist, $this->receptionistToken));

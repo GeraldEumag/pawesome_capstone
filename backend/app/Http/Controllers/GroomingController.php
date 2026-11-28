@@ -88,8 +88,10 @@ class GroomingController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'petId' => 'nullable|exists:pets,id',
-            'petName' => 'required|string|max:100',
+            // petId is required so the backend can enforce species
+            // compatibility — a free-text pet name alone cannot be checked.
+            'petId' => 'required|exists:pets,id',
+            'petName' => 'nullable|string|max:100',
             'service' => 'required|string|in:bath,haircut,nailTrim',
             'date' => 'required|date|after_or_equal:' . now(ServiceDurationService::STORE_TIMEZONE)->toDateString(),
             'time' => 'required|date_format:H:i',
@@ -104,10 +106,11 @@ class GroomingController extends Controller
             ], 422);
         }
 
-        if (auth()->user()?->role === 'customer' && $request->petId) {
+        $pet = Pet::find($request->petId);
+        if (auth()->user()?->role === 'customer') {
             $customerId = $this->currentCustomerId();
 
-            if (!Pet::where('id', $request->petId)->where('customer_id', $customerId ?? 0)->exists()) {
+            if (!$pet || !Pet::where('id', $request->petId)->where('customer_id', $customerId ?? 0)->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Pet not found',
@@ -115,7 +118,22 @@ class GroomingController extends Controller
             }
         }
 
-        $appointment = DB::transaction(function () use ($request) {
+        // Server-side animal-type enforcement: grooming is restricted to
+        // compatible species regardless of what the client submits.
+        $compatibility = \App\Services\PetServiceCompatibilityService::validateServiceCompatibility(
+            (int) $request->petId,
+            'grooming'
+        );
+        if (!($compatibility['valid'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => $compatibility['message'] ?? 'This service is not available for this pet species.',
+                'errors' => ['petId' => [$compatibility['message'] ?? 'This service is not available for this pet species.']],
+                'error_code' => $compatibility['error_code'] ?? 'service_not_allowed',
+            ], 422);
+        }
+
+        $appointment = DB::transaction(function () use ($request, $pet) {
             BookingAvailabilityService::lockServiceSchedule();
             if (!BookingAvailabilityService::isServiceTimeAvailable(
                 'grooming',
@@ -128,7 +146,9 @@ class GroomingController extends Controller
 
             return GroomingAppointment::create([
                 'pet_id' => $request->petId,
-                'pet_name' => $request->petName,
+                // The pet record is authoritative — never trust the
+                // client-supplied display name.
+                'pet_name' => $pet?->name ?? $request->petName,
                 'service' => $request->service,
                 'appointment_date' => $request->date,
                 'appointment_time' => $request->time,
