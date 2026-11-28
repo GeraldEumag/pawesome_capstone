@@ -28,6 +28,12 @@ Schedule::command('queue:work database --queue=emails,receipts,default --stop-wh
     ->everyMinute()
     ->withoutOverlapping();
 
+// Nightly production backup (03:00 Asia/Manila = 19:00 UTC): gzipped SQL dump
+// of every table + zip of storage/app + JSON manifest, kept on the persistent
+// Railway volume with 30-day retention. Off-site replication is layered on
+// top once object-storage credentials are configured.
+Schedule::command('ops:backup')->dailyAt('19:00')->withoutOverlapping(120);
+
 // HR & Payroll automated commands
 // Mark absent for all staff who had no punch on the previous workday
 Schedule::command('attendance:mark-absent')->dailyAt('23:30');
